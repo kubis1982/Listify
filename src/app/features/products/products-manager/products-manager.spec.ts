@@ -1,0 +1,66 @@
+import { TestBed } from '@angular/core/testing';
+import { CategoriesService } from '../../categories/data/categories.service';
+import { UnitsService } from '../../units/data/units.service';
+import { ProductsService } from '../data/products.service';
+import { ProductsManager } from './products-manager';
+
+describe('ProductsManager', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({ imports: [ProductsManager] });
+  });
+
+  it('shows an empty-state message when there are no products', () => {
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No products yet');
+  });
+
+  it('adds a product using the selected default unit and category', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const unitId = unitsService.units()[0].id;
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const categoryId = categoriesService.categories()[0].id;
+
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const nameInput = root.querySelector<HTMLInputElement>('input[type="text"]')!;
+    nameInput.value = 'Milk 3.2%';
+    nameInput.dispatchEvent(new Event('input'));
+
+    const selects = root.querySelectorAll<HTMLSelectElement>('select');
+    selects[0].value = unitId;
+    selects[0].dispatchEvent(new Event('input'));
+    selects[1].value = categoryId;
+    selects[1].dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    const productsService = TestBed.inject(ProductsService);
+    expect(productsService.products()).toEqual([
+      expect.objectContaining({ name: 'Milk 3.2%', defaultUnitId: unitId, categoryId }),
+    ]);
+    expect(root.textContent).toContain('Milk 3.2%');
+  });
+
+  it('removes a product after the user confirms', () => {
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Milk', defaultUnitId: 'u1', categoryId: 'c1' });
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('li button + button')!
+      .click();
+    fixture.detectChanges();
+
+    expect(productsService.products()).toEqual([]);
+  });
+});
