@@ -43,6 +43,7 @@ describe('ShoppingListDetail', () => {
     const root = fixture.nativeElement as HTMLElement;
     const productSelect = root.querySelector<HTMLSelectElement>('select')!;
     productSelect.value = productId;
+    productSelect.dispatchEvent(new Event('input'));
     productSelect.dispatchEvent(new Event('change'));
     fixture.detectChanges();
 

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { FormField, form, min, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,11 +11,12 @@ import { UnitsService } from '../../units/data/units.service';
 import { ShoppingListsService } from '../data/shopping-lists.service';
 
 interface ItemFormValue {
+  productId: string;
   quantity: number;
   note: string;
 }
 
-const EMPTY_ITEM_FORM: ItemFormValue = { quantity: 1, note: '' };
+const EMPTY_ITEM_FORM: ItemFormValue = { productId: '', quantity: 1, note: '' };
 
 @Component({
   selector: 'app-shopping-list-detail',
@@ -61,21 +62,16 @@ const EMPTY_ITEM_FORM: ItemFormValue = { quantity: 1, note: '' };
       }
 
       <h2>Add item</h2>
-      <form class="add-item-form" (submit)="addItem($event)">
+      <form class="add-item-form" novalidate (submit)="addItem($event)">
         <mat-form-field appearance="outline">
           <mat-label>Product</mat-label>
-          <select
-            matInput
-            matNativeControl
-            [value]="productId()"
-            (change)="onProductChange($event)"
-          >
+          <select matInput matNativeControl [formField]="itemForm.productId">
             <option value="" disabled>Select a product</option>
             @for (product of productsService.products(); track product.id) {
               <option [value]="product.id">{{ product.name }}</option>
             }
           </select>
-          @if (productSelectionError()) {
+          @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
             <mat-error>Please select a product.</mat-error>
           }
         </mat-form-field>
@@ -150,30 +146,19 @@ export class ShoppingListDetail {
     this.shoppingListsService.lists().find((l) => l.id === this.id()),
   );
 
-  protected readonly productId = signal('');
-  protected readonly selectedUnitId = linkedSignal(() => {
-    const product = this.productsService.products().find((p) => p.id === this.productId());
-    return product?.defaultUnitId ?? '';
-  });
-
   private readonly itemModel = signal<ItemFormValue>({ ...EMPTY_ITEM_FORM });
   protected readonly itemForm = form(this.itemModel, (path) => {
+    required(path.productId, { message: 'Please select a product.' });
     required(path.quantity);
     min(path.quantity, 0.01);
   });
 
-  protected readonly productSelectionError = signal(false);
-
-  constructor() {
-    effect(() => {
-      this.productId();
-      this.productSelectionError.set(false);
-    });
-  }
-
-  protected onProductChange(event: Event): void {
-    this.productId.set((event.target as HTMLSelectElement).value);
-  }
+  protected readonly selectedUnitId = linkedSignal(() => {
+    const product = this.productsService
+      .products()
+      .find((p) => p.id === this.itemForm.productId().value());
+    return product?.defaultUnitId ?? '';
+  });
 
   protected onUnitChange(event: Event): void {
     this.selectedUnitId.set((event.target as HTMLSelectElement).value);
@@ -193,16 +178,12 @@ export class ShoppingListDetail {
 
   protected addItem(event: Event): void {
     event.preventDefault();
-    const productId = this.productId();
-    if (!productId) {
-      this.productSelectionError.set(true);
-      return;
-    }
-    this.productSelectionError.set(false);
+    this.itemForm().markAsTouched();
     if (this.itemForm().invalid()) {
       return;
     }
 
+    const { productId, quantity, note } = this.itemModel();
     const product = this.productsService.products().find((p) => p.id === productId);
     const unit = this.unitsService.units().find((u) => u.id === this.selectedUnitId());
     const category = this.categoriesService.categories().find((c) => c.id === product?.categoryId);
@@ -210,7 +191,6 @@ export class ShoppingListDetail {
       return;
     }
 
-    const { quantity, note } = this.itemModel();
     this.shoppingListsService.addItemFromProduct(
       this.id(),
       product,
@@ -220,7 +200,6 @@ export class ShoppingListDetail {
       note.trim() ? note.trim() : undefined,
     );
 
-    this.productId.set('');
-    this.itemModel.set({ ...EMPTY_ITEM_FORM });
+    this.itemForm().reset({ ...EMPTY_ITEM_FORM });
   }
 }
