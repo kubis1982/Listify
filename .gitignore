@@ -45,3 +45,6 @@ Thumbs.db
 
 # Superpowers scratch workspace
 /.superpowers/
+
+# Playwright MCP
+/.playwright-mcp/
