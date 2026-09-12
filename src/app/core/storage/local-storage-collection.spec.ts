@@ -2,27 +2,6 @@ import { Injectable } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { createLocalStorageCollection } from './local-storage-collection';
 
-// Polyfill localStorage for test environment
-if (typeof globalThis !== 'undefined' && !globalThis.localStorage) {
-  const store: Record<string, string> = {};
-  globalThis.localStorage = {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value;
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      Object.keys(store).forEach((key) => {
-        delete store[key];
-      });
-    },
-    key: (index: number) => Object.keys(store)[index] || null,
-    length: Object.keys(store).length,
-  } as Storage;
-}
-
 interface TestItem {
   id: string;
   label: string;
