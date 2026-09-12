@@ -23,13 +23,15 @@ describe('CategoriesManager', () => {
     const fixture = TestBed.createComponent(CategoriesManager);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
 
     setInputValue(root.querySelector<HTMLInputElement>('input[type="text"]')!, 'Dairy');
     fixture.detectChanges();
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     fixture.detectChanges();
 
-    expect(root.querySelectorAll('mat-list-item').length).toBe(1);
+    expect(root.querySelectorAll('.list-card').length).toBe(1);
     expect(root.textContent).toContain('Dairy');
   });
 
@@ -41,7 +43,7 @@ describe('CategoriesManager', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('mat-list-item button + button')!
+      .querySelector<HTMLButtonElement>('button[aria-label="Delete Dairy"]')!
       .click();
     fixture.detectChanges();
 

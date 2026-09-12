@@ -22,6 +22,10 @@ describe('ShoppingListsOverview', () => {
     const fixture = TestBed.createComponent(ShoppingListsOverview);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
+
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
     const input = root.querySelector<HTMLInputElement>('input[type="text"]')!;
     input.value = 'Weekly groceries';
     input.dispatchEvent(new Event('input'));
@@ -30,7 +34,7 @@ describe('ShoppingListsOverview', () => {
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     fixture.detectChanges();
 
-    expect(root.querySelectorAll('mat-list-item').length).toBe(1);
+    expect(root.querySelectorAll('.list-card').length).toBe(1);
     expect(root.textContent).toContain('Weekly groceries');
   });
 
@@ -42,7 +46,7 @@ describe('ShoppingListsOverview', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('mat-list-item button:last-of-type')!
+      .querySelector<HTMLButtonElement>('button[aria-label="Delete Weekly groceries"]')!
       .click();
     fixture.detectChanges();
 

@@ -48,3 +48,7 @@ Thumbs.db
 
 # Playwright MCP
 /.playwright-mcp/
+
+# Superdesign scratch workspace
+/.superdesign
+/.superdesign/tmp/

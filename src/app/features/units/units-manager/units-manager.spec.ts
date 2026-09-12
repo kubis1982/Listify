@@ -23,6 +23,9 @@ describe('UnitsManager', () => {
     const fixture = TestBed.createComponent(UnitsManager);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
     const inputs = root.querySelectorAll<HTMLInputElement>('input[type="text"]');
 
     setInputValue(inputs[0], 'Kilogram');
@@ -31,7 +34,7 @@ describe('UnitsManager', () => {
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     fixture.detectChanges();
 
-    expect(root.querySelectorAll('mat-list-item').length).toBe(1);
+    expect(root.querySelectorAll('.list-card').length).toBe(1);
     expect(root.textContent).toContain('Kilogram (kg)');
   });
 
@@ -43,7 +46,7 @@ describe('UnitsManager', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('mat-list-item button + button')!
+      .querySelector<HTMLButtonElement>('button[aria-label="Delete Litre"]')!
       .click();
     fixture.detectChanges();
 

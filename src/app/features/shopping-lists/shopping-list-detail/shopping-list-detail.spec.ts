@@ -41,6 +41,9 @@ describe('ShoppingListDetail', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
     const productSelect = root.querySelector<HTMLSelectElement>('select')!;
     productSelect.value = productId;
     productSelect.dispatchEvent(new Event('input'));
@@ -82,6 +85,9 @@ describe('ShoppingListDetail', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
     const selects = root.querySelectorAll('select');
     expect(selects.length).toBe(2);
     expect(root.textContent).not.toContain('Category');
@@ -150,12 +156,11 @@ describe('ShoppingListDetail', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.querySelector('form.add-item-form')).toBeNull();
+    expect(root.querySelector('.fab')).toBeNull();
     expect(root.textContent).toContain('This list is completed');
     expect(root.querySelector<HTMLInputElement>('input[type="checkbox"]')!.disabled).toBe(true);
-    expect(
-      Array.from(root.querySelectorAll('button')).find((b) => b.textContent?.includes('Remove'))!
-        .disabled,
-    ).toBe(true);
+    expect(root.querySelector<HTMLButtonElement>('button[aria-label="Remove Milk"]')!.disabled).toBe(
+      true,
+    );
   });
 });

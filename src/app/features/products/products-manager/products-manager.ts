@@ -1,13 +1,10 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
+import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { UnitsService } from '../../units/data/units.service';
 import { Product, ProductId } from '../data/product.model';
 import { ProductsService } from '../data/products.service';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatListModule } from '@angular/material/list';
 
 interface ProductFormValue {
   name: string;
@@ -19,95 +16,124 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
 
 @Component({
   selector: 'app-products-manager',
-  imports: [FormField, MatButtonModule, MatFormFieldModule, MatInputModule, MatListModule],
+  imports: [FormField, FabPanel],
   template: `
-    <h1>Products</h1>
+    <div class="page">
+      <div class="page-header">
+        <h1>Products</h1>
+      </div>
 
-    @if (productsService.products().length === 0) {
-      <p>No products yet — add the first one below.</p>
-    } @else {
-      <mat-list>
-        @for (product of productsService.products(); track product.id) {
-          <mat-list-item>
-            <span matListItemTitle
-              >{{ product.name }} — {{ unitLabel(product.defaultUnitId) }},
-              {{ categoryLabel(product.categoryId) }}</span
-            >
-            <span matListItemMeta class="row-actions">
-              <button matButton="text" type="button" (click)="startEdit(product)">Edit</button>
-              <button matButton="text" type="button" (click)="remove(product.id)">Delete</button>
-            </span>
-          </mat-list-item>
-        }
-      </mat-list>
-    }
+      @if (productsService.products().length === 0) {
+        <p class="empty-state">No products yet — add the first one using the + button.</p>
+      } @else {
+        <div class="list-group">
+          @for (product of productsService.products(); track product.id) {
+            <div class="list-card">
+              <div class="list-card__body">
+                <span class="list-card__name">{{ product.name }}</span>
+                <span class="list-card__meta"
+                  >{{ unitLabel(product.defaultUnitId) }} · {{ categoryLabel(product.categoryId) }}</span
+                >
+              </div>
+              <div class="list-card__actions">
+                <button
+                  type="button"
+                  class="icon-btn"
+                  (click)="startEdit(product)"
+                  [attr.aria-label]="'Edit ' + product.name"
+                >
+                  <svg
+                    class="icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  (click)="remove(product.id)"
+                  [attr.aria-label]="'Delete ' + product.name"
+                >
+                  <svg
+                    class="icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
 
-    <h2>{{ editingId() ? 'Edit product' : 'Add product' }}</h2>
-    <form class="product-form" (submit)="handleSubmit($event)">
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput type="text" [formField]="productForm.name" />
+    <app-fab-panel
+      [title]="editingId() ? 'Edit product' : 'Add product'"
+      fabLabel="Add product"
+      [(open)]="isPanelOpen"
+    >
+      <form novalidate (submit)="handleSubmit($event)">
+        <label class="field-label" for="product-name">Name</label>
+        <input id="product-name" type="text" class="field-input" [formField]="productForm.name" />
         @if (productForm.name().invalid() && productForm.name().touched()) {
-          <mat-error>Name is required.</mat-error>
+          <span class="field-error">Name is required.</span>
         }
-      </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Default unit</mat-label>
-        <select matInput matNativeControl [formField]="productForm.defaultUnitId">
+        <label class="field-label" for="product-unit">Default unit</label>
+        <select id="product-unit" class="field-input" [formField]="productForm.defaultUnitId">
           <option value="" disabled>Select a unit</option>
           @for (unit of unitsService.units(); track unit.id) {
             <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
           }
         </select>
         @if (productForm.defaultUnitId().invalid() && productForm.defaultUnitId().touched()) {
-          <mat-error>A unit is required.</mat-error>
+          <span class="field-error">A unit is required.</span>
         }
-      </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Category</mat-label>
-        <select matInput matNativeControl [formField]="productForm.categoryId">
+        <label class="field-label" for="product-category">Category</label>
+        <select id="product-category" class="field-input" [formField]="productForm.categoryId">
           <option value="" disabled>Select a category</option>
           @for (category of categoriesService.categories(); track category.id) {
             <option [value]="category.id">{{ category.name }}</option>
           }
         </select>
         @if (productForm.categoryId().invalid() && productForm.categoryId().touched()) {
-          <mat-error>A category is required.</mat-error>
+          <span class="field-error">A category is required.</span>
         }
-      </mat-form-field>
 
-      @if (duplicateNameError()) {
-        <p role="alert">A product with this name already exists.</p>
-      }
+        @if (duplicateNameError()) {
+          <p class="field-error" role="alert">A product with this name already exists.</p>
+        }
 
-      <div class="form-actions">
-        <button matButton="filled" type="submit">{{ editingId() ? 'Save' : 'Add' }}</button>
+        <button type="submit" class="btn-accent-pill-lg full-width">
+          {{ editingId() ? 'Save' : 'Add' }}
+        </button>
         @if (editingId()) {
-          <button matButton="text" type="button" (click)="cancelEdit()">Cancel</button>
+          <button type="button" class="btn-outline-pill full-width" (click)="cancelEdit()">
+            Cancel
+          </button>
         }
-      </div>
-    </form>
-  `,
-  styles: `
-    .product-form {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      max-width: 360px;
-    }
-
-    .form-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .row-actions {
-      display: flex;
-      gap: 4px;
-    }
+      </form>
+    </app-fab-panel>
   `,
 })
 export class ProductsManager {
@@ -117,6 +143,7 @@ export class ProductsManager {
 
   protected readonly editingId = signal<ProductId | null>(null);
   protected readonly duplicateNameError = signal(false);
+  protected readonly isPanelOpen = signal(false);
 
   private readonly model = signal<ProductFormValue>({ ...EMPTY_PRODUCT_FORM });
   protected readonly productForm = form(this.model, (path) => {
@@ -149,11 +176,13 @@ export class ProductsManager {
       defaultUnitId: product.defaultUnitId,
       categoryId: product.categoryId,
     });
+    this.isPanelOpen.set(true);
   }
 
   protected cancelEdit(): void {
     this.editingId.set(null);
     this.productForm().reset({ ...EMPTY_PRODUCT_FORM });
+    this.isPanelOpen.set(false);
   }
 
   protected remove(id: ProductId): void {

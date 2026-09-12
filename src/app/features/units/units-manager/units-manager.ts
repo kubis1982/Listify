@@ -1,9 +1,6 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatListModule } from '@angular/material/list';
+import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { Unit, UnitId } from '../data/unit.model';
 import { UnitsService } from '../data/units.service';
 
@@ -16,74 +13,105 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
 
 @Component({
   selector: 'app-units-manager',
-  imports: [FormField, MatButtonModule, MatFormFieldModule, MatInputModule, MatListModule],
+  imports: [FormField, FabPanel],
   template: `
-    <h1>Units of measure</h1>
-
-    @if (unitsService.units().length === 0) {
-      <p>No units yet — add the first one below.</p>
-    } @else {
-      <mat-list>
-        @for (unit of unitsService.units(); track unit.id) {
-          <mat-list-item>
-            <span matListItemTitle>{{ unit.name }} ({{ unit.symbol }})</span>
-            <span matListItemMeta class="row-actions">
-              <button matButton="text" type="button" (click)="startEdit(unit)">Edit</button>
-              <button matButton="text" type="button" (click)="remove(unit.id)">Delete</button>
-            </span>
-          </mat-list-item>
-        }
-      </mat-list>
-    }
-
-    <h2>{{ editingId() ? 'Edit unit' : 'Add unit' }}</h2>
-    <form class="unit-form" (submit)="handleSubmit($event)">
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput type="text" [formField]="unitForm.name" />
-        @if (unitForm.name().invalid() && unitForm.name().touched()) {
-          <mat-error>Name is required.</mat-error>
-        }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Symbol</mat-label>
-        <input matInput type="text" [formField]="unitForm.symbol" />
-        @if (unitForm.symbol().invalid() && unitForm.symbol().touched()) {
-          <mat-error>Symbol is required.</mat-error>
-        }
-      </mat-form-field>
-
-      @if (duplicateNameError()) {
-        <p role="alert">A unit with this name already exists.</p>
-      }
-
-      <div class="form-actions">
-        <button matButton="filled" type="submit">{{ editingId() ? 'Save' : 'Add' }}</button>
-        @if (editingId()) {
-          <button matButton="text" type="button" (click)="cancelEdit()">Cancel</button>
-        }
+    <div class="page">
+      <div class="page-header">
+        <h1>Units of measure</h1>
       </div>
-    </form>
-  `,
-  styles: `
-    .unit-form {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      max-width: 360px;
-    }
 
-    .form-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
-    }
+      @if (unitsService.units().length === 0) {
+        <p class="empty-state">No units yet — add the first one using the + button.</p>
+      } @else {
+        <div class="list-group">
+          @for (unit of unitsService.units(); track unit.id) {
+            <div class="list-card">
+              <div class="list-card__body">
+                <span class="list-card__name">{{ unit.name }} ({{ unit.symbol }})</span>
+              </div>
+              <div class="list-card__actions">
+                <button
+                  type="button"
+                  class="icon-btn"
+                  (click)="startEdit(unit)"
+                  [attr.aria-label]="'Edit ' + unit.name"
+                >
+                  <svg
+                    class="icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  (click)="remove(unit.id)"
+                  [attr.aria-label]="'Delete ' + unit.name"
+                >
+                  <svg
+                    class="icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
 
-    .row-actions {
-      display: flex;
-      gap: 4px;
-    }
+    <app-fab-panel
+      [title]="editingId() ? 'Edit unit' : 'Add unit'"
+      fabLabel="Add unit"
+      [(open)]="isPanelOpen"
+    >
+      <form novalidate (submit)="handleSubmit($event)">
+        <label class="field-label" for="unit-name">Name</label>
+        <input id="unit-name" type="text" class="field-input" [formField]="unitForm.name" />
+        @if (unitForm.name().invalid() && unitForm.name().touched()) {
+          <span class="field-error">Name is required.</span>
+        }
+
+        <label class="field-label" for="unit-symbol">Symbol</label>
+        <input id="unit-symbol" type="text" class="field-input" [formField]="unitForm.symbol" />
+        @if (unitForm.symbol().invalid() && unitForm.symbol().touched()) {
+          <span class="field-error">Symbol is required.</span>
+        }
+
+        @if (duplicateNameError()) {
+          <p class="field-error" role="alert">A unit with this name already exists.</p>
+        }
+
+        <button type="submit" class="btn-accent-pill-lg full-width">
+          {{ editingId() ? 'Save' : 'Add' }}
+        </button>
+        @if (editingId()) {
+          <button type="button" class="btn-outline-pill full-width" (click)="cancelEdit()">
+            Cancel
+          </button>
+        }
+      </form>
+    </app-fab-panel>
   `,
 })
 export class UnitsManager {
@@ -91,6 +119,7 @@ export class UnitsManager {
 
   protected readonly editingId = signal<UnitId | null>(null);
   protected readonly duplicateNameError = signal(false);
+  protected readonly isPanelOpen = signal(false);
 
   private readonly model = signal<UnitFormValue>({ ...EMPTY_UNIT_FORM });
   protected readonly unitForm = form(this.model, (path) => {
@@ -108,11 +137,13 @@ export class UnitsManager {
   protected startEdit(unit: Unit): void {
     this.editingId.set(unit.id);
     this.model.set({ name: unit.name, symbol: unit.symbol });
+    this.isPanelOpen.set(true);
   }
 
   protected cancelEdit(): void {
     this.editingId.set(null);
     this.unitForm().reset({ ...EMPTY_UNIT_FORM });
+    this.isPanelOpen.set(false);
   }
 
   protected remove(id: UnitId): void {

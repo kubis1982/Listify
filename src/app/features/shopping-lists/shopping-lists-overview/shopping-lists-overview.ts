@@ -1,12 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatListModule } from '@angular/material/list';
+import { FabPanel } from '../../../shared/fab-panel/fab-panel';
+import { ShoppingList, ShoppingListId } from '../data/shopping-list.model';
 import { ShoppingListsService } from '../data/shopping-lists.service';
 
 interface NewListFormValue {
@@ -15,83 +12,197 @@ interface NewListFormValue {
 
 @Component({
   selector: 'app-shopping-lists-overview',
-  imports: [
-    DatePipe,
-    RouterLink,
-    FormField,
-    MatButtonModule,
-    MatChipsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatListModule,
-  ],
+  imports: [DatePipe, RouterLink, FormField, FabPanel],
   template: `
-    <h1>Shopping lists</h1>
+    <div class="page">
+      <div class="page-header">
+        <h1>Shopping lists</h1>
+      </div>
 
-    @if (shoppingListsService.lists().length === 0) {
-      <p>No shopping lists yet — create your first one below.</p>
-    } @else {
-      <mat-list>
-        @for (list of shoppingListsService.lists(); track list.id) {
-          <mat-list-item>
-            <span matListItemTitle
-              ><a [routerLink]="['/lists', list.id]">{{ list.name }}</a></span
-            >
-            <span matListItemLine>{{ list.createdAt | date: 'medium' }}</span>
-            <span matListItemMeta class="row-actions">
-              <mat-chip-set>
-                <mat-chip>{{ list.status === 'active' ? 'Active' : 'Completed' }}</mat-chip>
-              </mat-chip-set>
-              <button matButton="text" type="button" (click)="toggleStatus(list.id, list.status)">
-                {{ list.status === 'active' ? 'Mark completed' : 'Mark active' }}
-              </button>
-              <button matButton="text" type="button" (click)="remove(list.id)">Delete</button>
-            </span>
-          </mat-list-item>
+      @if (shoppingListsService.lists().length === 0) {
+        <p class="empty-state">No shopping lists yet — add the first one using the + button.</p>
+      } @else {
+        @if (activeLists().length > 0) {
+          <section class="list-section">
+            <div class="section-heading">
+              <h2>Active Lists</h2>
+              <span class="section-rule"></span>
+            </div>
+            <div class="list-group">
+              @for (list of activeLists(); track list.id) {
+                <div class="list-card">
+                  <span class="accent-bar accent-bar--active" aria-hidden="true"></span>
+                  <div class="list-card__body">
+                    <a class="list-card__name" [routerLink]="['/lists', list.id]">{{ list.name }}</a>
+                    <span class="list-card__meta">Added {{ list.createdAt | date: 'MMM d, y' }}</span>
+                  </div>
+                  <div class="list-card__actions">
+                    <button
+                      type="button"
+                      class="btn-outline-pill"
+                      (click)="toggleStatus(list.id, list.status)"
+                    >
+                      <svg
+                        class="icon icon--success"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                      Mark complete
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      (click)="remove(list.id)"
+                      [attr.aria-label]="'Delete ' + list.name"
+                    >
+                      <svg
+                        class="icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
         }
-      </mat-list>
-    }
 
-    <h2>New shopping list</h2>
-    <form class="new-list-form" (submit)="handleSubmit($event)">
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput type="text" [formField]="newListForm.name" />
+        @if (completedLists().length > 0) {
+          <section class="list-section list-section--completed">
+            <div class="section-heading">
+              <h2>Completed</h2>
+              <span class="section-rule"></span>
+            </div>
+            <div class="list-group">
+              @for (list of completedLists(); track list.id) {
+                <div class="list-card">
+                  <span class="accent-bar accent-bar--completed" aria-hidden="true"></span>
+                  <div class="list-card__body">
+                    <a class="list-card__name list-card__name--done" [routerLink]="['/lists', list.id]">{{
+                      list.name
+                    }}</a>
+                    <span class="list-card__meta">Added {{ list.createdAt | date: 'MMM d, y' }}</span>
+                  </div>
+                  <div class="list-card__actions">
+                    <button
+                      type="button"
+                      class="btn-outline-pill"
+                      (click)="toggleStatus(list.id, list.status)"
+                    >
+                      <svg
+                        class="icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <polyline points="3 3 3 8 8 8" />
+                      </svg>
+                      Restore
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      (click)="remove(list.id)"
+                      [attr.aria-label]="'Delete ' + list.name"
+                    >
+                      <svg
+                        class="icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+        }
+      }
+    </div>
+
+    <app-fab-panel title="New shopping list" fabLabel="Add shopping list" [(open)]="isPanelOpen">
+      <form novalidate (submit)="handleSubmit($event)">
+        <label class="field-label" for="new-list-name">Name</label>
+        <input id="new-list-name" type="text" class="field-input" [formField]="newListForm.name" />
         @if (newListForm.name().invalid() && newListForm.name().touched()) {
-          <mat-error>Name is required.</mat-error>
+          <span class="field-error">Name is required.</span>
         }
-      </mat-form-field>
-      <button matButton="filled" type="submit">Create list</button>
-    </form>
+        <button type="submit" class="btn-accent-pill-lg full-width">Create list</button>
+      </form>
+    </app-fab-panel>
   `,
   styles: `
-    .new-list-form {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      max-width: 360px;
+    .list-section {
+      margin-bottom: 3rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
     }
 
-    .row-actions {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+    .list-section--completed .list-group {
+      opacity: 0.75;
     }
   `,
 })
 export class ShoppingListsOverview {
   protected readonly shoppingListsService = inject(ShoppingListsService);
 
+  protected readonly activeLists = computed(() =>
+    this.shoppingListsService.lists().filter((list) => list.status === 'active'),
+  );
+  protected readonly completedLists = computed(() =>
+    this.shoppingListsService.lists().filter((list) => list.status === 'completed'),
+  );
+
+  protected readonly isPanelOpen = signal(false);
+
   private readonly model = signal<NewListFormValue>({ name: '' });
   protected readonly newListForm = form(this.model, (path) => {
     required(path.name);
   });
 
-  protected toggleStatus(id: string, status: 'active' | 'completed'): void {
+  protected toggleStatus(id: ShoppingListId, status: ShoppingList['status']): void {
     this.shoppingListsService.setStatus(id, status === 'active' ? 'completed' : 'active');
   }
 
-  protected remove(id: string): void {
+  protected remove(id: ShoppingListId): void {
     if (confirm('Delete this shopping list?')) {
       this.shoppingListsService.removeList(id);
     }

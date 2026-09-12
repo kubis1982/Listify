@@ -1,10 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { FormField, form, min, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../../units/data/units.service';
@@ -20,129 +17,312 @@ const EMPTY_ITEM_FORM: ItemFormValue = { productId: '', quantity: 1, note: '' };
 
 @Component({
   selector: 'app-shopping-list-detail',
-  imports: [
-    RouterLink,
-    FormField,
-    MatButtonModule,
-    MatCheckboxModule,
-    MatFormFieldModule,
-    MatInputModule,
-  ],
+  imports: [RouterLink, FormField, FabPanel],
   template: `
-    <a matButton="text" routerLink="/lists">Back to lists</a>
+    <div class="page">
+      <a class="back-link" routerLink="/lists">
+        <svg
+          class="icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+        <span>Back to lists</span>
+      </a>
 
-    @if (list(); as currentList) {
-      <h1>{{ currentList.name }}</h1>
-      <p>Status: {{ currentList.status === 'active' ? 'Active' : 'Completed' }}</p>
-      <button matButton="outlined" type="button" (click)="toggleStatus(currentList.status)">
-        {{ currentList.status === 'active' ? 'Mark completed' : 'Mark active' }}
-      </button>
-
-      @if (currentList.items.length === 0) {
-        <p>No items yet — add the first one below.</p>
-      } @else {
-        <ul class="item-list">
-          @for (item of currentList.items; track item.id) {
-            <li class="item-row">
-              <mat-checkbox
-                [checked]="item.purchased"
-                [disabled]="currentList.status === 'completed'"
-                (change)="togglePurchased(item.id, item.purchased)"
-              >
-                {{ item.productName }} — {{ item.quantity }} {{ item.unitLabel }} ({{
-                  item.categoryName
-                }})
-                @if (item.note) {
-                  <span> — {{ item.note }}</span>
-                }
-              </mat-checkbox>
-              <button
-                matButton="text"
-                type="button"
-                [disabled]="currentList.status === 'completed'"
-                (click)="removeItem(item.id)"
-              >
-                Remove
-              </button>
-            </li>
-          }
-        </ul>
-      }
-
-      <h2>Add item</h2>
-      @if (currentList.status === 'completed') {
-        <p>This list is completed. Mark it active again to add items.</p>
-      } @else {
-        <form class="add-item-form" novalidate (submit)="addItem($event)">
-          <mat-form-field appearance="outline">
-            <mat-label>Product</mat-label>
-            <select matInput matNativeControl [formField]="itemForm.productId">
-              <option value="" disabled>Select a product</option>
-              @for (product of productsService.products(); track product.id) {
-                <option [value]="product.id">{{ product.name }}</option>
-              }
-            </select>
-            @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
-              <mat-error>Please select a product.</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Unit</mat-label>
-            <select
-              matInput
-              matNativeControl
-              [value]="selectedUnitId()"
-              (change)="onUnitChange($event)"
+      @if (list(); as currentList) {
+        <div class="list-header">
+          <div class="list-header__title-row">
+            <h1>{{ currentList.name }}</h1>
+            <span
+              class="status-chip"
+              [class.status-chip--completed]="currentList.status === 'completed'"
             >
-              @for (unit of unitsService.units(); track unit.id) {
-                <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
-              }
-            </select>
-          </mat-form-field>
+              {{ currentList.status === 'active' ? 'Active' : 'Completed' }}
+            </span>
+          </div>
+          <button
+            type="button"
+            class="btn-accent-pill-lg"
+            (click)="toggleStatus(currentList.status)"
+          >
+            {{ currentList.status === 'active' ? 'Mark completed' : 'Mark active' }}
+          </button>
+        </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Quantity</mat-label>
-            <input matInput type="number" [formField]="itemForm.quantity" step="0.01" />
-            @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
-              <mat-error>Quantity must be greater than 0.</mat-error>
+        @if (currentList.items.length === 0) {
+          <p class="empty-state">No items yet — add the first one using the + button.</p>
+        } @else {
+          <ul class="item-list">
+            @for (item of currentList.items; track item.id) {
+              <li class="list-card">
+                <div class="checkbox-wrap">
+                  <input
+                    type="checkbox"
+                    class="sr-checkbox"
+                    [id]="'check-' + item.id"
+                    [checked]="item.purchased"
+                    [disabled]="currentList.status === 'completed'"
+                    [attr.aria-label]="item.productName + ' purchased'"
+                    (change)="togglePurchased(item.id, item.purchased)"
+                  />
+                  <label
+                    [for]="'check-' + item.id"
+                    class="checkbox-face"
+                    [class.checkbox-face--checked]="item.purchased"
+                  >
+                    @if (item.purchased) {
+                      <svg
+                        class="icon icon--sm"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    }
+                  </label>
+                </div>
+                <div class="list-card__body">
+                  <h3 class="item-card__name" [class.item-card__name--purchased]="item.purchased">
+                    {{ item.productName }}
+                  </h3>
+                  <div class="list-card__meta item-card__pills">
+                    <span class="pill data-font">{{ item.quantity }} {{ item.unitLabel }}</span>
+                    <span class="pill">{{ item.categoryName }}</span>
+                    @if (item.note) {
+                      <span class="item-card__note">— {{ item.note }}</span>
+                    }
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  [disabled]="currentList.status === 'completed'"
+                  (click)="removeItem(item.id)"
+                  [attr.aria-label]="'Remove ' + item.productName"
+                >
+                  <svg
+                    class="icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                </button>
+              </li>
             }
-          </mat-form-field>
+          </ul>
+        }
 
-          <mat-form-field appearance="outline">
-            <mat-label>Note</mat-label>
-            <input matInput type="text" [formField]="itemForm.note" />
-          </mat-form-field>
+        @if (currentList.status === 'completed') {
+          <p class="empty-state">This list is completed. Mark it active again to add items.</p>
+        } @else {
+          <app-fab-panel title="Add item" fabLabel="Add item" [(open)]="isAddPanelOpen">
+            <form novalidate (submit)="addItem($event)">
+              <label class="field-label" for="add-item-product">Product</label>
+              <select id="add-item-product" class="field-input" [formField]="itemForm.productId">
+                <option value="" disabled>Select a product</option>
+                @for (product of productsService.products(); track product.id) {
+                  <option [value]="product.id">{{ product.name }}</option>
+                }
+              </select>
+              @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
+                <span class="field-error">Please select a product.</span>
+              }
 
-          <button matButton="filled" type="submit">Add item</button>
-        </form>
+              <label class="field-label" for="add-item-unit">Unit</label>
+              <select
+                id="add-item-unit"
+                class="field-input"
+                [value]="selectedUnitId()"
+                (change)="onUnitChange($event)"
+              >
+                @for (unit of unitsService.units(); track unit.id) {
+                  <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
+                }
+              </select>
+
+              <label class="field-label" for="add-item-quantity">Quantity</label>
+              <input
+                id="add-item-quantity"
+                type="number"
+                class="field-input data-font"
+                step="0.01"
+                [formField]="itemForm.quantity"
+              />
+              @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
+                <span class="field-error">Quantity must be greater than 0.</span>
+              }
+
+              <label class="field-label" for="add-item-note">Note</label>
+              <input id="add-item-note" type="text" class="field-input" [formField]="itemForm.note" />
+
+              <button type="submit" class="btn-accent-pill-lg full-width">Add to list</button>
+            </form>
+          </app-fab-panel>
+        }
+      } @else {
+        <p>List not found.</p>
       }
-    } @else {
-      <p>List not found.</p>
-    }
+    </div>
   `,
   styles: `
+    .page {
+      max-width: 56.25rem;
+      padding-bottom: 8rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: rgba(23, 30, 25, 0.65);
+      text-decoration: none;
+      font-weight: 700;
+      margin-bottom: 2rem;
+
+      &:hover {
+        color: var(--color-ink);
+      }
+    }
+
+    .list-header {
+      margin-bottom: 2.5rem;
+    }
+
+    .list-header__title-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+
+      h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+    }
+
+    .status-chip {
+      padding: 0.25rem 1rem;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background-color: rgba(202, 0, 19, 0.1);
+      color: var(--color-accent);
+      border: 1px solid rgba(202, 0, 19, 0.2);
+    }
+
+    .status-chip--completed {
+      background-color: rgba(46, 139, 87, 0.12);
+      color: var(--app-success);
+      border-color: rgba(46, 139, 87, 0.25);
+    }
+
     .item-list {
       list-style: none;
-      margin: 0;
+      margin: 0 0 2rem;
       padding: 0;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 1rem;
     }
 
-    .item-row {
+    .checkbox-wrap {
+      position: relative;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      flex-shrink: 0;
     }
 
-    .add-item-form {
+    .sr-checkbox {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      margin: 0;
+      cursor: pointer;
+
+      &:disabled {
+        cursor: not-allowed;
+      }
+    }
+
+    .checkbox-face {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.75rem;
+      border: 2px solid rgba(183, 198, 194, 0.5);
       display: flex;
-      flex-direction: column;
-      gap: 4px;
-      max-width: 360px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition:
+        border-color 0.15s ease-out,
+        background-color 0.15s ease-out;
+    }
+
+    .sr-checkbox:hover + .checkbox-face {
+      border-color: var(--color-accent);
+    }
+
+    .checkbox-face--checked {
+      border-color: var(--app-success);
+      background-color: var(--app-success);
+      color: #ffffff;
+    }
+
+    .sr-checkbox:focus-visible + .checkbox-face {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    .item-card__name {
+      margin: 0 0 0.25rem;
+      font-size: 1.125rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .item-card__name--purchased {
+      text-decoration: line-through;
+      color: var(--app-success);
+    }
+
+    .item-card__pills {
+      flex-wrap: wrap;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .item-card__note {
+      font-size: 0.875rem;
+      font-style: italic;
+      color: rgba(23, 30, 25, 0.65);
     }
   `,
 })
@@ -157,6 +337,8 @@ export class ShoppingListDetail {
   protected readonly list = computed(() =>
     this.shoppingListsService.lists().find((l) => l.id === this.id()),
   );
+
+  protected readonly isAddPanelOpen = signal(false);
 
   private readonly itemModel = signal<ItemFormValue>({ ...EMPTY_ITEM_FORM });
   protected readonly itemForm = form(this.itemModel, (path) => {

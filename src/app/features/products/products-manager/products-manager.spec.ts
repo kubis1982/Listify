@@ -28,6 +28,9 @@ describe('ProductsManager', () => {
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
     const nameInput = root.querySelector<HTMLInputElement>('input[type="text"]')!;
     nameInput.value = 'Milk 3.2%';
     nameInput.dispatchEvent(new Event('input'));
@@ -57,7 +60,7 @@ describe('ProductsManager', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('mat-list-item button + button')!
+      .querySelector<HTMLButtonElement>('button[aria-label="Delete Milk"]')!
       .click();
     fixture.detectChanges();
 
