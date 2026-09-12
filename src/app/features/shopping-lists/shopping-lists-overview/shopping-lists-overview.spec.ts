@@ -30,7 +30,7 @@ describe('ShoppingListsOverview', () => {
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     fixture.detectChanges();
 
-    expect(root.querySelectorAll('li').length).toBe(1);
+    expect(root.querySelectorAll('mat-list-item').length).toBe(1);
     expect(root.textContent).toContain('Weekly groceries');
   });
 
@@ -42,7 +42,7 @@ describe('ShoppingListsOverview', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('li button:last-of-type')!
+      .querySelector<HTMLButtonElement>('mat-list-item button:last-of-type')!
       .click();
     fixture.detectChanges();
 
