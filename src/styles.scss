@@ -1,1 +1,56 @@
 /* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin defines the CSS variables used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more at https://material.angular.dev/guide/theming
+//
+// Palette note: Angular Material's Sass API only ships a fixed set of
+// predefined M3 tonal palettes (azure, violet, rose, red, green, ...) —
+// generating a custom tonal palette from an arbitrary seed hex (e.g. the
+// Quick Shop mockup's #3548a3 indigo) requires the Material Theme Builder
+// web tool or the Material Color Utilities JS library, neither of which is
+// available in this offline setup. `azure` is the closest built-in hue
+// family to the Quick Shop indigo direction, so it's used as the primary
+// palette here; the mockup's own literal hex values were a starting point,
+// not a pixel-exact spec.
+html {
+  height: 100%;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: (
+        plain-family: 'IBM Plex Sans, system-ui, sans-serif',
+        brand-family: 'IBM Plex Sans, system-ui, sans-serif',
+      ),
+      density: -1,
+    )
+  );
+
+  // Quick Shop's own semantic accent for "purchased"/"done" state — kept
+  // separate from the Material primary/tertiary accent per Material's own
+  // guidance that semantic color is not the theme's accent hue.
+  --app-success: #2e8b57;
+  --app-success-on: #ffffff;
+
+  // Tabular figures for quantities, matching the Quick Shop mockup's use of
+  // a monospace data face so quantities line up at a glance.
+  --app-font-data: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+body {
+  // Defer to the user's system light/dark preference by default.
+  color-scheme: light dark;
+
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+
+  margin: 0;
+  height: 100%;
+}
