@@ -115,7 +115,7 @@ describe('ShoppingListDetail', () => {
     const checkbox = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
       'input[type="checkbox"]',
     )!;
-    checkbox.dispatchEvent(new Event('change'));
+    checkbox.click();
     fixture.detectChanges();
 
     expect(shoppingListsService.lists()[0].items[0].purchased).toBe(true);

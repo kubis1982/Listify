@@ -1,6 +1,10 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { FormField, form, min, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../../units/data/units.service';
@@ -15,83 +19,122 @@ const EMPTY_ITEM_FORM: ItemFormValue = { quantity: 1, note: '' };
 
 @Component({
   selector: 'app-shopping-list-detail',
-  imports: [RouterLink, FormField],
+  imports: [
+    RouterLink,
+    FormField,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatFormFieldModule,
+    MatInputModule,
+  ],
   template: `
-    <a routerLink="/lists">Back to lists</a>
+    <a matButton="text" routerLink="/lists">Back to lists</a>
 
     @if (list(); as currentList) {
       <h1>{{ currentList.name }}</h1>
       <p>Status: {{ currentList.status === 'active' ? 'Active' : 'Completed' }}</p>
-      <button type="button" (click)="toggleStatus(currentList.status)">
+      <button matButton="outlined" type="button" (click)="toggleStatus(currentList.status)">
         {{ currentList.status === 'active' ? 'Mark completed' : 'Mark active' }}
       </button>
 
       @if (currentList.items.length === 0) {
         <p>No items yet — add the first one below.</p>
       } @else {
-        <ul>
+        <ul class="item-list">
           @for (item of currentList.items; track item.id) {
-            <li>
-              <label>
-                <input
-                  type="checkbox"
-                  [checked]="item.purchased"
-                  (change)="togglePurchased(item.id, item.purchased)"
-                />
+            <li class="item-row">
+              <mat-checkbox
+                [checked]="item.purchased"
+                (change)="togglePurchased(item.id, item.purchased)"
+              >
                 {{ item.productName }} — {{ item.quantity }} {{ item.unitLabel }} ({{
                   item.categoryName
                 }})
                 @if (item.note) {
                   <span> — {{ item.note }}</span>
                 }
-              </label>
-              <button type="button" (click)="removeItem(item.id)">Remove</button>
+              </mat-checkbox>
+              <button matButton="text" type="button" (click)="removeItem(item.id)">Remove</button>
             </li>
           }
         </ul>
       }
 
       <h2>Add item</h2>
-      <form (submit)="addItem($event)">
-        <label>
-          Product
-          <select [value]="productId()" (change)="onProductChange($event)">
+      <form class="add-item-form" (submit)="addItem($event)">
+        <mat-form-field appearance="outline">
+          <mat-label>Product</mat-label>
+          <select
+            matInput
+            matNativeControl
+            [value]="productId()"
+            (change)="onProductChange($event)"
+          >
             <option value="" disabled>Select a product</option>
             @for (product of productsService.products(); track product.id) {
               <option [value]="product.id">{{ product.name }}</option>
             }
           </select>
-        </label>
-        @if (productSelectionError()) {
-          <p role="alert">Please select a product.</p>
-        }
+          @if (productSelectionError()) {
+            <mat-error>Please select a product.</mat-error>
+          }
+        </mat-form-field>
 
-        <label>
-          Unit
-          <select [value]="selectedUnitId()" (change)="onUnitChange($event)">
+        <mat-form-field appearance="outline">
+          <mat-label>Unit</mat-label>
+          <select
+            matInput
+            matNativeControl
+            [value]="selectedUnitId()"
+            (change)="onUnitChange($event)"
+          >
             @for (unit of unitsService.units(); track unit.id) {
               <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
             }
           </select>
-        </label>
+        </mat-form-field>
 
-        <label>
-          Quantity
-          <input type="number" [formField]="itemForm.quantity" step="0.01" />
-        </label>
-        @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
-          <p role="alert">Quantity must be greater than 0.</p>
-        }
+        <mat-form-field appearance="outline">
+          <mat-label>Quantity</mat-label>
+          <input matInput type="number" [formField]="itemForm.quantity" step="0.01" />
+          @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
+            <mat-error>Quantity must be greater than 0.</mat-error>
+          }
+        </mat-form-field>
 
-        <label>
-          Note
-          <input type="text" [formField]="itemForm.note" />
-        </label>
+        <mat-form-field appearance="outline">
+          <mat-label>Note</mat-label>
+          <input matInput type="text" [formField]="itemForm.note" />
+        </mat-form-field>
 
-        <button type="submit">Add item</button>
+        <button matButton="filled" type="submit">Add item</button>
       </form>
     } @else {
       <p>List not found.</p>
+    }
+  `,
+  styles: `
+    .item-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .add-item-form {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 360px;
     }
   `,
 })
