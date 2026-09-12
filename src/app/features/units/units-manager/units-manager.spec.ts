@@ -31,7 +31,7 @@ describe('UnitsManager', () => {
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     fixture.detectChanges();
 
-    expect(root.querySelectorAll('li').length).toBe(1);
+    expect(root.querySelectorAll('mat-list-item').length).toBe(1);
     expect(root.textContent).toContain('Kilogram (kg)');
   });
 
@@ -43,7 +43,7 @@ describe('UnitsManager', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('li button + button')!
+      .querySelector<HTMLButtonElement>('mat-list-item button + button')!
       .click();
     fixture.detectChanges();
 
