@@ -1,7 +1,16 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  afterRenderEffect,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { ShoppingList, ShoppingListId } from '../data/shopping-list.model';
 import { ShoppingListsService } from '../data/shopping-lists.service';
@@ -159,7 +168,13 @@ interface NewListFormValue {
     <app-fab-panel title="New shopping list" fabLabel="Add shopping list" [(open)]="isPanelOpen">
       <form novalidate (submit)="handleSubmit($event)">
         <label class="field-label" for="new-list-name">Name</label>
-        <input id="new-list-name" type="text" class="field-input" [formField]="newListForm.name" />
+        <input
+          #nameInput
+          id="new-list-name"
+          type="text"
+          class="field-input"
+          [formField]="newListForm.name"
+        />
         @if (newListForm.name().invalid() && newListForm.name().touched()) {
           <span class="field-error">Name is required.</span>
         }
@@ -183,6 +198,8 @@ interface NewListFormValue {
 })
 export class ShoppingListsOverview {
   protected readonly shoppingListsService = inject(ShoppingListsService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
+  private readonly router = inject(Router);
 
   protected readonly activeLists = computed(() =>
     this.shoppingListsService.lists().filter((list) => list.status === 'active'),
@@ -192,18 +209,31 @@ export class ShoppingListsOverview {
   );
 
   protected readonly isPanelOpen = signal(false);
+  private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
 
   private readonly model = signal<NewListFormValue>({ name: '' });
   protected readonly newListForm = form(this.model, (path) => {
     required(path.name);
   });
 
+  constructor() {
+    afterRenderEffect(() => {
+      if (this.isPanelOpen()) {
+        this.nameInput()?.nativeElement.focus();
+      }
+    });
+  }
+
   protected toggleStatus(id: ShoppingListId, status: ShoppingList['status']): void {
     this.shoppingListsService.setStatus(id, status === 'active' ? 'completed' : 'active');
   }
 
-  protected remove(id: ShoppingListId): void {
-    if (confirm('Delete this shopping list?')) {
+  protected async remove(id: ShoppingListId): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Delete this shopping list?',
+      message: 'This will permanently remove the list and its items.',
+    });
+    if (confirmed) {
       this.shoppingListsService.removeList(id);
     }
   }
@@ -217,7 +247,8 @@ export class ShoppingListsOverview {
     if (!name) {
       return;
     }
-    this.shoppingListsService.addList(name);
+    const list = this.shoppingListsService.addList(name);
     this.newListForm().reset({ name: '' });
+    this.router.navigate(['/lists', list.id]);
   }
 }

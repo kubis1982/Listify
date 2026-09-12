@@ -1,5 +1,6 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { Unit, UnitId } from '../data/unit.model';
 import { UnitsService } from '../data/units.service';
@@ -116,6 +117,7 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
 })
 export class UnitsManager {
   protected readonly unitsService = inject(UnitsService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
 
   protected readonly editingId = signal<UnitId | null>(null);
   protected readonly duplicateNameError = signal(false);
@@ -146,8 +148,12 @@ export class UnitsManager {
     this.isPanelOpen.set(false);
   }
 
-  protected remove(id: UnitId): void {
-    if (confirm('Delete this unit?')) {
+  protected async remove(id: UnitId): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Delete this unit?',
+      message: 'This will permanently remove the unit.',
+    });
+    if (confirmed) {
       this.unitsService.remove(id);
     }
   }

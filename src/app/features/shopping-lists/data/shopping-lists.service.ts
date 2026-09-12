@@ -16,14 +16,16 @@ export class ShoppingListsService {
 
   readonly lists = this.store.items;
 
-  addList(name: string): void {
-    this.store.add({
+  addList(name: string): ShoppingList {
+    const list: ShoppingList = {
       id: crypto.randomUUID(),
       name,
       createdAt: new Date().toISOString(),
       status: 'active',
       items: [],
-    });
+    };
+    this.store.add(list);
+    return list;
   }
 
   setStatus(id: ShoppingListId, status: ShoppingList['status']): void {

@@ -1,6 +1,12 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { CategoriesService } from '../data/categories.service';
 import { CategoriesManager } from './categories-manager';
+
+function clickConfirmDialogButton(which: 'cancel' | 'confirm'): void {
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.confirm-dialog__actions button');
+  (which === 'cancel' ? buttons[0] : buttons[1]).click();
+}
 
 describe('CategoriesManager', () => {
   beforeEach(() => {
@@ -35,18 +41,37 @@ describe('CategoriesManager', () => {
     expect(root.textContent).toContain('Dairy');
   });
 
-  it('removes a category after the user confirms', () => {
+  it('removes a category after the user confirms in the dialog', async () => {
     const fixture = TestBed.createComponent(CategoriesManager);
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     fixture.detectChanges();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     (fixture.nativeElement as HTMLElement)
       .querySelector<HTMLButtonElement>('button[aria-label="Delete Dairy"]')!
       .click();
-    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    clickConfirmDialogButton('confirm');
+    await TestBed.inject(ApplicationRef).whenStable();
 
     expect(categoriesService.categories()).toEqual([]);
+  });
+
+  it('keeps the category when the user cancels the delete dialog', async () => {
+    const fixture = TestBed.createComponent(CategoriesManager);
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    fixture.detectChanges();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('button[aria-label="Delete Dairy"]')!
+      .click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    clickConfirmDialogButton('cancel');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(categoriesService.categories().length).toBe(1);
   });
 });

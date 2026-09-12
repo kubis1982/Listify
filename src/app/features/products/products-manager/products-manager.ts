@@ -1,5 +1,6 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { UnitsService } from '../../units/data/units.service';
@@ -138,6 +139,7 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
 })
 export class ProductsManager {
   protected readonly productsService = inject(ProductsService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
   protected readonly unitsService = inject(UnitsService);
   protected readonly categoriesService = inject(CategoriesService);
 
@@ -185,8 +187,12 @@ export class ProductsManager {
     this.isPanelOpen.set(false);
   }
 
-  protected remove(id: ProductId): void {
-    if (confirm('Delete this product?')) {
+  protected async remove(id: ProductId): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Delete this product?',
+      message: 'This will permanently remove the product.',
+    });
+    if (confirmed) {
       this.productsService.remove(id);
     }
   }

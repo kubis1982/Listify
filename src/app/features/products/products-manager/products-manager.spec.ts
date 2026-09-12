@@ -1,8 +1,14 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { UnitsService } from '../../units/data/units.service';
 import { ProductsService } from '../data/products.service';
 import { ProductsManager } from './products-manager';
+
+function clickConfirmDialogButton(which: 'cancel' | 'confirm'): void {
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.confirm-dialog__actions button');
+  (which === 'cancel' ? buttons[0] : buttons[1]).click();
+}
 
 describe('ProductsManager', () => {
   beforeEach(() => {
@@ -52,18 +58,37 @@ describe('ProductsManager', () => {
     expect(root.textContent).toContain('Milk 3.2%');
   });
 
-  it('removes a product after the user confirms', () => {
+  it('removes a product after the user confirms in the dialog', async () => {
     const productsService = TestBed.inject(ProductsService);
     productsService.add({ name: 'Milk', defaultUnitId: 'u1', categoryId: 'c1' });
     const fixture = TestBed.createComponent(ProductsManager);
     fixture.detectChanges();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     (fixture.nativeElement as HTMLElement)
       .querySelector<HTMLButtonElement>('button[aria-label="Delete Milk"]')!
       .click();
-    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    clickConfirmDialogButton('confirm');
+    await TestBed.inject(ApplicationRef).whenStable();
 
     expect(productsService.products()).toEqual([]);
+  });
+
+  it('keeps the product when the user cancels the delete dialog', async () => {
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Milk', defaultUnitId: 'u1', categoryId: 'c1' });
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('button[aria-label="Delete Milk"]')!
+      .click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    clickConfirmDialogButton('cancel');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(productsService.products().length).toBe(1);
   });
 });

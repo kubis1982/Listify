@@ -1,6 +1,12 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { UnitsService } from '../data/units.service';
 import { UnitsManager } from './units-manager';
+
+function clickConfirmDialogButton(which: 'cancel' | 'confirm'): void {
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.confirm-dialog__actions button');
+  (which === 'cancel' ? buttons[0] : buttons[1]).click();
+}
 
 describe('UnitsManager', () => {
   beforeEach(() => {
@@ -38,18 +44,37 @@ describe('UnitsManager', () => {
     expect(root.textContent).toContain('Kilogram (kg)');
   });
 
-  it('removes a unit after the user confirms', () => {
+  it('removes a unit after the user confirms in the dialog', async () => {
     const fixture = TestBed.createComponent(UnitsManager);
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ name: 'Litre', symbol: 'l' });
     fixture.detectChanges();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     (fixture.nativeElement as HTMLElement)
       .querySelector<HTMLButtonElement>('button[aria-label="Delete Litre"]')!
       .click();
-    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    clickConfirmDialogButton('confirm');
+    await TestBed.inject(ApplicationRef).whenStable();
 
     expect(unitsService.units()).toEqual([]);
+  });
+
+  it('keeps the unit when the user cancels the delete dialog', async () => {
+    const fixture = TestBed.createComponent(UnitsManager);
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'Litre', symbol: 'l' });
+    fixture.detectChanges();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('button[aria-label="Delete Litre"]')!
+      .click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    clickConfirmDialogButton('cancel');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(unitsService.units().length).toBe(1);
   });
 });

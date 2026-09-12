@@ -29,6 +29,12 @@ describe('ShoppingListsService', () => {
     expect(Number.isNaN(Date.parse(list.createdAt))).toBe(false);
   });
 
+  it('returns the created list from addList', () => {
+    const service = TestBed.inject(ShoppingListsService);
+    const created = service.addList('Weekly groceries');
+    expect(created).toEqual(service.lists()[0]);
+  });
+
   it('changes the status of a list', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');

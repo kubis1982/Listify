@@ -1,5 +1,6 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { Category, CategoryId } from '../data/category.model';
 import { CategoriesService } from '../data/categories.service';
@@ -109,6 +110,7 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
 })
 export class CategoriesManager {
   protected readonly categoriesService = inject(CategoriesService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
 
   protected readonly editingId = signal<CategoryId | null>(null);
   protected readonly duplicateNameError = signal(false);
@@ -138,8 +140,12 @@ export class CategoriesManager {
     this.isPanelOpen.set(false);
   }
 
-  protected remove(id: CategoryId): void {
-    if (confirm('Delete this category?')) {
+  protected async remove(id: CategoryId): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Delete this category?',
+      message: 'This will permanently remove the category.',
+    });
+    if (confirmed) {
       this.categoriesService.remove(id);
     }
   }
