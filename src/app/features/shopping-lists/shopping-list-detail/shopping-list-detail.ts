@@ -76,15 +76,6 @@ const EMPTY_ITEM_FORM: ItemFormValue = { quantity: 1, note: '' };
         </label>
 
         <label>
-          Category
-          <select [value]="selectedCategoryId()" (change)="onCategoryChange($event)">
-            @for (category of categoriesService.categories(); track category.id) {
-              <option [value]="category.id">{{ category.name }}</option>
-            }
-          </select>
-        </label>
-
-        <label>
           Quantity
           <input type="number" [formField]="itemForm.quantity" step="0.01" />
         </label>
@@ -121,10 +112,6 @@ export class ShoppingListDetail {
     const product = this.productsService.products().find((p) => p.id === this.productId());
     return product?.defaultUnitId ?? '';
   });
-  protected readonly selectedCategoryId = linkedSignal(() => {
-    const product = this.productsService.products().find((p) => p.id === this.productId());
-    return product?.categoryId ?? '';
-  });
 
   private readonly itemModel = signal<ItemFormValue>({ ...EMPTY_ITEM_FORM });
   protected readonly itemForm = form(this.itemModel, (path) => {
@@ -147,10 +134,6 @@ export class ShoppingListDetail {
 
   protected onUnitChange(event: Event): void {
     this.selectedUnitId.set((event.target as HTMLSelectElement).value);
-  }
-
-  protected onCategoryChange(event: Event): void {
-    this.selectedCategoryId.set((event.target as HTMLSelectElement).value);
   }
 
   protected toggleStatus(status: 'active' | 'completed'): void {
@@ -179,9 +162,7 @@ export class ShoppingListDetail {
 
     const product = this.productsService.products().find((p) => p.id === productId);
     const unit = this.unitsService.units().find((u) => u.id === this.selectedUnitId());
-    const category = this.categoriesService
-      .categories()
-      .find((c) => c.id === this.selectedCategoryId());
+    const category = this.categoriesService.categories().find((c) => c.id === product?.categoryId);
     if (!product || !unit || !category) {
       return;
     }

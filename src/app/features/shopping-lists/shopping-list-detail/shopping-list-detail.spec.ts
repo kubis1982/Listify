@@ -61,6 +61,31 @@ describe('ShoppingListDetail', () => {
     );
   });
 
+  it('does not show a category selector — category is derived from the product', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({
+      name: 'Milk',
+      defaultUnitId: unitsService.units()[0].id,
+      categoryId: categoriesService.categories()[0].id,
+    });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const selects = root.querySelectorAll('select');
+    expect(selects.length).toBe(2);
+    expect(root.textContent).not.toContain('Category');
+  });
+
   it('marks an item as purchased when its checkbox is toggled', () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ name: 'litre', symbol: 'l' });

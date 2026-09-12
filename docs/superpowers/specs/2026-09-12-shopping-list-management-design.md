@@ -160,9 +160,10 @@ instead of constructor injection.
   add/edit operations: product, unit, category, list, and list item.
 - `shopping-list-detail` screen: a form for adding an item with a product
   picker (select/combobox) from the catalog. Selecting a product sets, via
-  `linkedSignal()`, the default unit and category (based on the product's
-  `defaultUnitId`/`categoryId`), overridable before submitting. Additional
-  fields: quantity, note.
+  `linkedSignal()`, the default unit (based on the product's `defaultUnitId`),
+  overridable before submitting. The category is not user-editable here — it
+  is always taken from the selected product's `categoryId` and is not shown
+  as a separate control. Additional fields: quantity, note.
 - Dictionary management screens (`products-manager`, `units-manager`,
   `categories-manager`): a single component per screen combining the list
   view and the add/edit form (see the implementation plan's rationale) —
