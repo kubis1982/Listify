@@ -1,30 +1,33 @@
-import { expect, afterEach } from 'vitest';
+class MemoryStorage implements Storage {
+  private readonly store = new Map<string, string>();
 
-// Ensure localStorage is available in jsdom environment
-if (!globalThis.localStorage) {
-  const store: Record<string, string> = {};
+  get length(): number {
+    return this.store.size;
+  }
 
-  globalThis.localStorage = {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value;
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      Object.keys(store).forEach((key) => {
-        delete store[key];
-      });
-    },
-    key: (index: number) => Object.keys(store)[index] || null,
-    length: Object.keys(store).length,
-  } as Storage;
+  clear(): void {
+    this.store.clear();
+  }
+
+  getItem(key: string): string | null {
+    return this.store.has(key) ? (this.store.get(key) ?? null) : null;
+  }
+
+  key(index: number): string | null {
+    return Array.from(this.store.keys())[index] ?? null;
+  }
+
+  removeItem(key: string): void {
+    this.store.delete(key);
+  }
+
+  setItem(key: string, value: string): void {
+    this.store.set(key, value);
+  }
 }
 
-// Clear localStorage between tests
-afterEach(() => {
-  if (globalThis.localStorage) {
-    globalThis.localStorage.clear();
-  }
+Object.defineProperty(globalThis, 'localStorage', {
+  configurable: true,
+  value: new MemoryStorage(),
+  writable: true,
 });
