@@ -1,4 +1,13 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import {
+  afterRenderEffect,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
@@ -28,7 +37,7 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
         <p class="empty-state">No products yet — add the first one using the + button.</p>
       } @else {
         <div class="list-group">
-          @for (product of productsService.products(); track product.id) {
+          @for (product of sortedProducts(); track product.id) {
             <div class="list-card">
               <div class="list-card__body">
                 <span class="list-card__name">{{ product.name }}</span>
@@ -94,7 +103,13 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
     >
       <form novalidate (submit)="handleSubmit($event)">
         <label class="field-label" for="product-name">Name</label>
-        <input id="product-name" type="text" class="field-input" [formField]="productForm.name" />
+        <input
+          #nameInput
+          id="product-name"
+          type="text"
+          class="field-input"
+          [formField]="productForm.name"
+        />
         @if (productForm.name().invalid() && productForm.name().touched()) {
           <span class="field-error">Name is required.</span>
         }
@@ -147,6 +162,12 @@ export class ProductsManager {
   protected readonly duplicateNameError = signal(false);
   protected readonly isPanelOpen = signal(false);
 
+  protected readonly sortedProducts = computed(() =>
+    [...this.productsService.products()].sort((a, b) => a.name.localeCompare(b.name)),
+  );
+
+  private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
+
   private readonly model = signal<ProductFormValue>({ ...EMPTY_PRODUCT_FORM });
   protected readonly productForm = form(this.model, (path) => {
     required(path.name);
@@ -158,6 +179,12 @@ export class ProductsManager {
     effect(() => {
       this.productForm.name().value();
       this.duplicateNameError.set(false);
+    });
+
+    afterRenderEffect(() => {
+      if (this.isPanelOpen()) {
+        this.nameInput()?.nativeElement.focus();
+      }
     });
   }
 
@@ -222,9 +249,11 @@ export class ProductsManager {
 
     if (editingId) {
       this.productsService.update(editingId, value);
+      this.cancelEdit();
     } else {
       this.productsService.add(value);
+      this.productForm().reset({ ...EMPTY_PRODUCT_FORM });
+      this.nameInput()?.nativeElement.focus();
     }
-    this.cancelEdit();
   }
 }

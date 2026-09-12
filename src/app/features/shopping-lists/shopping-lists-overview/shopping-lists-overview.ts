@@ -202,10 +202,16 @@ export class ShoppingListsOverview {
   private readonly router = inject(Router);
 
   protected readonly activeLists = computed(() =>
-    this.shoppingListsService.lists().filter((list) => list.status === 'active'),
+    this.shoppingListsService
+      .lists()
+      .filter((list) => list.status === 'active')
+      .sort((a, b) => a.name.localeCompare(b.name)),
   );
   protected readonly completedLists = computed(() =>
-    this.shoppingListsService.lists().filter((list) => list.status === 'completed'),
+    this.shoppingListsService
+      .lists()
+      .filter((list) => list.status === 'completed')
+      .sort((a, b) => a.name.localeCompare(b.name)),
   );
 
   protected readonly isPanelOpen = signal(false);

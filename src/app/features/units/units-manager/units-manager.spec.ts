@@ -1,5 +1,7 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { CategoriesService } from '../../categories/data/categories.service';
+import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../data/units.service';
 import { UnitsManager } from './units-manager';
 
@@ -34,8 +36,8 @@ describe('UnitsManager', () => {
 
     const inputs = root.querySelectorAll<HTMLInputElement>('input[type="text"]');
 
-    setInputValue(inputs[0], 'Kilogram');
-    setInputValue(inputs[1], 'kg');
+    setInputValue(inputs[0], 'kg');
+    setInputValue(inputs[1], 'Kilogram');
     fixture.detectChanges();
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     fixture.detectChanges();
@@ -74,6 +76,33 @@ describe('UnitsManager', () => {
 
     clickConfirmDialogButton('cancel');
     await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(unitsService.units().length).toBe(1);
+  });
+
+  it('disables delete for a unit used by a product and does not remove it', () => {
+    const fixture = TestBed.createComponent(UnitsManager);
+    const unitsService = TestBed.inject(UnitsService);
+    const categoriesService = TestBed.inject(CategoriesService);
+    const productsService = TestBed.inject(ProductsService);
+
+    unitsService.add({ name: 'Litre', symbol: 'l' });
+    categoriesService.add({ name: 'Beverages' });
+    fixture.detectChanges();
+
+    const unitId = unitsService.units()[0].id;
+    const categoryId = categoriesService.categories()[0].id;
+    productsService.add({ name: 'Milk', categoryId, defaultUnitId: unitId });
+    fixture.detectChanges();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'button[aria-label="Cannot delete Litre — used by a product"]',
+    );
+    expect(button).not.toBeNull();
+    expect(button!.disabled).toBe(true);
+
+    button!.click();
+    fixture.detectChanges();
 
     expect(unitsService.units().length).toBe(1);
   });

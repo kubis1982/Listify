@@ -1,7 +1,17 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import {
+  afterRenderEffect,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
+import { ProductsService } from '../../products/data/products.service';
 import { Unit, UnitId } from '../data/unit.model';
 import { UnitsService } from '../data/units.service';
 
@@ -25,7 +35,7 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
         <p class="empty-state">No units yet — add the first one using the + button.</p>
       } @else {
         <div class="list-group">
-          @for (unit of unitsService.units(); track unit.id) {
+          @for (unit of sortedUnits(); track unit.id) {
             <div class="list-card">
               <div class="list-card__body">
                 <span class="list-card__name">{{ unit.name }} ({{ unit.symbol }})</span>
@@ -55,7 +65,15 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
                   type="button"
                   class="icon-btn"
                   (click)="remove(unit.id)"
-                  [attr.aria-label]="'Delete ' + unit.name"
+                  [disabled]="usedUnitIds().has(unit.id)"
+                  [attr.aria-label]="
+                    usedUnitIds().has(unit.id)
+                      ? 'Cannot delete ' + unit.name + ' — used by a product'
+                      : 'Delete ' + unit.name
+                  "
+                  [attr.title]="
+                    usedUnitIds().has(unit.id) ? 'Cannot delete — used by a product' : null
+                  "
                 >
                   <svg
                     class="icon"
@@ -87,20 +105,26 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
       [(open)]="isPanelOpen"
     >
       <form novalidate (submit)="handleSubmit($event)">
+        <label class="field-label" for="unit-symbol">Symbol</label>
+        <input
+          #symbolInput
+          id="unit-symbol"
+          type="text"
+          class="field-input"
+          [formField]="unitForm.symbol"
+        />
+        @if (unitForm.symbol().invalid() && unitForm.symbol().touched()) {
+          <span class="field-error">Symbol is required.</span>
+        }
+
         <label class="field-label" for="unit-name">Name</label>
         <input id="unit-name" type="text" class="field-input" [formField]="unitForm.name" />
         @if (unitForm.name().invalid() && unitForm.name().touched()) {
           <span class="field-error">Name is required.</span>
         }
 
-        <label class="field-label" for="unit-symbol">Symbol</label>
-        <input id="unit-symbol" type="text" class="field-input" [formField]="unitForm.symbol" />
-        @if (unitForm.symbol().invalid() && unitForm.symbol().touched()) {
-          <span class="field-error">Symbol is required.</span>
-        }
-
-        @if (duplicateNameError()) {
-          <p class="field-error" role="alert">A unit with this name already exists.</p>
+        @if (duplicateSymbolError()) {
+          <p class="field-error" role="alert">A unit with this symbol already exists.</p>
         }
 
         <button type="submit" class="btn-accent-pill-lg full-width">
@@ -118,10 +142,23 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
 export class UnitsManager {
   protected readonly unitsService = inject(UnitsService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
+  private readonly productsService = inject(ProductsService);
 
   protected readonly editingId = signal<UnitId | null>(null);
-  protected readonly duplicateNameError = signal(false);
+  protected readonly duplicateSymbolError = signal(false);
   protected readonly isPanelOpen = signal(false);
+
+  protected readonly sortedUnits = computed(() =>
+    [...this.unitsService.units()].sort(
+      (a, b) => a.name.localeCompare(b.name) || a.symbol.localeCompare(b.symbol),
+    ),
+  );
+
+  protected readonly usedUnitIds = computed(
+    () => new Set(this.productsService.products().map((product) => product.defaultUnitId)),
+  );
+
+  private readonly symbolInput = viewChild<ElementRef<HTMLInputElement>>('symbolInput');
 
   private readonly model = signal<UnitFormValue>({ ...EMPTY_UNIT_FORM });
   protected readonly unitForm = form(this.model, (path) => {
@@ -131,8 +168,14 @@ export class UnitsManager {
 
   constructor() {
     effect(() => {
-      this.unitForm.name().value();
-      this.duplicateNameError.set(false);
+      this.unitForm.symbol().value();
+      this.duplicateSymbolError.set(false);
+    });
+
+    afterRenderEffect(() => {
+      if (this.isPanelOpen()) {
+        this.symbolInput()?.nativeElement.focus();
+      }
     });
   }
 
@@ -149,6 +192,10 @@ export class UnitsManager {
   }
 
   protected async remove(id: UnitId): Promise<void> {
+    if (this.usedUnitIds().has(id)) {
+      return;
+    }
+
     const confirmed = await this.confirmDialogService.confirm({
       title: 'Delete this unit?',
       message: 'This will permanently remove the unit.',
@@ -164,8 +211,12 @@ export class UnitsManager {
       return;
     }
 
-    const value = { ...this.model(), name: this.model().name.trim() };
-    if (!value.name) {
+    const value = {
+      ...this.model(),
+      name: this.model().name.trim(),
+      symbol: this.model().symbol.trim(),
+    };
+    if (!value.name || !value.symbol) {
       return;
     }
 
@@ -173,18 +224,21 @@ export class UnitsManager {
     const isDuplicate = this.unitsService
       .units()
       .some(
-        (unit) => unit.id !== editingId && unit.name.toLowerCase() === value.name.toLowerCase(),
+        (unit) =>
+          unit.id !== editingId && unit.symbol.toLowerCase() === value.symbol.toLowerCase(),
       );
     if (isDuplicate) {
-      this.duplicateNameError.set(true);
+      this.duplicateSymbolError.set(true);
       return;
     }
 
     if (editingId) {
       this.unitsService.update(editingId, value);
+      this.cancelEdit();
     } else {
       this.unitsService.add(value);
+      this.unitForm().reset({ ...EMPTY_UNIT_FORM });
+      this.symbolInput()?.nativeElement.focus();
     }
-    this.cancelEdit();
   }
 }

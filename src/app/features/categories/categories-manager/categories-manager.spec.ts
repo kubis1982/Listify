@@ -1,5 +1,7 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { ProductsService } from '../../products/data/products.service';
+import { UnitsService } from '../../units/data/units.service';
 import { CategoriesService } from '../data/categories.service';
 import { CategoriesManager } from './categories-manager';
 
@@ -71,6 +73,33 @@ describe('CategoriesManager', () => {
 
     clickConfirmDialogButton('cancel');
     await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(categoriesService.categories().length).toBe(1);
+  });
+
+  it('disables delete for a category used by a product and does not remove it', () => {
+    const fixture = TestBed.createComponent(CategoriesManager);
+    const categoriesService = TestBed.inject(CategoriesService);
+    const unitsService = TestBed.inject(UnitsService);
+    const productsService = TestBed.inject(ProductsService);
+
+    categoriesService.add({ name: 'Dairy' });
+    unitsService.add({ name: 'Kilogram', symbol: 'kg' });
+    fixture.detectChanges();
+
+    const categoryId = categoriesService.categories()[0].id;
+    const unitId = unitsService.units()[0].id;
+    productsService.add({ name: 'Milk', categoryId, defaultUnitId: unitId });
+    fixture.detectChanges();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'button[aria-label="Cannot delete Dairy — used by a product"]',
+    );
+    expect(button).not.toBeNull();
+    expect(button!.disabled).toBe(true);
+
+    button!.click();
+    fixture.detectChanges();
 
     expect(categoriesService.categories().length).toBe(1);
   });

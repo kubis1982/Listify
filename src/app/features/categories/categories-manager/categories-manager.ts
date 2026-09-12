@@ -1,7 +1,17 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import {
+  afterRenderEffect,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
+import { ProductsService } from '../../products/data/products.service';
 import { Category, CategoryId } from '../data/category.model';
 import { CategoriesService } from '../data/categories.service';
 
@@ -24,7 +34,7 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
         <p class="empty-state">No categories yet — add the first one using the + button.</p>
       } @else {
         <div class="list-group">
-          @for (category of categoriesService.categories(); track category.id) {
+          @for (category of sortedCategories(); track category.id) {
             <div class="list-card">
               <div class="list-card__body">
                 <span class="list-card__name">{{ category.name }}</span>
@@ -54,7 +64,17 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
                   type="button"
                   class="icon-btn"
                   (click)="remove(category.id)"
-                  [attr.aria-label]="'Delete ' + category.name"
+                  [disabled]="usedCategoryIds().has(category.id)"
+                  [attr.aria-label]="
+                    usedCategoryIds().has(category.id)
+                      ? 'Cannot delete ' + category.name + ' — used by a product'
+                      : 'Delete ' + category.name
+                  "
+                  [attr.title]="
+                    usedCategoryIds().has(category.id)
+                      ? 'Cannot delete — used by a product'
+                      : null
+                  "
                 >
                   <svg
                     class="icon"
@@ -87,7 +107,13 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
     >
       <form novalidate (submit)="handleSubmit($event)">
         <label class="field-label" for="category-name">Name</label>
-        <input id="category-name" type="text" class="field-input" [formField]="categoryForm.name" />
+        <input
+          #nameInput
+          id="category-name"
+          type="text"
+          class="field-input"
+          [formField]="categoryForm.name"
+        />
         @if (categoryForm.name().invalid() && categoryForm.name().touched()) {
           <span class="field-error">Name is required.</span>
         }
@@ -111,10 +137,21 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
 export class CategoriesManager {
   protected readonly categoriesService = inject(CategoriesService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
+  private readonly productsService = inject(ProductsService);
 
   protected readonly editingId = signal<CategoryId | null>(null);
   protected readonly duplicateNameError = signal(false);
   protected readonly isPanelOpen = signal(false);
+
+  protected readonly sortedCategories = computed(() =>
+    [...this.categoriesService.categories()].sort((a, b) => a.name.localeCompare(b.name)),
+  );
+
+  protected readonly usedCategoryIds = computed(
+    () => new Set(this.productsService.products().map((product) => product.categoryId)),
+  );
+
+  private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
 
   private readonly model = signal<CategoryFormValue>({ ...EMPTY_CATEGORY_FORM });
   protected readonly categoryForm = form(this.model, (path) => {
@@ -125,6 +162,12 @@ export class CategoriesManager {
     effect(() => {
       this.categoryForm.name().value();
       this.duplicateNameError.set(false);
+    });
+
+    afterRenderEffect(() => {
+      if (this.isPanelOpen()) {
+        this.nameInput()?.nativeElement.focus();
+      }
     });
   }
 
@@ -141,6 +184,10 @@ export class CategoriesManager {
   }
 
   protected async remove(id: CategoryId): Promise<void> {
+    if (this.usedCategoryIds().has(id)) {
+      return;
+    }
+
     const confirmed = await this.confirmDialogService.confirm({
       title: 'Delete this category?',
       message: 'This will permanently remove the category.',
@@ -175,9 +222,11 @@ export class CategoriesManager {
 
     if (editingId) {
       this.categoriesService.update(editingId, value);
+      this.cancelEdit();
     } else {
       this.categoriesService.add(value);
+      this.categoryForm().reset({ ...EMPTY_CATEGORY_FORM });
+      this.nameInput()?.nativeElement.focus();
     }
-    this.cancelEdit();
   }
 }
