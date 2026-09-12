@@ -4,6 +4,10 @@ import { CategoriesService } from '../../categories/data/categories.service';
 import { UnitsService } from '../../units/data/units.service';
 import { Product, ProductId } from '../data/product.model';
 import { ProductsService } from '../data/products.service';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
 
 interface ProductFormValue {
   name: string;
@@ -15,72 +19,95 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
 
 @Component({
   selector: 'app-products-manager',
-  imports: [FormField],
+  imports: [FormField, MatButtonModule, MatFormFieldModule, MatInputModule, MatListModule],
   template: `
     <h1>Products</h1>
 
     @if (productsService.products().length === 0) {
       <p>No products yet — add the first one below.</p>
     } @else {
-      <ul>
+      <mat-list>
         @for (product of productsService.products(); track product.id) {
-          <li>
-            <span
+          <mat-list-item>
+            <span matListItemTitle
               >{{ product.name }} — {{ unitLabel(product.defaultUnitId) }},
               {{ categoryLabel(product.categoryId) }}</span
             >
-            <button type="button" (click)="startEdit(product)">Edit</button>
-            <button type="button" (click)="remove(product.id)">Delete</button>
-          </li>
+            <span matListItemMeta class="row-actions">
+              <button matButton="text" type="button" (click)="startEdit(product)">Edit</button>
+              <button matButton="text" type="button" (click)="remove(product.id)">Delete</button>
+            </span>
+          </mat-list-item>
         }
-      </ul>
+      </mat-list>
     }
 
     <h2>{{ editingId() ? 'Edit product' : 'Add product' }}</h2>
-    <form (submit)="handleSubmit($event)">
-      <label>
-        Name
-        <input type="text" [formField]="productForm.name" />
-      </label>
-      @if (productForm.name().invalid() && productForm.name().touched()) {
-        <p role="alert">Name is required.</p>
-      }
+    <form class="product-form" (submit)="handleSubmit($event)">
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput type="text" [formField]="productForm.name" />
+        @if (productForm.name().invalid() && productForm.name().touched()) {
+          <mat-error>Name is required.</mat-error>
+        }
+      </mat-form-field>
 
-      <label>
-        Default unit
-        <select [formField]="productForm.defaultUnitId">
+      <mat-form-field appearance="outline">
+        <mat-label>Default unit</mat-label>
+        <select matInput matNativeControl [formField]="productForm.defaultUnitId">
           <option value="" disabled>Select a unit</option>
           @for (unit of unitsService.units(); track unit.id) {
             <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
           }
         </select>
-      </label>
-      @if (productForm.defaultUnitId().invalid() && productForm.defaultUnitId().touched()) {
-        <p role="alert">A unit is required.</p>
-      }
+        @if (productForm.defaultUnitId().invalid() && productForm.defaultUnitId().touched()) {
+          <mat-error>A unit is required.</mat-error>
+        }
+      </mat-form-field>
 
-      <label>
-        Category
-        <select [formField]="productForm.categoryId">
+      <mat-form-field appearance="outline">
+        <mat-label>Category</mat-label>
+        <select matInput matNativeControl [formField]="productForm.categoryId">
           <option value="" disabled>Select a category</option>
           @for (category of categoriesService.categories(); track category.id) {
             <option [value]="category.id">{{ category.name }}</option>
           }
         </select>
-      </label>
-      @if (productForm.categoryId().invalid() && productForm.categoryId().touched()) {
-        <p role="alert">A category is required.</p>
-      }
+        @if (productForm.categoryId().invalid() && productForm.categoryId().touched()) {
+          <mat-error>A category is required.</mat-error>
+        }
+      </mat-form-field>
 
       @if (duplicateNameError()) {
         <p role="alert">A product with this name already exists.</p>
       }
 
-      <button type="submit">{{ editingId() ? 'Save' : 'Add' }}</button>
-      @if (editingId()) {
-        <button type="button" (click)="cancelEdit()">Cancel</button>
-      }
+      <div class="form-actions">
+        <button matButton="filled" type="submit">{{ editingId() ? 'Save' : 'Add' }}</button>
+        @if (editingId()) {
+          <button matButton="text" type="button" (click)="cancelEdit()">Cancel</button>
+        }
+      </div>
     </form>
+  `,
+  styles: `
+    .product-form {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 360px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 4px;
+    }
   `,
 })
 export class ProductsManager {

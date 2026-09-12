@@ -57,7 +57,7 @@ describe('ProductsManager', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('li button + button')!
+      .querySelector<HTMLButtonElement>('mat-list-item button + button')!
       .click();
     fixture.detectChanges();
 
