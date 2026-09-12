@@ -164,8 +164,10 @@ instead of constructor injection.
   `defaultUnitId`/`categoryId`), overridable before submitting. Additional
   fields: quantity, note.
 - Dictionary management screens (`products-manager`, `units-manager`,
-  `categories-manager`): a list + add/edit form pattern, split into small,
-  focused components (`*-list`, `*-form`).
+  `categories-manager`): a single component per screen combining the list
+  view and the add/edit form (see the implementation plan's rationale) —
+  each stays small and cohesive at its current size; split into `*-list`/
+  `*-form` components only if a screen's responsibilities grow.
 - All components are standalone, use `input()`/`output()`/`model()` instead
   of decorators, native control flow (`@if`/`@for`), `class`/`style`
   bindings instead of `ngClass`/`ngStyle`, and avoid importing
