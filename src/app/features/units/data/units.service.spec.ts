@@ -15,9 +15,7 @@ describe('UnitsService', () => {
   it('adds a unit with a generated id', () => {
     const service = TestBed.inject(UnitsService);
     service.add({ name: 'Kilogram', symbol: 'kg' });
-    expect(service.units()).toEqual([
-      expect.objectContaining({ name: 'Kilogram', symbol: 'kg' }),
-    ]);
+    expect(service.units()).toEqual([expect.objectContaining({ name: 'Kilogram', symbol: 'kg' })]);
     expect(service.units()[0].id).toBeTruthy();
   });
 

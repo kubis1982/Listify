@@ -68,7 +68,11 @@ export class ShoppingListsOverview {
     if (this.newListForm().invalid()) {
       return;
     }
-    this.shoppingListsService.addList(this.model().name);
-    this.model.set({ name: '' });
+    const name = this.model().name.trim();
+    if (!name) {
+      return;
+    }
+    this.shoppingListsService.addList(name);
+    this.newListForm().reset({ name: '' });
   }
 }

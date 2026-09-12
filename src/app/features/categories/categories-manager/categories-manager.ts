@@ -74,7 +74,7 @@ export class CategoriesManager {
 
   protected cancelEdit(): void {
     this.editingId.set(null);
-    this.model.set({ ...EMPTY_CATEGORY_FORM });
+    this.categoryForm().reset({ ...EMPTY_CATEGORY_FORM });
   }
 
   protected remove(id: CategoryId): void {
@@ -89,7 +89,11 @@ export class CategoriesManager {
       return;
     }
 
-    const value = this.model();
+    const value = { ...this.model(), name: this.model().name.trim() };
+    if (!value.name) {
+      return;
+    }
+
     const editingId = this.editingId();
     const isDuplicate = this.categoriesService
       .categories()

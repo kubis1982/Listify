@@ -29,6 +29,12 @@ describe('createLocalStorageCollection', () => {
     expect(harness.collection.items()).toEqual([{ id: '9', label: 'Existing' }]);
   });
 
+  it('starts empty when localStorage contains valid JSON that is not an array', () => {
+    localStorage.setItem('test:items', JSON.stringify({ not: 'an array' }));
+    const harness = TestBed.inject(TestCollectionHarness);
+    expect(harness.collection.items()).toEqual([]);
+  });
+
   it('adds an item and exposes it via items()', () => {
     const harness = TestBed.inject(TestCollectionHarness);
     harness.collection.add({ id: '1', label: 'First' });
@@ -39,9 +45,7 @@ describe('createLocalStorageCollection', () => {
     const harness = TestBed.inject(TestCollectionHarness);
     harness.collection.add({ id: '1', label: 'First' });
     TestBed.tick();
-    expect(JSON.parse(localStorage.getItem('test:items')!)).toEqual([
-      { id: '1', label: 'First' },
-    ]);
+    expect(JSON.parse(localStorage.getItem('test:items')!)).toEqual([{ id: '1', label: 'First' }]);
   });
 
   it('updates an existing item by id, leaving others untouched', () => {

@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { FormField, form, min } from '@angular/forms/signals';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { FormField, form, min, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
@@ -62,6 +62,9 @@ const EMPTY_ITEM_FORM: ItemFormValue = { quantity: 1, note: '' };
             }
           </select>
         </label>
+        @if (productSelectionError()) {
+          <p role="alert">Please select a product.</p>
+        }
 
         <label>
           Unit
@@ -125,8 +128,18 @@ export class ShoppingListDetail {
 
   private readonly itemModel = signal<ItemFormValue>({ ...EMPTY_ITEM_FORM });
   protected readonly itemForm = form(this.itemModel, (path) => {
+    required(path.quantity);
     min(path.quantity, 0.01);
   });
+
+  protected readonly productSelectionError = signal(false);
+
+  constructor() {
+    effect(() => {
+      this.productId();
+      this.productSelectionError.set(false);
+    });
+  }
 
   protected onProductChange(event: Event): void {
     this.productId.set((event.target as HTMLSelectElement).value);
@@ -155,7 +168,12 @@ export class ShoppingListDetail {
   protected addItem(event: Event): void {
     event.preventDefault();
     const productId = this.productId();
-    if (!productId || this.itemForm().invalid()) {
+    if (!productId) {
+      this.productSelectionError.set(true);
+      return;
+    }
+    this.productSelectionError.set(false);
+    if (this.itemForm().invalid()) {
       return;
     }
 

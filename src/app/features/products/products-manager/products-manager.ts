@@ -126,7 +126,7 @@ export class ProductsManager {
 
   protected cancelEdit(): void {
     this.editingId.set(null);
-    this.model.set({ ...EMPTY_PRODUCT_FORM });
+    this.productForm().reset({ ...EMPTY_PRODUCT_FORM });
   }
 
   protected remove(id: ProductId): void {
@@ -141,7 +141,11 @@ export class ProductsManager {
       return;
     }
 
-    const value = this.model();
+    const value = { ...this.model(), name: this.model().name.trim() };
+    if (!value.name) {
+      return;
+    }
+
     const editingId = this.editingId();
     const isDuplicate = this.productsService
       .products()

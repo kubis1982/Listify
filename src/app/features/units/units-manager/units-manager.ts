@@ -85,7 +85,7 @@ export class UnitsManager {
 
   protected cancelEdit(): void {
     this.editingId.set(null);
-    this.model.set({ ...EMPTY_UNIT_FORM });
+    this.unitForm().reset({ ...EMPTY_UNIT_FORM });
   }
 
   protected remove(id: UnitId): void {
@@ -100,7 +100,11 @@ export class UnitsManager {
       return;
     }
 
-    const value = this.model();
+    const value = { ...this.model(), name: this.model().name.trim() };
+    if (!value.name) {
+      return;
+    }
+
     const editingId = this.editingId();
     const isDuplicate = this.unitsService
       .units()

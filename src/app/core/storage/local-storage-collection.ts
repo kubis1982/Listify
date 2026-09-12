@@ -10,7 +10,11 @@ export interface LocalStorageCollection<T> {
 function readFromStorage<T>(storageKey: string): T[] {
   try {
     const raw = localStorage.getItem(storageKey);
-    return raw ? (JSON.parse(raw) as T[]) : [];
+    if (!raw) {
+      return [];
+    }
+    const parsed = JSON.parse(raw) as T[];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
