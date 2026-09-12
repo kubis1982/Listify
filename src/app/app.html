@@ -1,9 +1,12 @@
-<nav aria-label="Main navigation">
-  <a routerLink="/lists" routerLinkActive="active">Shopping lists</a>
-  <a routerLink="/products" routerLinkActive="active">Products</a>
-  <a routerLink="/units" routerLinkActive="active">Units</a>
-  <a routerLink="/categories" routerLinkActive="active">Categories</a>
-</nav>
+<mat-toolbar>
+  <span class="brand">Listify</span>
+  <nav aria-label="Main navigation" class="nav-links">
+    <a matButton="text" routerLink="/lists" routerLinkActive="active">Shopping lists</a>
+    <a matButton="text" routerLink="/products" routerLinkActive="active">Products</a>
+    <a matButton="text" routerLink="/units" routerLinkActive="active">Units</a>
+    <a matButton="text" routerLink="/categories" routerLinkActive="active">Categories</a>
+  </nav>
+</mat-toolbar>
 
 <main>
   <router-outlet />
