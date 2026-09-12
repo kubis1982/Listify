@@ -89,4 +89,21 @@ describe('ShoppingListsService', () => {
 
     expect(service.lists()[0].items).toEqual([]);
   });
+
+  it('ignores item changes for a completed list', () => {
+    const service = TestBed.inject(ShoppingListsService);
+    service.addList('Weekly groceries');
+    const listId = service.lists()[0].id;
+    service.addItemFromProduct(listId, product, unit, category, 1);
+    const itemId = service.lists()[0].items[0].id;
+    service.setStatus(listId, 'completed');
+
+    service.addItemFromProduct(listId, product, unit, category, 2);
+    service.setItemPurchased(listId, itemId, true);
+    service.removeItem(listId, itemId);
+
+    const list = service.lists()[0];
+    expect(list.items.length).toBe(1);
+    expect(list.items[0].purchased).toBe(false);
+  });
 });

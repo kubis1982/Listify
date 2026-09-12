@@ -46,6 +46,7 @@ const EMPTY_ITEM_FORM: ItemFormValue = { productId: '', quantity: 1, note: '' };
             <li class="item-row">
               <mat-checkbox
                 [checked]="item.purchased"
+                [disabled]="currentList.status === 'completed'"
                 (change)="togglePurchased(item.id, item.purchased)"
               >
                 {{ item.productName }} — {{ item.quantity }} {{ item.unitLabel }} ({{
@@ -55,56 +56,67 @@ const EMPTY_ITEM_FORM: ItemFormValue = { productId: '', quantity: 1, note: '' };
                   <span> — {{ item.note }}</span>
                 }
               </mat-checkbox>
-              <button matButton="text" type="button" (click)="removeItem(item.id)">Remove</button>
+              <button
+                matButton="text"
+                type="button"
+                [disabled]="currentList.status === 'completed'"
+                (click)="removeItem(item.id)"
+              >
+                Remove
+              </button>
             </li>
           }
         </ul>
       }
 
       <h2>Add item</h2>
-      <form class="add-item-form" novalidate (submit)="addItem($event)">
-        <mat-form-field appearance="outline">
-          <mat-label>Product</mat-label>
-          <select matInput matNativeControl [formField]="itemForm.productId">
-            <option value="" disabled>Select a product</option>
-            @for (product of productsService.products(); track product.id) {
-              <option [value]="product.id">{{ product.name }}</option>
+      @if (currentList.status === 'completed') {
+        <p>This list is completed. Mark it active again to add items.</p>
+      } @else {
+        <form class="add-item-form" novalidate (submit)="addItem($event)">
+          <mat-form-field appearance="outline">
+            <mat-label>Product</mat-label>
+            <select matInput matNativeControl [formField]="itemForm.productId">
+              <option value="" disabled>Select a product</option>
+              @for (product of productsService.products(); track product.id) {
+                <option [value]="product.id">{{ product.name }}</option>
+              }
+            </select>
+            @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
+              <mat-error>Please select a product.</mat-error>
             }
-          </select>
-          @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
-            <mat-error>Please select a product.</mat-error>
-          }
-        </mat-form-field>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Unit</mat-label>
-          <select
-            matInput
-            matNativeControl
-            [value]="selectedUnitId()"
-            (change)="onUnitChange($event)"
-          >
-            @for (unit of unitsService.units(); track unit.id) {
-              <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
+          <mat-form-field appearance="outline">
+            <mat-label>Unit</mat-label>
+            <select
+              matInput
+              matNativeControl
+              [value]="selectedUnitId()"
+              (change)="onUnitChange($event)"
+            >
+              @for (unit of unitsService.units(); track unit.id) {
+                <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
+              }
+            </select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Quantity</mat-label>
+            <input matInput type="number" [formField]="itemForm.quantity" step="0.01" />
+            @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
+              <mat-error>Quantity must be greater than 0.</mat-error>
             }
-          </select>
-        </mat-form-field>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Quantity</mat-label>
-          <input matInput type="number" [formField]="itemForm.quantity" step="0.01" />
-          @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
-            <mat-error>Quantity must be greater than 0.</mat-error>
-          }
-        </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Note</mat-label>
+            <input matInput type="text" [formField]="itemForm.note" />
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Note</mat-label>
-          <input matInput type="text" [formField]="itemForm.note" />
-        </mat-form-field>
-
-        <button matButton="filled" type="submit">Add item</button>
-      </form>
+          <button matButton="filled" type="submit">Add item</button>
+        </form>
+      }
     } @else {
       <p>List not found.</p>
     }

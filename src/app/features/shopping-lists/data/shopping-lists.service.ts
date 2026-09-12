@@ -43,7 +43,7 @@ export class ShoppingListsService {
     note?: string,
   ): void {
     const list = this.lists().find((l) => l.id === listId);
-    if (!list) {
+    if (!list || list.status !== 'active') {
       return;
     }
     const item: ShoppingListItem = {
@@ -60,7 +60,7 @@ export class ShoppingListsService {
 
   setItemPurchased(listId: ShoppingListId, itemId: ShoppingListItemId, purchased: boolean): void {
     const list = this.lists().find((l) => l.id === listId);
-    if (!list) {
+    if (!list || list.status !== 'active') {
       return;
     }
     this.store.update(listId, {
@@ -70,7 +70,7 @@ export class ShoppingListsService {
 
   removeItem(listId: ShoppingListId, itemId: ShoppingListItemId): void {
     const list = this.lists().find((l) => l.id === listId);
-    if (!list) {
+    if (!list || list.status !== 'active') {
       return;
     }
     this.store.update(listId, { items: list.items.filter((item) => item.id !== itemId) });

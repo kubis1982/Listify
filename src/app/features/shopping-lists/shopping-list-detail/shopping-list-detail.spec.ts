@@ -121,4 +121,41 @@ describe('ShoppingListDetail', () => {
 
     expect(shoppingListsService.lists()[0].items[0].purchased).toBe(true);
   });
+
+  it('hides the add-item form and disables item actions for a completed list', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({
+      name: 'Milk',
+      defaultUnitId: unitsService.units()[0].id,
+      categoryId: categoriesService.categories()[0].id,
+    });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+    shoppingListsService.addItemFromProduct(
+      listId,
+      productsService.products()[0],
+      unitsService.units()[0],
+      categoriesService.categories()[0],
+      1,
+    );
+    shoppingListsService.setStatus(listId, 'completed');
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('form.add-item-form')).toBeNull();
+    expect(root.textContent).toContain('This list is completed');
+    expect(root.querySelector<HTMLInputElement>('input[type="checkbox"]')!.disabled).toBe(true);
+    expect(
+      Array.from(root.querySelectorAll('button')).find((b) => b.textContent?.includes('Remove'))!
+        .disabled,
+    ).toBe(true);
+  });
 });
