@@ -104,7 +104,9 @@ export class UnitsManager {
     const editingId = this.editingId();
     const isDuplicate = this.unitsService
       .units()
-      .some((unit) => unit.id !== editingId && unit.name.toLowerCase() === value.name.toLowerCase());
+      .some(
+        (unit) => unit.id !== editingId && unit.name.toLowerCase() === value.name.toLowerCase(),
+      );
     if (isDuplicate) {
       this.duplicateNameError.set(true);
       return;
