@@ -1,0 +1,20 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+
+  a.active {
+    font-weight: 700;
+  }
+}
+
+main {
+  padding: 1rem;
+}
