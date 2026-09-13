@@ -239,7 +239,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                 <label class="field-label" for="add-item-product">Product</label>
                 <select id="add-item-product" class="field-input" [formField]="itemForm.productId">
                   <option value="" disabled>Select a product</option>
-                  @for (product of productsService.products(); track product.id) {
+                  @for (product of sortedProducts(); track product.id) {
                     <option [value]="product.id">{{ product.name }}</option>
                   }
                 </select>
@@ -447,6 +447,10 @@ export class ShoppingListDetail {
 
   protected readonly list = computed(() =>
     this.shoppingListsService.lists().find((l) => l.id === this.id()),
+  );
+
+  protected readonly sortedProducts = computed(() =>
+    [...this.productsService.products()].sort((a, b) => a.name.localeCompare(b.name)),
   );
 
   protected readonly itemsByCategory = computed(() => {
