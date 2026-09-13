@@ -96,6 +96,64 @@ describe('ShoppingListsService', () => {
     expect(service.lists()[0].items).toEqual([]);
   });
 
+  it('merges quantity into an existing unpurchased item with the same product, unit, and note', () => {
+    const service = TestBed.inject(ShoppingListsService);
+    service.addList('Weekly groceries');
+    const listId = service.lists()[0].id;
+    service.addItemFromProduct(listId, product, unit, category, 2, 'organic');
+
+    const merged = service.addItemFromProduct(listId, product, unit, category, 3, 'organic');
+
+    expect(merged).toBe(true);
+    const list = service.lists()[0];
+    expect(list.items.length).toBe(1);
+    expect(list.items[0].quantity).toBe(5);
+  });
+
+  it('merges quantity case-insensitively across product name, unit, and note', () => {
+    const service = TestBed.inject(ShoppingListsService);
+    service.addList('Weekly groceries');
+    const listId = service.lists()[0].id;
+    service.addItemFromProduct(listId, product, unit, category, 2, 'Organic');
+
+    const upperProduct: Product = { ...product, name: 'MILK 3.2%' };
+    const upperUnit: Unit = { ...unit, symbol: 'L' };
+    const merged = service.addItemFromProduct(listId, upperProduct, upperUnit, category, 1, 'organic');
+
+    expect(merged).toBe(true);
+    const list = service.lists()[0];
+    expect(list.items.length).toBe(1);
+    expect(list.items[0].quantity).toBe(3);
+  });
+
+  it('does not merge when the note differs', () => {
+    const service = TestBed.inject(ShoppingListsService);
+    service.addList('Weekly groceries');
+    const listId = service.lists()[0].id;
+    service.addItemFromProduct(listId, product, unit, category, 2, 'organic');
+
+    const merged = service.addItemFromProduct(listId, product, unit, category, 1, 'skimmed');
+
+    expect(merged).toBe(false);
+    expect(service.lists()[0].items.length).toBe(2);
+  });
+
+  it('does not merge into an item already marked as purchased', () => {
+    const service = TestBed.inject(ShoppingListsService);
+    service.addList('Weekly groceries');
+    const listId = service.lists()[0].id;
+    service.addItemFromProduct(listId, product, unit, category, 2, 'organic');
+    const itemId = service.lists()[0].items[0].id;
+    service.setItemPurchased(listId, itemId, true);
+
+    const merged = service.addItemFromProduct(listId, product, unit, category, 1, 'organic');
+
+    expect(merged).toBe(false);
+    const list = service.lists()[0];
+    expect(list.items.length).toBe(2);
+    expect(list.items[0].quantity).toBe(2);
+  });
+
   it('ignores item changes for a completed list', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');

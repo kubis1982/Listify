@@ -43,10 +43,19 @@ export class ShoppingListsService {
     category: Category,
     quantity: number,
     note?: string,
-  ): void {
+  ): boolean {
     const list = this.lists().find((l) => l.id === listId);
     if (!list || list.status !== 'active') {
-      return;
+      return false;
+    }
+    const existing = list.items.find((item) => this.isSameUnpurchasedItem(item, product, unit, note));
+    if (existing) {
+      this.store.update(listId, {
+        items: list.items.map((item) =>
+          item.id === existing.id ? { ...item, quantity: item.quantity + quantity } : item,
+        ),
+      });
+      return true;
     }
     const item: ShoppingListItem = {
       id: crypto.randomUUID(),
@@ -58,6 +67,21 @@ export class ShoppingListsService {
       note,
     };
     this.store.update(listId, { items: [...list.items, item] });
+    return false;
+  }
+
+  private isSameUnpurchasedItem(
+    item: ShoppingListItem,
+    product: Product,
+    unit: Unit,
+    note?: string,
+  ): boolean {
+    return (
+      !item.purchased &&
+      item.productName.toLowerCase() === product.name.toLowerCase() &&
+      item.unitLabel.toLowerCase() === unit.symbol.toLowerCase() &&
+      (item.note ?? '').toLowerCase() === (note ?? '').toLowerCase()
+    );
   }
 
   setItemPurchased(listId: ShoppingListId, itemId: ShoppingListItemId, purchased: boolean): void {

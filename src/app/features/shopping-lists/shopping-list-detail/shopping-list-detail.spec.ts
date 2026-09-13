@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../../units/data/units.service';
@@ -63,6 +64,97 @@ describe('ShoppingListDetail', () => {
         quantity: 1,
       }),
     );
+  });
+
+  it('shows a feedback message when the submitted item merges into an existing unpurchased item', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const unitId = unitsService.units()[0].id;
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const categoryId = categoriesService.categories()[0].id;
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Milk', defaultUnitId: unitId, categoryId });
+    const productId = productsService.products()[0].id;
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+    shoppingListsService.addItemFromProduct(
+      listId,
+      productsService.products()[0],
+      unitsService.units()[0],
+      categoriesService.categories()[0],
+      1,
+    );
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const productSelect = root.querySelector<HTMLSelectElement>('select')!;
+    productSelect.value = productId;
+    productSelect.dispatchEvent(new Event('input'));
+    productSelect.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Quantity updated for existing item.');
+  });
+
+  it('clears the feedback message a few seconds after it appears', () => {
+    vi.useFakeTimers();
+    try {
+      const unitsService = TestBed.inject(UnitsService);
+      unitsService.add({ name: 'litre', symbol: 'l' });
+      const unitId = unitsService.units()[0].id;
+      const categoriesService = TestBed.inject(CategoriesService);
+      categoriesService.add({ name: 'Dairy' });
+      const categoryId = categoriesService.categories()[0].id;
+      const productsService = TestBed.inject(ProductsService);
+      productsService.add({ name: 'Milk', defaultUnitId: unitId, categoryId });
+      const productId = productsService.products()[0].id;
+      const shoppingListsService = TestBed.inject(ShoppingListsService);
+      shoppingListsService.addList('Weekly groceries');
+      const listId = shoppingListsService.lists()[0].id;
+      shoppingListsService.addItemFromProduct(
+        listId,
+        productsService.products()[0],
+        unitsService.units()[0],
+        categoriesService.categories()[0],
+        1,
+      );
+
+      const fixture = TestBed.createComponent(ShoppingListDetail);
+      fixture.componentRef.setInput('id', listId);
+      fixture.detectChanges();
+
+      const root = fixture.nativeElement as HTMLElement;
+      root.querySelector<HTMLButtonElement>('.fab')!.click();
+      fixture.detectChanges();
+
+      const productSelect = root.querySelector<HTMLSelectElement>('select')!;
+      productSelect.value = productId;
+      productSelect.dispatchEvent(new Event('input'));
+      productSelect.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+      fixture.detectChanges();
+      expect(root.textContent).toContain('Quantity updated for existing item.');
+
+      vi.advanceTimersByTime(3000);
+      fixture.detectChanges();
+
+      expect(root.textContent).not.toContain('Quantity updated for existing item.');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not show a category selector — category is derived from the product', () => {
