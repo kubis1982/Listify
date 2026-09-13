@@ -16,4 +16,13 @@ export class ConfirmDialogService {
     const result = await firstValueFrom(dialogRef.closed);
     return result ?? false;
   }
+
+  async alert(data: { title: string; message: string }): Promise<void> {
+    const dialogRef = this.dialog.open<boolean, ConfirmDialogData>(ConfirmDialog, {
+      data: { ...data, hideCancel: true, confirmLabel: 'OK' },
+      role: 'alertdialog',
+      autoFocus: '.btn-accent-pill-lg',
+    });
+    await firstValueFrom(dialogRef.closed);
+  }
 }
