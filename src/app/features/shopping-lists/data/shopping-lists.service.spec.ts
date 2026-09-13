@@ -221,4 +221,27 @@ describe('ShoppingListsService', () => {
 
     expect(created.items[0].note).toBeUndefined();
   });
+
+  it('does not persist unexpected extra fields on an imported item', () => {
+    const service = TestBed.inject(ShoppingListsService);
+
+    const itemWithExtraField = {
+      productName: 'Milk',
+      unitLabel: 'l',
+      categoryName: 'Dairy',
+      quantity: 2,
+      note: 'organic',
+      maliciousField: 'should not survive import',
+    } as unknown as { productName: string; unitLabel: string; categoryName: string; quantity: number; note?: string };
+
+    const created = service.importList({
+      name: 'Shared list',
+      items: [itemWithExtraField],
+    });
+
+    expect(Object.keys(created.items[0]).sort()).toEqual(
+      ['id', 'productName', 'unitLabel', 'categoryName', 'quantity', 'purchased', 'note'].sort(),
+    );
+    expect(created.items[0]).not.toHaveProperty('maliciousField');
+  });
 });

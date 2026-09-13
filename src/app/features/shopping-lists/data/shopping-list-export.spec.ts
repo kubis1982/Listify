@@ -107,6 +107,42 @@ describe('parseShoppingListExport', () => {
     });
     expect(() => parseShoppingListExport(json)).toThrow(ShoppingListImportError);
   });
+
+  it('throws when an item quantity is zero', () => {
+    const json = JSON.stringify({
+      version: 1,
+      list: {
+        name: 'x',
+        items: [{ productName: 'Milk', unitLabel: 'l', categoryName: 'Dairy', quantity: 0 }],
+      },
+    });
+    expect(() => parseShoppingListExport(json)).toThrow(ShoppingListImportError);
+  });
+
+  it('throws when an item quantity is negative', () => {
+    const json = JSON.stringify({
+      version: 1,
+      list: {
+        name: 'x',
+        items: [{ productName: 'Milk', unitLabel: 'l', categoryName: 'Dairy', quantity: -1 }],
+      },
+    });
+    expect(() => parseShoppingListExport(json)).toThrow(ShoppingListImportError);
+  });
+
+  it('throws when an item quantity parses to Infinity', () => {
+    // Written as raw JSON text (not JSON.stringify) because JSON.stringify(Infinity) would
+    // serialize to `null` before parsing ever happens. A number literal this large parses
+    // to Infinity via JSON.parse, which is exactly the corruption path being guarded against.
+    const json = `{
+      "version": 1,
+      "list": {
+        "name": "x",
+        "items": [{ "productName": "Milk", "unitLabel": "l", "categoryName": "Dairy", "quantity": 1e400 }]
+      }
+    }`;
+    expect(() => parseShoppingListExport(json)).toThrow(ShoppingListImportError);
+  });
 });
 
 describe('toExportFilename', () => {

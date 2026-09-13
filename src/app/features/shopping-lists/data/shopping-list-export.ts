@@ -93,6 +93,8 @@ function isValidExportItem(value: unknown): value is ShoppingListExportItem {
     typeof item['unitLabel'] === 'string' &&
     typeof item['categoryName'] === 'string' &&
     typeof item['quantity'] === 'number' &&
+    Number.isFinite(item['quantity']) &&
+    item['quantity'] > 0 &&
     (item['note'] === undefined || typeof item['note'] === 'string')
   );
 }

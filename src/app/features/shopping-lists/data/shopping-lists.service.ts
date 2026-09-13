@@ -35,7 +35,15 @@ export class ShoppingListsService {
       name: data.name,
       createdAt: new Date().toISOString(),
       status: 'active',
-      items: data.items.map((item) => ({ ...item, id: crypto.randomUUID(), purchased: false })),
+      items: data.items.map(({ productName, unitLabel, categoryName, quantity, note }) => ({
+        id: crypto.randomUUID(),
+        productName,
+        unitLabel,
+        categoryName,
+        quantity,
+        purchased: false,
+        note,
+      })),
     };
     this.store.add(list);
     return list;
