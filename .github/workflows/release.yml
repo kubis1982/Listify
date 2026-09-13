@@ -9,13 +9,49 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  validate-version:
+    name: Validate Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Extract version from tag
+        id: extract-version
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/v}"
+          echo "version=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "Version extracted: $TAG_NAME"
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ steps.extract-version.outputs.version }}"
+          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format: $VERSION. Expected format: x.y.z"
+            exit 1
+          fi
+          echo "✅ Version format is valid: $VERSION"
+
+      - name: Validate version matches package.json
+        run: |
+          VERSION="${{ steps.extract-version.outputs.version }}"
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if [ "$PACKAGE_VERSION" != "$VERSION" ]; then
+            echo "❌ Tag v$VERSION does not match \"version\": \"$PACKAGE_VERSION\" in package.json."
+            echo "Bump the version in package.json and commit it to main before creating the tag."
+            exit 1
+          fi
+          echo "✅ Tag version matches package.json: $VERSION"
+
+  build:
+    name: Build and Package
+    needs: validate-version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -37,9 +73,163 @@ jobs:
           cd dist/listify/browser
           zip -r "${GITHUB_WORKSPACE}/listify-${GITHUB_REF_NAME}.zip" .
 
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: listify-build
+          path: listify-${{ github.ref_name }}.zip
+
+  create-github-release:
+    name: Create GitHub Release
+    needs: [validate-version, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: listify-build
+
+      - name: Get previous tag
+        id: previous-tag
+        run: |
+          # Find the tag immediately preceding the current one in semver order,
+          # not just the highest other tag (matters for out-of-order releases,
+          # e.g. a hotfix cut after a newer release already exists).
+          CURRENT_TAG="${{ github.ref_name }}"
+          PREVIOUS_TAG=$(git tag -l "v*.*.*" | sort -V | grep -B1 -x -F "$CURRENT_TAG" | head -n 1)
+
+          if [ -z "$PREVIOUS_TAG" ] || [ "$PREVIOUS_TAG" = "$CURRENT_TAG" ]; then
+            echo "No previous tag found, using first commit"
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+
+          echo "previous-tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
+          echo "📋 Previous tag: $PREVIOUS_TAG"
+
+      - name: Generate changelog from commits
+        id: changelog
+        run: |
+          PREVIOUS_TAG="${{ steps.previous-tag.outputs.previous-tag }}"
+          CURRENT_TAG="${{ github.ref_name }}"
+
+          echo "## 📋 What's Changed" > changelog.md
+          echo "" >> changelog.md
+
+          # Breaking changes
+          BREAKING_CHANGES=$(git log "$PREVIOUS_TAG..$CURRENT_TAG" --grep="BREAKING CHANGE" --pretty=format:"- %s (%h)" || true)
+          if [ -n "$BREAKING_CHANGES" ]; then
+            echo "### ⚠️ BREAKING CHANGES" >> changelog.md
+            echo "" >> changelog.md
+            echo "$BREAKING_CHANGES" >> changelog.md
+            echo "" >> changelog.md
+          fi
+
+          # Features
+          FEATURES=$(git log "$PREVIOUS_TAG..$CURRENT_TAG" --grep="^feat" --pretty=format:"- %s by @%an (%h)" || true)
+          if [ -n "$FEATURES" ]; then
+            echo "### ✨ Features" >> changelog.md
+            echo "" >> changelog.md
+            echo "$FEATURES" >> changelog.md
+            echo "" >> changelog.md
+          fi
+
+          # Bug fixes
+          BUGFIXES=$(git log "$PREVIOUS_TAG..$CURRENT_TAG" --grep="^fix" --pretty=format:"- %s by @%an (%h)" || true)
+          if [ -n "$BUGFIXES" ]; then
+            echo "### 🐛 Bug Fixes" >> changelog.md
+            echo "" >> changelog.md
+            echo "$BUGFIXES" >> changelog.md
+            echo "" >> changelog.md
+          fi
+
+          # Documentation
+          DOCS=$(git log "$PREVIOUS_TAG..$CURRENT_TAG" --grep="^docs" --pretty=format:"- %s by @%an (%h)" || true)
+          if [ -n "$DOCS" ]; then
+            echo "### 📝 Documentation" >> changelog.md
+            echo "" >> changelog.md
+            echo "$DOCS" >> changelog.md
+            echo "" >> changelog.md
+          fi
+
+          # Performance
+          PERF=$(git log "$PREVIOUS_TAG..$CURRENT_TAG" --grep="^perf" --pretty=format:"- %s by @%an (%h)" || true)
+          if [ -n "$PERF" ]; then
+            echo "### ⚡ Performance" >> changelog.md
+            echo "" >> changelog.md
+            echo "$PERF" >> changelog.md
+            echo "" >> changelog.md
+          fi
+
+          # Refactoring
+          REFACTOR=$(git log "$PREVIOUS_TAG..$CURRENT_TAG" --grep="^refactor" --pretty=format:"- %s by @%an (%h)" || true)
+          if [ -n "$REFACTOR" ]; then
+            echo "### ♻️ Code Refactoring" >> changelog.md
+            echo "" >> changelog.md
+            echo "$REFACTOR" >> changelog.md
+            echo "" >> changelog.md
+          fi
+
+          # Other changes
+          OTHER=$(git log "$PREVIOUS_TAG..$CURRENT_TAG" --grep="^test\|^chore\|^ci\|^build" --pretty=format:"- %s by @%an (%h)" || true)
+          if [ -n "$OTHER" ]; then
+            echo "### 🔧 Other Changes" >> changelog.md
+            echo "" >> changelog.md
+            echo "$OTHER" >> changelog.md
+            echo "" >> changelog.md
+          fi
+
+          cat changelog.md
+
+      - name: Generate statistics
+        id: statistics
+        run: |
+          PREVIOUS_TAG="${{ steps.previous-tag.outputs.previous-tag }}"
+          CURRENT_TAG="${{ github.ref_name }}"
+
+          echo "## 📊 Statistics" > statistics.md
+          echo "" >> statistics.md
+
+          COMMIT_COUNT=$(git rev-list "$PREVIOUS_TAG..$CURRENT_TAG" --count)
+          echo "- **$COMMIT_COUNT** commits since $PREVIOUS_TAG" >> statistics.md
+
+          FILES_CHANGED=$(git diff "$PREVIOUS_TAG..$CURRENT_TAG" --stat | tail -n 1 || echo "0 files changed")
+          echo "- $FILES_CHANGED" >> statistics.md
+
+          echo "- **Contributors**: " >> statistics.md
+          git log "$PREVIOUS_TAG..$CURRENT_TAG" --format='%an' | sort -u | while read -r author; do
+            echo "  - @$author" >> statistics.md
+          done
+
+          echo "" >> statistics.md
+          echo "**Full Changelog**: [\`$PREVIOUS_TAG...$CURRENT_TAG\`](https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...$CURRENT_TAG)" >> statistics.md
+          echo "" >> statistics.md
+
+          cat statistics.md
+
+      - name: Combine release notes
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+
+          echo "# Release v$VERSION" > release-notes.md
+          echo "" >> release-notes.md
+          cat changelog.md >> release-notes.md
+          echo "" >> release-notes.md
+          cat statistics.md >> release-notes.md
+          echo "---" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "**Note**: If you're upgrading from a previous version, please review the changelog above for any breaking changes." >> release-notes.md
+
+          cat release-notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
+          name: Release ${{ github.ref_name }}
+          body_path: release-notes.md
           files: listify-${{ github.ref_name }}.zip
