@@ -12,6 +12,7 @@ import { FormField, form, required } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
+import { parseShoppingListExport, ShoppingListImportError } from '../data/shopping-list-export';
 import { ShoppingList, ShoppingListId } from '../data/shopping-list.model';
 import { ShoppingListsService } from '../data/shopping-lists.service';
 
@@ -26,6 +27,30 @@ interface NewListFormValue {
     <div class="page">
       <div class="page-header">
         <h1>Shopping lists</h1>
+        <button type="button" class="btn-outline-pill" (click)="triggerImport()">
+          <svg
+            class="icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          Import
+        </button>
+        <input
+          #importInput
+          type="file"
+          accept="application/json,.json"
+          hidden
+          (change)="handleImportFileSelected($event)"
+        />
       </div>
 
       @if (shoppingListsService.lists().length === 0) {
@@ -216,6 +241,7 @@ export class ShoppingListsOverview {
 
   protected readonly isPanelOpen = signal(false);
   private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
+  private readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
 
   private readonly model = signal<NewListFormValue>({ name: '' });
   protected readonly newListForm = form(this.model, (path) => {
@@ -256,5 +282,32 @@ export class ShoppingListsOverview {
     const list = this.shoppingListsService.addList(name);
     this.newListForm().reset({ name: '' });
     this.router.navigate(['/lists', list.id]);
+  }
+
+  protected triggerImport(): void {
+    this.importInput()?.nativeElement.click();
+  }
+
+  protected async handleImportFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const parsed = parseShoppingListExport(text);
+      const list = this.shoppingListsService.importList(parsed.list);
+      this.router.navigate(['/lists', list.id]);
+    } catch (error) {
+      if (error instanceof ShoppingListImportError) {
+        await this.confirmDialogService.alert({
+          title: 'Import failed',
+          message: "We couldn't read this file — check it's a valid Listify export.",
+        });
+      }
+    }
   }
 }

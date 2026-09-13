@@ -9,6 +9,16 @@ function clickConfirmDialogButton(which: 'cancel' | 'confirm'): void {
   (which === 'cancel' ? buttons[0] : buttons[1]).click();
 }
 
+function createImportFile(content: string): File {
+  return new File([content], 'list.json', { type: 'application/json' });
+}
+
+function selectImportFile(root: HTMLElement, file: File): void {
+  const fileInput = root.querySelector<HTMLInputElement>('input[type="file"]')!;
+  Object.defineProperty(fileInput, 'files', { value: [file], configurable: true });
+  fileInput.dispatchEvent(new Event('change'));
+}
+
 @Component({ template: '' })
 class DummyDetailComponent {}
 
@@ -120,5 +130,44 @@ describe('ShoppingListsOverview', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     expect(shoppingListsService.lists().length).toBe(1);
+  });
+
+  it('imports a valid file and navigates to the new list', async () => {
+    const fixture = TestBed.createComponent(ShoppingListsOverview);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const file = createImportFile(
+      JSON.stringify({
+        version: 1,
+        exportedAt: '2026-01-01T00:00:00.000Z',
+        list: {
+          name: 'Shared list',
+          items: [{ productName: 'Milk', unitLabel: 'l', categoryName: 'Dairy', quantity: 2 }],
+        },
+      }),
+    );
+    selectImportFile(fixture.nativeElement as HTMLElement, file);
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    expect(shoppingListsService.lists().length).toBe(1);
+    expect(shoppingListsService.lists()[0].name).toBe('Shared list');
+    const createdId = shoppingListsService.lists()[0].id;
+    expect(navigateSpy).toHaveBeenCalledWith(['/lists', createdId]);
+  });
+
+  it('shows an alert and creates no list when the file is invalid', async () => {
+    const fixture = TestBed.createComponent(ShoppingListsOverview);
+    fixture.detectChanges();
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+
+    const file = createImportFile('not valid json');
+    selectImportFile(fixture.nativeElement as HTMLElement, file);
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(shoppingListsService.lists()).toEqual([]);
+    expect(document.body.textContent).toContain('Import failed');
   });
 });
