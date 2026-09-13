@@ -165,7 +165,7 @@ export class CategoriesManager {
     });
 
     effect(() => {
-      if (!this.isPanelOpen() && this.editingId() !== null) {
+      if (!this.isPanelOpen()) {
         this.editingId.set(null);
         this.categoryForm().reset({ ...EMPTY_CATEGORY_FORM });
       }

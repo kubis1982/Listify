@@ -113,4 +113,27 @@ describe('ProductsManager', () => {
     expect(root.textContent).toContain('Add product');
     expect(root.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('');
   });
+
+  it('clears typed-in data when the add panel is closed without submitting', () => {
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const nameInput = root.querySelector<HTMLInputElement>('input[type="text"]')!;
+    nameInput.value = 'Milk 3.2%';
+    nameInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    root.querySelector<HTMLButtonElement>('button[aria-label="Close form"]')!.click();
+    fixture.detectChanges();
+
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Add product');
+    expect(root.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('');
+  });
 });

@@ -173,7 +173,7 @@ export class UnitsManager {
     });
 
     effect(() => {
-      if (!this.isPanelOpen() && this.editingId() !== null) {
+      if (!this.isPanelOpen()) {
         this.editingId.set(null);
         this.unitForm().reset({ ...EMPTY_UNIT_FORM });
       }

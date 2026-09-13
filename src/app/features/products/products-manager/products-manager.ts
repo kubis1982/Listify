@@ -182,7 +182,7 @@ export class ProductsManager {
     });
 
     effect(() => {
-      if (!this.isPanelOpen() && this.editingId() !== null) {
+      if (!this.isPanelOpen()) {
         this.editingId.set(null);
         this.productForm().reset({ ...EMPTY_PRODUCT_FORM });
       }

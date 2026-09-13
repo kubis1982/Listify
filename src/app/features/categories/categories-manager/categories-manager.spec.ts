@@ -99,6 +99,27 @@ describe('CategoriesManager', () => {
     expect(root.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('');
   });
 
+  it('clears typed-in data when the add panel is closed without submitting', () => {
+    const fixture = TestBed.createComponent(CategoriesManager);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    setInputValue(root.querySelector<HTMLInputElement>('input[type="text"]')!, 'Dairy');
+    fixture.detectChanges();
+
+    root.querySelector<HTMLButtonElement>('button[aria-label="Close form"]')!.click();
+    fixture.detectChanges();
+
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Add category');
+    expect(root.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('');
+  });
+
   it('disables delete for a category used by a product and does not remove it', () => {
     const fixture = TestBed.createComponent(CategoriesManager);
     const categoriesService = TestBed.inject(CategoriesService);
