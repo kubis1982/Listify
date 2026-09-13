@@ -164,6 +164,13 @@ export class CategoriesManager {
       this.duplicateNameError.set(false);
     });
 
+    effect(() => {
+      if (!this.isPanelOpen() && this.editingId() !== null) {
+        this.editingId.set(null);
+        this.categoryForm().reset({ ...EMPTY_CATEGORY_FORM });
+      }
+    });
+
     afterRenderEffect(() => {
       if (this.isPanelOpen()) {
         this.nameInput()?.nativeElement.focus();
