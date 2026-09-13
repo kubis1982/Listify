@@ -181,6 +181,13 @@ export class ProductsManager {
       this.duplicateNameError.set(false);
     });
 
+    effect(() => {
+      if (!this.isPanelOpen()) {
+        this.editingId.set(null);
+        this.productForm().reset({ ...EMPTY_PRODUCT_FORM });
+      }
+    });
+
     afterRenderEffect(() => {
       if (this.isPanelOpen()) {
         this.nameInput()?.nativeElement.focus();

@@ -8,7 +8,13 @@ import { Component, input, model } from '@angular/core';
         <div class="add-panel">
           <div class="add-panel__header">
             <h2>{{ title() }}</h2>
-            <button type="button" class="icon-btn" (click)="close()" aria-label="Close form">
+            <button
+              type="button"
+              class="icon-btn"
+              (mousedown)="$event.preventDefault()"
+              (click)="close()"
+              aria-label="Close form"
+            >
               <svg
                 class="icon"
                 viewBox="0 0 24 24"

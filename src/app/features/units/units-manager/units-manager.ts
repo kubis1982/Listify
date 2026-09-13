@@ -172,6 +172,13 @@ export class UnitsManager {
       this.duplicateSymbolError.set(false);
     });
 
+    effect(() => {
+      if (!this.isPanelOpen()) {
+        this.editingId.set(null);
+        this.unitForm().reset({ ...EMPTY_UNIT_FORM });
+      }
+    });
+
     afterRenderEffect(() => {
       if (this.isPanelOpen()) {
         this.symbolInput()?.nativeElement.focus();
