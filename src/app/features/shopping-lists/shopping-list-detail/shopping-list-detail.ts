@@ -248,6 +248,9 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                 />
 
                 <button type="submit" class="btn-accent-pill-lg full-width">Add to list</button>
+                @if (feedbackMessage()) {
+                  <p class="field-info" role="status">{{ feedbackMessage() }}</p>
+                }
               </form>
             }
           </app-fab-panel>
@@ -410,6 +413,8 @@ export class ShoppingListDetail {
 
   protected readonly isItemPanelOpen = signal(false);
   protected readonly editingItemId = signal<ShoppingListItemId | null>(null);
+  protected readonly feedbackMessage = signal<string | null>(null);
+  private feedbackTimeoutId?: ReturnType<typeof setTimeout>;
 
   private readonly itemModel = signal<ItemFormValue>({ ...EMPTY_ITEM_FORM });
   protected readonly itemForm = form(this.itemModel, (path) => {
@@ -500,7 +505,7 @@ export class ShoppingListDetail {
       return;
     }
 
-    this.shoppingListsService.addItemFromProduct(
+    const merged = this.shoppingListsService.addItemFromProduct(
       this.id(),
       product,
       unit,
@@ -510,5 +515,14 @@ export class ShoppingListDetail {
     );
 
     this.itemForm().reset({ ...EMPTY_ITEM_FORM });
+    this.showFeedback(merged ? 'Quantity updated for existing item.' : null);
+  }
+
+  private showFeedback(message: string | null): void {
+    clearTimeout(this.feedbackTimeoutId);
+    this.feedbackMessage.set(message);
+    if (message) {
+      this.feedbackTimeoutId = setTimeout(() => this.feedbackMessage.set(null), 3000);
+    }
   }
 }
