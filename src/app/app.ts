@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 @Component({
@@ -6,5 +6,18 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss',
+  host: {
+    '(document:keydown.escape)': 'closeMenu()',
+  },
 })
-export class App {}
+export class App {
+  protected readonly isMenuOpen = signal(false);
+
+  protected toggleMenu(): void {
+    this.isMenuOpen.update((open) => !open);
+  }
+
+  protected closeMenu(): void {
+    this.isMenuOpen.set(false);
+  }
+}

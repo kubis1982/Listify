@@ -20,11 +20,63 @@
   font-size: 1.125rem;
   letter-spacing: -0.02em;
   color: var(--color-paper);
+  flex: 1;
+}
+
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  color: var(--color-sage);
+  cursor: pointer;
+  transition: color 0.15s ease-out;
+
+  &:hover {
+    color: var(--color-paper);
+  }
 }
 
 .nav-links {
   display: flex;
   gap: 0.25rem;
+}
+
+@media (max-width: 639.98px) {
+  .app-header {
+    gap: 0.5rem;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    flex-direction: column;
+    gap: 0;
+    padding: 0.5rem 1.5rem 1rem;
+    background-color: var(--color-ink);
+
+    &.open {
+      display: flex;
+    }
+  }
+
+  .nav-link {
+    box-sizing: border-box;
+    width: 100%;
+    padding-block: 0.75rem;
+    border-radius: 0.5rem;
+    text-align: left;
+  }
 }
 
 .nav-link {

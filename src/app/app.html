@@ -1,10 +1,30 @@
 <header class="app-header">
   <span class="brand">Listify</span>
-  <nav aria-label="Main navigation" class="nav-links">
-    <a class="nav-link" routerLink="/lists" routerLinkActive="active">Shopping lists</a>
-    <a class="nav-link" routerLink="/products" routerLinkActive="active">Products</a>
-    <a class="nav-link" routerLink="/units" routerLinkActive="active">Units</a>
-    <a class="nav-link" routerLink="/categories" routerLinkActive="active">Categories</a>
+  <button
+    type="button"
+    class="menu-toggle"
+    aria-controls="main-nav"
+    [attr.aria-expanded]="isMenuOpen()"
+    [attr.aria-label]="isMenuOpen() ? 'Close menu' : 'Open menu'"
+    (click)="toggleMenu()"
+  >
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+    </svg>
+  </button>
+  <nav
+    id="main-nav"
+    aria-label="Main navigation"
+    class="nav-links"
+    [class.open]="isMenuOpen()"
+    [attr.inert]="isMenuOpen() ? null : true"
+  >
+    <a class="nav-link" routerLink="/lists" routerLinkActive="active" (click)="closeMenu()">Shopping lists</a>
+    <a class="nav-link" routerLink="/products" routerLinkActive="active" (click)="closeMenu()">Products</a>
+    <a class="nav-link" routerLink="/units" routerLinkActive="active" (click)="closeMenu()">Units</a>
+    <a class="nav-link" routerLink="/categories" routerLinkActive="active" (click)="closeMenu()">Categories</a>
   </nav>
 </header>
 

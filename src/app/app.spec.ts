@@ -1,12 +1,16 @@
+import { ApplicationRef, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
+
+@Component({ template: '' })
+class DummyRouteComponent {}
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      providers: [provideRouter([{ path: '**', component: DummyRouteComponent }])],
     }).compileComponents();
   });
 
@@ -23,5 +27,61 @@ describe('App', () => {
       (a) => a.getAttribute('href'),
     );
     expect(links).toEqual(['/lists', '/products', '/units', '/categories']);
+  });
+
+  it('collapses the nav behind a closed menu toggle by default', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const toggle = element.querySelector('.menu-toggle') as HTMLButtonElement;
+    const nav = element.querySelector('nav') as HTMLElement;
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(nav.hasAttribute('inert')).toBe(true);
+  });
+
+  it('opens the nav when the menu toggle is clicked', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const toggle = element.querySelector('.menu-toggle') as HTMLButtonElement;
+
+    toggle.click();
+    fixture.detectChanges();
+
+    const nav = element.querySelector('nav') as HTMLElement;
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(nav.hasAttribute('inert')).toBe(false);
+  });
+
+  it('closes the nav when a link is clicked', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const toggle = element.querySelector('.menu-toggle') as HTMLButtonElement;
+
+    toggle.click();
+    fixture.detectChanges();
+    (element.querySelector('nav a') as HTMLAnchorElement).click();
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect((element.querySelector('nav') as HTMLElement).hasAttribute('inert')).toBe(true);
+  });
+
+  it('closes the nav when Escape is pressed', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const toggle = element.querySelector('.menu-toggle') as HTMLButtonElement;
+
+    toggle.click();
+    fixture.detectChanges();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect((element.querySelector('nav') as HTMLElement).hasAttribute('inert')).toBe(true);
   });
 });
