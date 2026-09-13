@@ -5,6 +5,7 @@ import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../../units/data/units.service';
+import { ShoppingListItem, ShoppingListItemId } from '../data/shopping-list.model';
 import { ShoppingListsService } from '../data/shopping-lists.service';
 
 interface ItemFormValue {
@@ -13,7 +14,12 @@ interface ItemFormValue {
   note: string;
 }
 
+interface QuantityFormValue {
+  quantity: number;
+}
+
 const EMPTY_ITEM_FORM: ItemFormValue = { productId: '', quantity: 1, note: '' };
+const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
 
 @Component({
   selector: 'app-shopping-list-detail',
@@ -106,30 +112,53 @@ const EMPTY_ITEM_FORM: ItemFormValue = { productId: '', quantity: 1, note: '' };
                     }
                   </div>
                 </div>
-                <button
-                  type="button"
-                  class="icon-btn"
-                  [disabled]="currentList.status === 'completed'"
-                  (click)="removeItem(item.id)"
-                  [attr.aria-label]="'Remove ' + item.productName"
-                >
-                  <svg
-                    class="icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
+                <div class="list-card__actions">
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    [disabled]="currentList.status === 'completed'"
+                    (click)="startEditItem(item)"
+                    [attr.aria-label]="'Edit ' + item.productName + ' quantity'"
                   >
-                    <path d="M3 6h18" />
-                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                    <line x1="10" y1="11" x2="10" y2="17" />
-                    <line x1="14" y1="11" x2="14" y2="17" />
-                  </svg>
-                </button>
+                    <svg
+                      class="icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    [disabled]="currentList.status === 'completed'"
+                    (click)="removeItem(item.id)"
+                    [attr.aria-label]="'Remove ' + item.productName"
+                  >
+                    <svg
+                      class="icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      <line x1="10" y1="11" x2="10" y2="17" />
+                      <line x1="14" y1="11" x2="14" y2="17" />
+                    </svg>
+                  </button>
+                </div>
               </li>
             }
           </ul>
@@ -138,48 +167,78 @@ const EMPTY_ITEM_FORM: ItemFormValue = { productId: '', quantity: 1, note: '' };
         @if (currentList.status === 'completed') {
           <p class="empty-state">This list is completed. Mark it active again to add items.</p>
         } @else {
-          <app-fab-panel title="Add item" fabLabel="Add item" [(open)]="isAddPanelOpen">
-            <form novalidate (submit)="addItem($event)">
-              <label class="field-label" for="add-item-product">Product</label>
-              <select id="add-item-product" class="field-input" [formField]="itemForm.productId">
-                <option value="" disabled>Select a product</option>
-                @for (product of productsService.products(); track product.id) {
-                  <option [value]="product.id">{{ product.name }}</option>
+          <app-fab-panel
+            [title]="editingItemId() ? 'Edit quantity' : 'Add item'"
+            fabLabel="Add item"
+            [(open)]="isItemPanelOpen"
+          >
+            @if (editingItemId()) {
+              <form novalidate (submit)="saveItemQuantity($event)">
+                <label class="field-label" for="edit-item-quantity">Quantity</label>
+                <input
+                  id="edit-item-quantity"
+                  type="number"
+                  class="field-input data-font"
+                  step="0.01"
+                  [formField]="quantityForm.quantity"
+                />
+                @if (quantityForm.quantity().invalid() && quantityForm.quantity().touched()) {
+                  <span class="field-error">Quantity must be greater than 0.</span>
                 }
-              </select>
-              @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
-                <span class="field-error">Please select a product.</span>
-              }
 
-              <label class="field-label" for="add-item-unit">Unit</label>
-              <select
-                id="add-item-unit"
-                class="field-input"
-                [value]="selectedUnitId()"
-                (change)="onUnitChange($event)"
-              >
-                @for (unit of unitsService.units(); track unit.id) {
-                  <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
+                <button type="submit" class="btn-accent-pill-lg full-width">Save</button>
+                <button type="button" class="btn-outline-pill full-width" (click)="cancelEditItem()">
+                  Cancel
+                </button>
+              </form>
+            } @else {
+              <form novalidate (submit)="addItem($event)">
+                <label class="field-label" for="add-item-product">Product</label>
+                <select id="add-item-product" class="field-input" [formField]="itemForm.productId">
+                  <option value="" disabled>Select a product</option>
+                  @for (product of productsService.products(); track product.id) {
+                    <option [value]="product.id">{{ product.name }}</option>
+                  }
+                </select>
+                @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
+                  <span class="field-error">Please select a product.</span>
                 }
-              </select>
 
-              <label class="field-label" for="add-item-quantity">Quantity</label>
-              <input
-                id="add-item-quantity"
-                type="number"
-                class="field-input data-font"
-                step="0.01"
-                [formField]="itemForm.quantity"
-              />
-              @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
-                <span class="field-error">Quantity must be greater than 0.</span>
-              }
+                <label class="field-label" for="add-item-unit">Unit</label>
+                <select
+                  id="add-item-unit"
+                  class="field-input"
+                  [value]="selectedUnitId()"
+                  (change)="onUnitChange($event)"
+                >
+                  @for (unit of unitsService.units(); track unit.id) {
+                    <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
+                  }
+                </select>
 
-              <label class="field-label" for="add-item-note">Note</label>
-              <input id="add-item-note" type="text" class="field-input" [formField]="itemForm.note" />
+                <label class="field-label" for="add-item-quantity">Quantity</label>
+                <input
+                  id="add-item-quantity"
+                  type="number"
+                  class="field-input data-font"
+                  step="0.01"
+                  [formField]="itemForm.quantity"
+                />
+                @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
+                  <span class="field-error">Quantity must be greater than 0.</span>
+                }
 
-              <button type="submit" class="btn-accent-pill-lg full-width">Add to list</button>
-            </form>
+                <label class="field-label" for="add-item-note">Note</label>
+                <input
+                  id="add-item-note"
+                  type="text"
+                  class="field-input"
+                  [formField]="itemForm.note"
+                />
+
+                <button type="submit" class="btn-accent-pill-lg full-width">Add to list</button>
+              </form>
+            }
           </app-fab-panel>
         }
       } @else {
@@ -338,11 +397,18 @@ export class ShoppingListDetail {
     this.shoppingListsService.lists().find((l) => l.id === this.id()),
   );
 
-  protected readonly isAddPanelOpen = signal(false);
+  protected readonly isItemPanelOpen = signal(false);
+  protected readonly editingItemId = signal<ShoppingListItemId | null>(null);
 
   private readonly itemModel = signal<ItemFormValue>({ ...EMPTY_ITEM_FORM });
   protected readonly itemForm = form(this.itemModel, (path) => {
     required(path.productId, { message: 'Please select a product.' });
+    required(path.quantity);
+    min(path.quantity, 0.01);
+  });
+
+  private readonly quantityModel = signal<QuantityFormValue>({ ...EMPTY_QUANTITY_FORM });
+  protected readonly quantityForm = form(this.quantityModel, (path) => {
     required(path.quantity);
     min(path.quantity, 0.01);
   });
@@ -368,6 +434,34 @@ export class ShoppingListDetail {
 
   protected removeItem(itemId: string): void {
     this.shoppingListsService.removeItem(this.id(), itemId);
+  }
+
+  protected startEditItem(item: ShoppingListItem): void {
+    this.editingItemId.set(item.id);
+    this.quantityModel.set({ quantity: item.quantity });
+    this.isItemPanelOpen.set(true);
+  }
+
+  protected cancelEditItem(): void {
+    this.editingItemId.set(null);
+    this.quantityForm().reset({ ...EMPTY_QUANTITY_FORM });
+    this.isItemPanelOpen.set(false);
+  }
+
+  protected saveItemQuantity(event: Event): void {
+    event.preventDefault();
+    this.quantityForm().markAsTouched();
+    if (this.quantityForm().invalid()) {
+      return;
+    }
+
+    const itemId = this.editingItemId();
+    if (!itemId) {
+      return;
+    }
+
+    this.shoppingListsService.updateItemQuantity(this.id(), itemId, this.quantityModel().quantity);
+    this.cancelEditItem();
   }
 
   protected addItem(event: Event): void {

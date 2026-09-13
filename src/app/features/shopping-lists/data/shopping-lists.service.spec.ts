@@ -84,6 +84,18 @@ describe('ShoppingListsService', () => {
     expect(service.lists()[0].items[0].purchased).toBe(true);
   });
 
+  it('updates the quantity of an item', () => {
+    const service = TestBed.inject(ShoppingListsService);
+    service.addList('Weekly groceries');
+    const listId = service.lists()[0].id;
+    service.addItemFromProduct(listId, product, unit, category, 1);
+    const itemId = service.lists()[0].items[0].id;
+
+    service.updateItemQuantity(listId, itemId, 3.5);
+
+    expect(service.lists()[0].items[0].quantity).toBe(3.5);
+  });
+
   it('removes an item from a list', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');
@@ -106,10 +118,12 @@ describe('ShoppingListsService', () => {
 
     service.addItemFromProduct(listId, product, unit, category, 2);
     service.setItemPurchased(listId, itemId, true);
+    service.updateItemQuantity(listId, itemId, 9);
     service.removeItem(listId, itemId);
 
     const list = service.lists()[0];
     expect(list.items.length).toBe(1);
     expect(list.items[0].purchased).toBe(false);
+    expect(list.items[0].quantity).toBe(1);
   });
 });
