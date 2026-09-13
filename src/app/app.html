@@ -14,13 +14,7 @@
       <line x1="4" y1="18" x2="20" y2="18" />
     </svg>
   </button>
-  <nav
-    id="main-nav"
-    aria-label="Main navigation"
-    class="nav-links"
-    [class.open]="isMenuOpen()"
-    [attr.inert]="isMenuOpen() ? null : true"
-  >
+  <nav id="main-nav" aria-label="Main navigation" class="nav-links" [class.open]="isMenuOpen()">
     <a class="nav-link" routerLink="/lists" routerLinkActive="active" (click)="closeMenu()">Shopping lists</a>
     <a class="nav-link" routerLink="/products" routerLinkActive="active" (click)="closeMenu()">Products</a>
     <a class="nav-link" routerLink="/units" routerLinkActive="active" (click)="closeMenu()">Units</a>

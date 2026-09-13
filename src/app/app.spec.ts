@@ -1,6 +1,6 @@
 import { ApplicationRef, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { App } from './app';
 
 @Component({ template: '' })
@@ -37,7 +37,7 @@ describe('App', () => {
     const nav = element.querySelector('nav') as HTMLElement;
 
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect(nav.hasAttribute('inert')).toBe(true);
+    expect(nav.classList.contains('open')).toBe(false);
   });
 
   it('opens the nav when the menu toggle is clicked', () => {
@@ -51,7 +51,7 @@ describe('App', () => {
 
     const nav = element.querySelector('nav') as HTMLElement;
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(nav.hasAttribute('inert')).toBe(false);
+    expect(nav.classList.contains('open')).toBe(true);
   });
 
   it('closes the nav when a link is clicked', async () => {
@@ -67,7 +67,7 @@ describe('App', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect((element.querySelector('nav') as HTMLElement).hasAttribute('inert')).toBe(true);
+    expect((element.querySelector('nav') as HTMLElement).classList.contains('open')).toBe(false);
   });
 
   it('closes the nav when Escape is pressed', () => {
@@ -82,6 +82,18 @@ describe('App', () => {
     fixture.detectChanges();
 
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect((element.querySelector('nav') as HTMLElement).hasAttribute('inert')).toBe(true);
+    expect((element.querySelector('nav') as HTMLElement).classList.contains('open')).toBe(false);
+  });
+
+  it('keeps nav links clickable even while the menu toggle is closed', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    (element.querySelector('nav a[href="/units"]') as HTMLAnchorElement).click();
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/units');
   });
 });
