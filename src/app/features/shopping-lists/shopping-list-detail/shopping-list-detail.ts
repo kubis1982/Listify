@@ -15,6 +15,7 @@ import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../../units/data/units.service';
+import { toExportFilename, toShoppingListExport } from '../data/shopping-list-export';
 import { ShoppingListItem, ShoppingListItemId } from '../data/shopping-list.model';
 import { ShoppingListsService } from '../data/shopping-lists.service';
 
@@ -64,13 +65,39 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
               {{ currentList.status === 'active' ? 'Active' : 'Completed' }}
             </span>
           </div>
-          <button
-            type="button"
-            class="btn-accent-pill-lg"
-            (click)="toggleStatus(currentList.status)"
-          >
-            {{ currentList.status === 'active' ? 'Mark completed' : 'Mark active' }}
-          </button>
+          <div class="list-header__actions">
+            <button
+              type="button"
+              class="btn-accent-pill-lg"
+              (click)="toggleStatus(currentList.status)"
+            >
+              {{ currentList.status === 'active' ? 'Mark completed' : 'Mark active' }}
+            </button>
+            <button
+              type="button"
+              class="btn-outline-pill"
+              (click)="shareList()"
+              [attr.aria-label]="'Share ' + currentList.name"
+            >
+              <svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              Share
+            </button>
+          </div>
         </div>
 
         @if (itemsByCategory().length === 0) {
@@ -304,6 +331,12 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
       }
     }
 
+    .list-header__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
     .status-chip {
       padding: 0.25rem 1rem;
       border-radius: 999px;
@@ -472,6 +505,48 @@ export class ShoppingListDetail {
 
   protected toggleStatus(status: 'active' | 'completed'): void {
     this.shoppingListsService.setStatus(this.id(), status === 'active' ? 'completed' : 'active');
+  }
+
+  protected async shareList(): Promise<void> {
+    const currentList = this.list();
+    if (!currentList) {
+      return;
+    }
+    const json = JSON.stringify(toShoppingListExport(currentList), null, 2);
+    const file = new File([json], toExportFilename(currentList.name), { type: 'application/json' });
+
+    const shared = await this.tryNativeShare(file, currentList.name);
+    if (!shared) {
+      this.downloadFile(file);
+    }
+  }
+
+  private async tryNativeShare(file: File, title: string): Promise<boolean> {
+    const nav = navigator as Navigator & {
+      canShare?: (data: { files: File[] }) => boolean;
+      share?: (data: { files: File[]; title?: string }) => Promise<void>;
+    };
+    if (typeof nav.share !== 'function' || typeof nav.canShare !== 'function' || !nav.canShare({ files: [file] })) {
+      return false;
+    }
+    try {
+      await nav.share({ files: [file], title });
+      return true;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return true;
+      }
+      return false;
+    }
+  }
+
+  private downloadFile(file: File): void {
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.name;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   protected togglePurchased(itemId: string, purchased: boolean): void {

@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
@@ -349,5 +350,107 @@ describe('ShoppingListDetail', () => {
     expect(
       root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk quantity"]')!.disabled,
     ).toBe(true);
+  });
+});
+
+describe('ShoppingListDetail sharing', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      imports: [ShoppingListDetail],
+      providers: [provideRouter([])],
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete (navigator as { canShare?: unknown }).canShare;
+    delete (navigator as { share?: unknown }).share;
+  });
+
+  function setupListWithItem(): string {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({
+      name: 'Milk',
+      defaultUnitId: unitsService.units()[0].id,
+      categoryId: categoriesService.categories()[0].id,
+    });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+    shoppingListsService.addItemFromProduct(
+      listId,
+      productsService.products()[0],
+      unitsService.units()[0],
+      categoriesService.categories()[0],
+      2,
+      'organic',
+    );
+    return listId;
+  }
+
+  it('downloads a JSON file when the Web Share API is unavailable', async () => {
+    const listId = setupListWithItem();
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('button[aria-label="Share Weekly groceries"]')!.click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(createObjectURLSpy).toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalled();
+    expect(revokeSpy).toHaveBeenCalledWith('blob:mock-url');
+  });
+
+  it('uses the Web Share API with a file when supported', async () => {
+    const listId = setupListWithItem();
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const shareSpy = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'canShare', { value: () => true, configurable: true });
+    Object.defineProperty(navigator, 'share', { value: shareSpy, configurable: true });
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('button[aria-label="Share Weekly groceries"]')!.click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(shareSpy).toHaveBeenCalledTimes(1);
+    const [callArgs] = shareSpy.mock.calls[0];
+    expect(callArgs.title).toBe('Weekly groceries');
+    expect(callArgs.files[0].name).toBe('weekly-groceries.json');
+  });
+
+  it('does not fall back to download when the user cancels the native share sheet', async () => {
+    const listId = setupListWithItem();
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    Object.defineProperty(navigator, 'canShare', { value: () => true, configurable: true });
+    Object.defineProperty(navigator, 'share', {
+      value: vi.fn().mockRejectedValue(new DOMException('cancelled', 'AbortError')),
+      configurable: true,
+    });
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('button[aria-label="Share Weekly groceries"]')!.click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(createObjectURLSpy).not.toHaveBeenCalled();
   });
 });
