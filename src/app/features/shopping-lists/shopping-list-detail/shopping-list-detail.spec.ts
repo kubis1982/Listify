@@ -400,8 +400,8 @@ describe('ShoppingListDetail sharing', () => {
     fixture.detectChanges();
 
     const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
-    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 
     const root = fixture.nativeElement as HTMLElement;
     root.querySelector<HTMLButtonElement>('button[aria-label="Share Weekly groceries"]')!.click();
@@ -444,8 +444,8 @@ describe('ShoppingListDetail sharing', () => {
       configurable: true,
     });
     const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 
     const root = fixture.nativeElement as HTMLElement;
     root.querySelector<HTMLButtonElement>('button[aria-label="Share Weekly groceries"]')!.click();
