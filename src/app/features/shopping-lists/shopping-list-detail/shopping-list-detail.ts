@@ -1,4 +1,14 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import {
+  afterRenderEffect,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormField, form, min, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
@@ -176,6 +186,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
               <form novalidate (submit)="saveItemQuantity($event)">
                 <label class="field-label" for="edit-item-quantity">Quantity</label>
                 <input
+                  #quantityInput
                   id="edit-item-quantity"
                   type="number"
                   class="field-input data-font"
@@ -413,12 +424,22 @@ export class ShoppingListDetail {
     min(path.quantity, 0.01);
   });
 
+  private readonly quantityInput = viewChild<ElementRef<HTMLInputElement>>('quantityInput');
+
   protected readonly selectedUnitId = linkedSignal(() => {
     const product = this.productsService
       .products()
       .find((p) => p.id === this.itemForm.productId().value());
     return product?.defaultUnitId ?? '';
   });
+
+  constructor() {
+    afterRenderEffect(() => {
+      if (this.isItemPanelOpen() && this.editingItemId()) {
+        this.quantityInput()?.nativeElement.focus();
+      }
+    });
+  }
 
   protected onUnitChange(event: Event): void {
     this.selectedUnitId.set((event.target as HTMLSelectElement).value);

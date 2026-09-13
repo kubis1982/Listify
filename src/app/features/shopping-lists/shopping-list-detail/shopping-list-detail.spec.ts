@@ -161,6 +161,7 @@ describe('ShoppingListDetail', () => {
     expect(root.querySelectorAll('select').length).toBe(0);
     const quantityInput = root.querySelector<HTMLInputElement>('input[type="number"]')!;
     expect(quantityInput.value).toBe('2');
+    expect(document.activeElement).toBe(quantityInput);
 
     quantityInput.value = '5';
     quantityInput.dispatchEvent(new Event('input'));
