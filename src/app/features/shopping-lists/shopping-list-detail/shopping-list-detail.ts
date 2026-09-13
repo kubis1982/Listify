@@ -73,105 +73,110 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
           </button>
         </div>
 
-        @if (currentList.items.length === 0) {
+        @if (itemsByCategory().length === 0) {
           <p class="empty-state">No items yet — add the first one using the + button.</p>
         } @else {
-          <ul class="item-list">
-            @for (item of currentList.items; track item.id) {
-              <li class="list-card">
-                <div class="checkbox-wrap">
-                  <input
-                    type="checkbox"
-                    class="sr-checkbox"
-                    [id]="'check-' + item.id"
-                    [checked]="item.purchased"
-                    [disabled]="currentList.status === 'completed'"
-                    [attr.aria-label]="item.productName + ' purchased'"
-                    (change)="togglePurchased(item.id, item.purchased)"
-                  />
-                  <label
-                    [for]="'check-' + item.id"
-                    class="checkbox-face"
-                    [class.checkbox-face--checked]="item.purchased"
-                  >
-                    @if (item.purchased) {
+          @for (group of itemsByCategory(); track group.categoryName) {
+            <div class="section-heading">
+              <h2>{{ group.categoryName }}</h2>
+              <span class="section-rule"></span>
+            </div>
+            <ul class="item-list">
+              @for (item of group.items; track item.id) {
+                <li class="list-card">
+                  <div class="checkbox-wrap">
+                    <input
+                      type="checkbox"
+                      class="sr-checkbox"
+                      [id]="'check-' + item.id"
+                      [checked]="item.purchased"
+                      [disabled]="currentList.status === 'completed'"
+                      [attr.aria-label]="item.productName + ' purchased'"
+                      (change)="togglePurchased(item.id, item.purchased)"
+                    />
+                    <label
+                      [for]="'check-' + item.id"
+                      class="checkbox-face"
+                      [class.checkbox-face--checked]="item.purchased"
+                    >
+                      @if (item.purchased) {
+                        <svg
+                          class="icon icon--sm"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="3"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      }
+                    </label>
+                  </div>
+                  <div class="list-card__body">
+                    <h3 class="item-card__name" [class.item-card__name--purchased]="item.purchased">
+                      {{ item.productName }}
+                    </h3>
+                    <div class="list-card__meta item-card__pills">
+                      <span class="pill data-font">{{ item.quantity }} {{ item.unitLabel }}</span>
+                      @if (item.note) {
+                        <span class="item-card__note">— {{ item.note }}</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="list-card__actions">
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      [disabled]="currentList.status === 'completed'"
+                      (click)="startEditItem(item)"
+                      [attr.aria-label]="'Edit ' + item.productName + ' quantity'"
+                    >
                       <svg
-                        class="icon icon--sm"
+                        class="icon"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        stroke-width="3"
+                        stroke-width="2"
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         aria-hidden="true"
                       >
-                        <polyline points="20 6 9 17 4 12" />
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
                       </svg>
-                    }
-                  </label>
-                </div>
-                <div class="list-card__body">
-                  <h3 class="item-card__name" [class.item-card__name--purchased]="item.purchased">
-                    {{ item.productName }}
-                  </h3>
-                  <div class="list-card__meta item-card__pills">
-                    <span class="pill data-font">{{ item.quantity }} {{ item.unitLabel }}</span>
-                    <span class="pill">{{ item.categoryName }}</span>
-                    @if (item.note) {
-                      <span class="item-card__note">— {{ item.note }}</span>
-                    }
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      [disabled]="currentList.status === 'completed'"
+                      (click)="removeItem(item.id)"
+                      [attr.aria-label]="'Remove ' + item.productName"
+                    >
+                      <svg
+                        class="icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
                   </div>
-                </div>
-                <div class="list-card__actions">
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    [disabled]="currentList.status === 'completed'"
-                    (click)="startEditItem(item)"
-                    [attr.aria-label]="'Edit ' + item.productName + ' quantity'"
-                  >
-                    <svg
-                      class="icon"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 20h9" />
-                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    [disabled]="currentList.status === 'completed'"
-                    (click)="removeItem(item.id)"
-                    [attr.aria-label]="'Remove ' + item.productName"
-                  >
-                    <svg
-                      class="icon"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M3 6h18" />
-                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                      <line x1="10" y1="11" x2="10" y2="17" />
-                      <line x1="14" y1="11" x2="14" y2="17" />
-                    </svg>
-                  </button>
-                </div>
-              </li>
-            }
-          </ul>
+                </li>
+              }
+            </ul>
+          }
         }
 
         @if (currentList.status === 'completed') {
@@ -410,6 +415,21 @@ export class ShoppingListDetail {
   protected readonly list = computed(() =>
     this.shoppingListsService.lists().find((l) => l.id === this.id()),
   );
+
+  protected readonly itemsByCategory = computed(() => {
+    const groups = new Map<string, ShoppingListItem[]>();
+    for (const item of this.list()?.items ?? []) {
+      const group = groups.get(item.categoryName);
+      if (group) {
+        group.push(item);
+      } else {
+        groups.set(item.categoryName, [item]);
+      }
+    }
+    return [...groups.entries()]
+      .map(([categoryName, items]) => ({ categoryName, items }))
+      .sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+  });
 
   protected readonly isItemPanelOpen = signal(false);
   protected readonly editingItemId = signal<ShoppingListItemId | null>(null);
