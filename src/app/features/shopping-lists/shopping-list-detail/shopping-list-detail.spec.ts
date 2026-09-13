@@ -220,6 +220,52 @@ describe('ShoppingListDetail', () => {
     expect(shoppingListsService.lists()[0].items[0].purchased).toBe(true);
   });
 
+  it('edits the quantity of an item via the edit panel', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({
+      name: 'Milk',
+      defaultUnitId: unitsService.units()[0].id,
+      categoryId: categoriesService.categories()[0].id,
+    });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+    shoppingListsService.addItemFromProduct(
+      listId,
+      productsService.products()[0],
+      unitsService.units()[0],
+      categoriesService.categories()[0],
+      2,
+    );
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk quantity"]')!.click();
+    fixture.detectChanges();
+
+    expect(root.querySelectorAll('select').length).toBe(0);
+    const quantityInput = root.querySelector<HTMLInputElement>('input[type="number"]')!;
+    expect(quantityInput.value).toBe('2');
+    expect(document.activeElement).toBe(quantityInput);
+
+    quantityInput.value = '5';
+    quantityInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    expect(shoppingListsService.lists()[0].items[0].quantity).toBe(5);
+    expect(root.querySelector('.add-panel')).toBeNull();
+  });
+
   it('hides the add-item form and disables item actions for a completed list', () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ name: 'litre', symbol: 'l' });
@@ -254,5 +300,8 @@ describe('ShoppingListDetail', () => {
     expect(root.querySelector<HTMLButtonElement>('button[aria-label="Remove Milk"]')!.disabled).toBe(
       true,
     );
+    expect(
+      root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk quantity"]')!.disabled,
+    ).toBe(true);
   });
 });
