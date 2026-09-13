@@ -184,4 +184,64 @@ describe('ShoppingListsService', () => {
     expect(list.items[0].purchased).toBe(false);
     expect(list.items[0].quantity).toBe(1);
   });
+
+  it('imports a list with a fresh id, active status, and unpurchased items', () => {
+    const service = TestBed.inject(ShoppingListsService);
+
+    const created = service.importList({
+      name: 'Shared list',
+      items: [{ productName: 'Milk', unitLabel: 'l', categoryName: 'Dairy', quantity: 2, note: 'organic' }],
+    });
+
+    expect(created.status).toBe('active');
+    expect(Number.isNaN(Date.parse(created.createdAt))).toBe(false);
+    expect(created.id).toBeTruthy();
+    expect(created.items.length).toBe(1);
+    expect(created.items[0]).toEqual(
+      expect.objectContaining({
+        productName: 'Milk',
+        unitLabel: 'l',
+        categoryName: 'Dairy',
+        quantity: 2,
+        purchased: false,
+        note: 'organic',
+      }),
+    );
+    expect(created.items[0].id).toBeTruthy();
+    expect(service.lists()).toEqual([created]);
+  });
+
+  it('imports items without a note as items with no note', () => {
+    const service = TestBed.inject(ShoppingListsService);
+
+    const created = service.importList({
+      name: 'Shared list',
+      items: [{ productName: 'Milk', unitLabel: 'l', categoryName: 'Dairy', quantity: 2 }],
+    });
+
+    expect(created.items[0].note).toBeUndefined();
+  });
+
+  it('does not persist unexpected extra fields on an imported item', () => {
+    const service = TestBed.inject(ShoppingListsService);
+
+    const itemWithExtraField = {
+      productName: 'Milk',
+      unitLabel: 'l',
+      categoryName: 'Dairy',
+      quantity: 2,
+      note: 'organic',
+      maliciousField: 'should not survive import',
+    } as unknown as { productName: string; unitLabel: string; categoryName: string; quantity: number; note?: string };
+
+    const created = service.importList({
+      name: 'Shared list',
+      items: [itemWithExtraField],
+    });
+
+    expect(Object.keys(created.items[0]).sort()).toEqual(
+      ['id', 'productName', 'unitLabel', 'categoryName', 'quantity', 'purchased', 'note'].sort(),
+    );
+    expect(created.items[0]).not.toHaveProperty('maliciousField');
+  });
 });

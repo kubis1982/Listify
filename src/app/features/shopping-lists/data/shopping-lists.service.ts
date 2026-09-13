@@ -3,6 +3,7 @@ import { createLocalStorageCollection } from '../../../core/storage/local-storag
 import { Category } from '../../categories/data/category.model';
 import { Product } from '../../products/data/product.model';
 import { Unit } from '../../units/data/unit.model';
+import { type ShoppingListExport } from './shopping-list-export';
 import {
   ShoppingList,
   ShoppingListId,
@@ -23,6 +24,26 @@ export class ShoppingListsService {
       createdAt: new Date().toISOString(),
       status: 'active',
       items: [],
+    };
+    this.store.add(list);
+    return list;
+  }
+
+  importList(data: ShoppingListExport['list']): ShoppingList {
+    const list: ShoppingList = {
+      id: crypto.randomUUID(),
+      name: data.name,
+      createdAt: new Date().toISOString(),
+      status: 'active',
+      items: data.items.map(({ productName, unitLabel, categoryName, quantity, note }) => ({
+        id: crypto.randomUUID(),
+        productName,
+        unitLabel,
+        categoryName,
+        quantity,
+        purchased: false,
+        note,
+      })),
     };
     this.store.add(list);
     return list;

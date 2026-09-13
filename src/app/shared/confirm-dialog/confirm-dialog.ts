@@ -6,6 +6,7 @@ export interface ConfirmDialogData {
   readonly message: string;
   readonly confirmLabel?: string;
   readonly cancelLabel?: string;
+  readonly hideCancel?: boolean;
 }
 
 @Component({
@@ -32,9 +33,11 @@ export interface ConfirmDialogData {
       </div>
       <p class="confirm-dialog__message">{{ data.message }}</p>
       <div class="confirm-dialog__actions">
-        <button type="button" class="btn-outline-pill" (click)="cancel()">
-          {{ data.cancelLabel ?? 'Cancel' }}
-        </button>
+        @if (!data.hideCancel) {
+          <button type="button" class="btn-outline-pill" (click)="cancel()">
+            {{ data.cancelLabel ?? 'Cancel' }}
+          </button>
+        }
         <button type="button" class="btn-accent-pill-lg" (click)="confirm()">
           {{ data.confirmLabel ?? 'Delete' }}
         </button>
