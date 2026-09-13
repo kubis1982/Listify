@@ -185,6 +185,52 @@ describe('ShoppingListDetail', () => {
     expect(root.textContent).not.toContain('Category');
   });
 
+  it('groups items into sections by category, sorted alphabetically', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const unitId = unitsService.units()[0].id;
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Produce' });
+    categoriesService.add({ name: 'Dairy' });
+    const [produceCategory, dairyCategory] = categoriesService.categories();
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Apples', defaultUnitId: unitId, categoryId: produceCategory.id });
+    productsService.add({ name: 'Milk', defaultUnitId: unitId, categoryId: dairyCategory.id });
+    const [applesProduct, milkProduct] = productsService.products();
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+    shoppingListsService.addItemFromProduct(
+      listId,
+      applesProduct,
+      unitsService.units()[0],
+      produceCategory,
+      3,
+    );
+    shoppingListsService.addItemFromProduct(
+      listId,
+      milkProduct,
+      unitsService.units()[0],
+      dairyCategory,
+      1,
+    );
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const headings = Array.from(root.querySelectorAll('.section-heading h2')).map(
+      (heading) => heading.textContent,
+    );
+    expect(headings).toEqual(['Dairy', 'Produce']);
+
+    const itemLists = root.querySelectorAll('.item-list');
+    expect(itemLists.length).toBe(2);
+    expect(itemLists[0].textContent).toContain('Milk');
+    expect(itemLists[1].textContent).toContain('Apples');
+  });
+
   it('marks an item as purchased when its checkbox is toggled', () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ name: 'litre', symbol: 'l' });
