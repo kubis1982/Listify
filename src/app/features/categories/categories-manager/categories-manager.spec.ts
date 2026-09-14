@@ -77,7 +77,7 @@ describe('CategoriesManager', () => {
     expect(categoriesService.categories().length).toBe(1);
   });
 
-  it('resets to add mode when the edit panel is closed via the panel close button', () => {
+  it('resets to add mode when editing is cancelled', () => {
     const fixture = TestBed.createComponent(CategoriesManager);
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
@@ -89,7 +89,7 @@ describe('CategoriesManager', () => {
 
     expect(root.textContent).toContain('Edit category');
 
-    root.querySelector<HTMLButtonElement>('button[aria-label="Close form"]')!.click();
+    root.querySelector<HTMLButtonElement>('.btn-outline-pill')!.click();
     fixture.detectChanges();
 
     root.querySelector<HTMLButtonElement>('.fab')!.click();
@@ -99,7 +99,7 @@ describe('CategoriesManager', () => {
     expect(root.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('');
   });
 
-  it('clears typed-in data when the add panel is closed without submitting', () => {
+  it('clears typed-in data when adding is cancelled without submitting', () => {
     const fixture = TestBed.createComponent(CategoriesManager);
     fixture.detectChanges();
 
@@ -110,7 +110,7 @@ describe('CategoriesManager', () => {
     setInputValue(root.querySelector<HTMLInputElement>('input[type="text"]')!, 'Dairy');
     fixture.detectChanges();
 
-    root.querySelector<HTMLButtonElement>('button[aria-label="Close form"]')!.click();
+    root.querySelector<HTMLButtonElement>('.btn-outline-pill')!.click();
     fixture.detectChanges();
 
     root.querySelector<HTMLButtonElement>('.fab')!.click();

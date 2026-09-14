@@ -107,7 +107,7 @@ describe('UnitsManager', () => {
     expect(unitsService.units().length).toBe(1);
   });
 
-  it('resets to add mode when the edit panel is closed via the panel close button', () => {
+  it('resets to add mode when editing is cancelled', () => {
     const fixture = TestBed.createComponent(UnitsManager);
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ name: 'Litre', symbol: 'l' });
@@ -119,7 +119,7 @@ describe('UnitsManager', () => {
 
     expect(root.textContent).toContain('Edit unit');
 
-    root.querySelector<HTMLButtonElement>('button[aria-label="Close form"]')!.click();
+    root.querySelector<HTMLButtonElement>('.btn-outline-pill')!.click();
     fixture.detectChanges();
 
     root.querySelector<HTMLButtonElement>('.fab')!.click();
@@ -129,7 +129,7 @@ describe('UnitsManager', () => {
     expect(root.querySelectorAll<HTMLInputElement>('input[type="text"]')[0].value).toBe('');
   });
 
-  it('clears typed-in data when the add panel is closed without submitting', () => {
+  it('clears typed-in data when adding is cancelled without submitting', () => {
     const fixture = TestBed.createComponent(UnitsManager);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -140,7 +140,7 @@ describe('UnitsManager', () => {
     setInputValue(root.querySelectorAll<HTMLInputElement>('input[type="text"]')[0], 'kg');
     fixture.detectChanges();
 
-    root.querySelector<HTMLButtonElement>('button[aria-label="Close form"]')!.click();
+    root.querySelector<HTMLButtonElement>('.btn-outline-pill')!.click();
     fixture.detectChanges();
 
     root.querySelector<HTMLButtonElement>('.fab')!.click();

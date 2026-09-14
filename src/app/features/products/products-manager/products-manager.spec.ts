@@ -92,7 +92,7 @@ describe('ProductsManager', () => {
     expect(productsService.products().length).toBe(1);
   });
 
-  it('resets to add mode when the edit panel is closed via the panel close button', () => {
+  it('resets to add mode when editing is cancelled', () => {
     const productsService = TestBed.inject(ProductsService);
     productsService.add({ name: 'Milk', defaultUnitId: 'u1', categoryId: 'c1' });
     const fixture = TestBed.createComponent(ProductsManager);
@@ -104,7 +104,7 @@ describe('ProductsManager', () => {
 
     expect(root.textContent).toContain('Edit product');
 
-    root.querySelector<HTMLButtonElement>('button[aria-label="Close form"]')!.click();
+    root.querySelector<HTMLButtonElement>('.btn-outline-pill')!.click();
     fixture.detectChanges();
 
     root.querySelector<HTMLButtonElement>('.fab')!.click();
@@ -114,7 +114,7 @@ describe('ProductsManager', () => {
     expect(root.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('');
   });
 
-  it('clears typed-in data when the add panel is closed without submitting', () => {
+  it('clears typed-in data when adding is cancelled without submitting', () => {
     const fixture = TestBed.createComponent(ProductsManager);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -127,7 +127,7 @@ describe('ProductsManager', () => {
     nameInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    root.querySelector<HTMLButtonElement>('button[aria-label="Close form"]')!.click();
+    root.querySelector<HTMLButtonElement>('.btn-outline-pill')!.click();
     fixture.detectChanges();
 
     root.querySelector<HTMLButtonElement>('.fab')!.click();
