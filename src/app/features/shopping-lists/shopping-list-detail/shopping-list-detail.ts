@@ -229,10 +229,10 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                   <span class="field-error">Quantity must be greater than 0.</span>
                 }
 
-                <button type="submit" class="btn-accent-pill-lg full-width">Save</button>
-                <button type="button" class="btn-outline-pill full-width" (click)="cancelEditItem()">
-                  Cancel
-                </button>
+                <div class="form-actions">
+                  <button type="button" class="btn-outline-pill" (click)="cancel()">Cancel</button>
+                  <button type="submit" class="btn-accent-pill-lg">Save</button>
+                </div>
               </form>
             } @else {
               <form novalidate (submit)="addItem($event)">
@@ -279,7 +279,10 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                   [formField]="itemForm.note"
                 />
 
-                <button type="submit" class="btn-accent-pill-lg full-width">Add to list</button>
+                <div class="form-actions">
+                  <button type="button" class="btn-outline-pill" (click)="cancel()">Cancel</button>
+                  <button type="submit" class="btn-accent-pill-lg">Add to list</button>
+                </div>
                 @if (feedbackMessage()) {
                   <p class="field-info" role="status">{{ feedbackMessage() }}</p>
                 }
@@ -567,8 +570,9 @@ export class ShoppingListDetail {
     this.isItemPanelOpen.set(true);
   }
 
-  protected cancelEditItem(): void {
+  protected cancel(): void {
     this.editingItemId.set(null);
+    this.itemForm().reset({ ...EMPTY_ITEM_FORM });
     this.quantityForm().reset({ ...EMPTY_QUANTITY_FORM });
     this.isItemPanelOpen.set(false);
   }
@@ -586,7 +590,7 @@ export class ShoppingListDetail {
     }
 
     this.shoppingListsService.updateItemQuantity(this.id(), itemId, this.quantityModel().quantity);
-    this.cancelEditItem();
+    this.cancel();
   }
 
   protected addItem(event: Event): void {

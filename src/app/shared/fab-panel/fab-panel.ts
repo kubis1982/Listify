@@ -8,27 +8,6 @@ import { Component, input, model } from '@angular/core';
         <div class="add-panel">
           <div class="add-panel__header">
             <h2>{{ title() }}</h2>
-            <button
-              type="button"
-              class="icon-btn"
-              (mousedown)="$event.preventDefault()"
-              (click)="close()"
-              aria-label="Close form"
-            >
-              <svg
-                class="icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
           </div>
           <ng-content />
         </div>
@@ -64,9 +43,5 @@ export class FabPanel {
 
   protected toggle(): void {
     this.open.update((isOpen) => !isOpen);
-  }
-
-  protected close(): void {
-    this.open.set(false);
   }
 }

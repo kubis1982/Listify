@@ -122,14 +122,12 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
           <p class="field-error" role="alert">A category with this name already exists.</p>
         }
 
-        <button type="submit" class="btn-accent-pill-lg full-width">
-          {{ editingId() ? 'Save' : 'Add' }}
-        </button>
-        @if (editingId()) {
-          <button type="button" class="btn-outline-pill full-width" (click)="cancelEdit()">
-            Cancel
+        <div class="form-actions">
+          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">Cancel</button>
+          <button type="submit" class="btn-accent-pill-lg">
+            {{ editingId() ? 'Save' : 'Add' }}
           </button>
-        }
+        </div>
       </form>
     </app-fab-panel>
   `,

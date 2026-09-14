@@ -140,14 +140,12 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
           <p class="field-error" role="alert">A product with this name already exists.</p>
         }
 
-        <button type="submit" class="btn-accent-pill-lg full-width">
-          {{ editingId() ? 'Save' : 'Add' }}
-        </button>
-        @if (editingId()) {
-          <button type="button" class="btn-outline-pill full-width" (click)="cancelEdit()">
-            Cancel
+        <div class="form-actions">
+          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">Cancel</button>
+          <button type="submit" class="btn-accent-pill-lg">
+            {{ editingId() ? 'Save' : 'Add' }}
           </button>
-        }
+        </div>
       </form>
     </app-fab-panel>
   `,
