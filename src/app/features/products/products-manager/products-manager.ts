@@ -166,7 +166,7 @@ export class ProductsManager {
 
   private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
 
-  private readonly model = signal<ProductFormValue>({ ...EMPTY_PRODUCT_FORM });
+  private readonly model = signal<ProductFormValue>(this.buildEmptyProductForm());
   protected readonly productForm = form(this.model, (path) => {
     required(path.name);
     required(path.defaultUnitId);
@@ -182,7 +182,7 @@ export class ProductsManager {
     effect(() => {
       if (!this.isPanelOpen()) {
         this.editingId.set(null);
-        this.productForm().reset({ ...EMPTY_PRODUCT_FORM });
+        this.productForm().reset(this.buildEmptyProductForm());
       }
     });
 
@@ -215,8 +215,12 @@ export class ProductsManager {
 
   protected cancelEdit(): void {
     this.editingId.set(null);
-    this.productForm().reset({ ...EMPTY_PRODUCT_FORM });
+    this.productForm().reset(this.buildEmptyProductForm());
     this.isPanelOpen.set(false);
+  }
+
+  private buildEmptyProductForm(): ProductFormValue {
+    return { ...EMPTY_PRODUCT_FORM, defaultUnitId: this.unitsService.defaultUnit()?.id ?? '' };
   }
 
   protected async remove(id: ProductId): Promise<void> {
@@ -257,7 +261,7 @@ export class ProductsManager {
       this.cancelEdit();
     } else {
       this.productsService.add(value);
-      this.productForm().reset({ ...EMPTY_PRODUCT_FORM });
+      this.productForm().reset(this.buildEmptyProductForm());
       this.nameInput()?.nativeElement.focus();
     }
   }

@@ -34,4 +34,37 @@ describe('UnitsService', () => {
     service.remove(id);
     expect(service.units()).toEqual([]);
   });
+
+  it('exposes no default unit when none is set', () => {
+    const service = TestBed.inject(UnitsService);
+    service.add({ name: 'Kilogram', symbol: 'kg' });
+    expect(service.defaultUnit()).toBeUndefined();
+  });
+
+  it('exposes the unit added as default', () => {
+    const service = TestBed.inject(UnitsService);
+    service.add({ name: 'Kilogram', symbol: 'kg', isDefault: true });
+    expect(service.defaultUnit()?.symbol).toBe('kg');
+  });
+
+  it('adding a new default unit clears the previous default', () => {
+    const service = TestBed.inject(UnitsService);
+    service.add({ name: 'Kilogram', symbol: 'kg', isDefault: true });
+    const firstId = service.units()[0].id;
+    service.add({ name: 'Liter', symbol: 'l', isDefault: true });
+    const units = service.units();
+    expect(units.find((unit) => unit.id === firstId)?.isDefault).toBe(false);
+    expect(units.find((unit) => unit.symbol === 'l')?.isDefault).toBe(true);
+  });
+
+  it('updating a unit to be default clears the previous default', () => {
+    const service = TestBed.inject(UnitsService);
+    service.add({ name: 'Kilogram', symbol: 'kg', isDefault: true });
+    service.add({ name: 'Liter', symbol: 'l' });
+    const literId = service.units()[1].id;
+    service.update(literId, { isDefault: true });
+    const units = service.units();
+    expect(units.find((unit) => unit.symbol === 'kg')?.isDefault).toBe(false);
+    expect(units.find((unit) => unit.id === literId)?.isDefault).toBe(true);
+  });
 });

@@ -149,4 +149,60 @@ describe('UnitsManager', () => {
     expect(root.textContent).toContain('Add unit');
     expect(root.querySelectorAll<HTMLInputElement>('input[type="text"]')[0].value).toBe('');
   });
+
+  it('highlights the default unit with the default-accent star', () => {
+    const fixture = TestBed.createComponent(UnitsManager);
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'Litre', symbol: 'l', isDefault: true });
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const button = root.querySelector<HTMLButtonElement>(
+      'button[aria-label="Litre is already the default unit"]',
+    )!;
+    expect(button.classList).toContain('icon-btn--default');
+  });
+
+  it('sets a unit as default when its "set as default" action is clicked', () => {
+    const fixture = TestBed.createComponent(UnitsManager);
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'Litre', symbol: 'l' });
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('button[aria-label="Set Litre as default"]')!.click();
+    fixture.detectChanges();
+
+    expect(unitsService.units()[0].isDefault).toBe(true);
+  });
+
+  it('switches the default unit when a different unit is set as default', () => {
+    const fixture = TestBed.createComponent(UnitsManager);
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'Kilogram', symbol: 'kg', isDefault: true });
+    unitsService.add({ name: 'Litre', symbol: 'l' });
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('button[aria-label="Set Litre as default"]')!.click();
+    fixture.detectChanges();
+
+    const units = unitsService.units();
+    expect(units.find((unit) => unit.symbol === 'kg')?.isDefault).toBe(false);
+    expect(units.find((unit) => unit.symbol === 'l')?.isDefault).toBe(true);
+  });
+
+  it('disables the "set as default" action for the unit that is already default', () => {
+    const fixture = TestBed.createComponent(UnitsManager);
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'Litre', symbol: 'l', isDefault: true });
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const button = root.querySelector<HTMLButtonElement>(
+      'button[aria-label="Litre is already the default unit"]',
+    );
+    expect(button).not.toBeNull();
+    expect(button!.disabled).toBe(true);
+  });
 });

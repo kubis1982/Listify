@@ -44,6 +44,34 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
                 <button
                   type="button"
                   class="icon-btn"
+                  [class.icon-btn--default]="unit.isDefault"
+                  (click)="setDefault(unit.id)"
+                  [disabled]="unit.isDefault"
+                  [attr.aria-label]="
+                    unit.isDefault
+                      ? unit.name + ' is already the default unit'
+                      : 'Set ' + unit.name + ' as default'
+                  "
+                  [attr.title]="unit.isDefault ? null : 'Set as default'"
+                >
+                  <svg
+                    class="icon"
+                    viewBox="0 0 24 24"
+                    [attr.fill]="unit.isDefault ? 'currentColor' : 'none'"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polygon
+                      points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn"
                   (click)="startEdit(unit)"
                   [disabled]="usedUnitIds().has(unit.id)"
                   [attr.aria-label]="
@@ -196,6 +224,10 @@ export class UnitsManager {
     this.editingId.set(unit.id);
     this.model.set({ name: unit.name, symbol: unit.symbol });
     this.isPanelOpen.set(true);
+  }
+
+  protected setDefault(id: UnitId): void {
+    this.unitsService.update(id, { isDefault: true });
   }
 
   protected cancelEdit(): void {

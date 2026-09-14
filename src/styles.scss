@@ -37,6 +37,9 @@ html {
   --app-success: #2e8b57;
   --app-success-on: #ffffff;
 
+  // Semantic "this is the default" accent (e.g. the default unit's star).
+  --app-default: #b8860b;
+
   // Tabular figures for quantities, so they line up at a glance.
   --app-font-data: 'IBM Plex Mono', ui-monospace, monospace;
 }
@@ -263,6 +266,14 @@ a.list-card__name {
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+  }
+}
+
+.icon-btn--default {
+  color: var(--app-default);
+
+  &:disabled {
+    opacity: 1;
   }
 }
 

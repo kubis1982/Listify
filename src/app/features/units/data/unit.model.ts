@@ -4,4 +4,5 @@ export interface Unit {
   id: UnitId;
   name: string;
   symbol: string;
+  isDefault?: boolean;
 }

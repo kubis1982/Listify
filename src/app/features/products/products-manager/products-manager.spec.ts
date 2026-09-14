@@ -136,4 +136,50 @@ describe('ProductsManager', () => {
     expect(root.textContent).toContain('Add product');
     expect(root.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('');
   });
+
+  it('pre-selects the default unit when adding a new product', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'Litre', symbol: 'l', isDefault: true });
+    const defaultUnitId = unitsService.units()[0].id;
+
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const unitSelect = root.querySelectorAll<HTMLSelectElement>('select')[0];
+    expect(unitSelect.value).toBe(defaultUnitId);
+  });
+
+  it('keeps the default unit selected after the form resets following a successful add', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'Litre', symbol: 'l', isDefault: true });
+    const defaultUnitId = unitsService.units()[0].id;
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const categoryId = categoriesService.categories()[0].id;
+
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const nameInput = root.querySelector<HTMLInputElement>('input[type="text"]')!;
+    nameInput.value = 'Milk';
+    nameInput.dispatchEvent(new Event('input'));
+    const selects = root.querySelectorAll<HTMLSelectElement>('select');
+    selects[1].value = categoryId;
+    selects[1].dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    const unitSelectAfterReset = root.querySelectorAll<HTMLSelectElement>('select')[0];
+    expect(unitSelectAfterReset.value).toBe(defaultUnitId);
+  });
 });
