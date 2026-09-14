@@ -229,14 +229,55 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
             @if (editingItemId()) {
               <form novalidate (submit)="saveItemQuantity($event)">
                 <label class="field-label" for="edit-item-quantity">Quantity</label>
-                <input
-                  #quantityInput
-                  id="edit-item-quantity"
-                  type="number"
-                  class="field-input data-font"
-                  step="0.01"
-                  [formField]="quantityForm.quantity"
-                />
+                <div class="quantity-stepper">
+                  <button
+                    type="button"
+                    class="quantity-stepper__btn"
+                    (click)="adjustQuantity(-1)"
+                    aria-label="Decrease quantity"
+                  >
+                    <svg
+                      class="icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                  </button>
+                  <input
+                    #quantityInput
+                    id="edit-item-quantity"
+                    type="number"
+                    class="field-input data-font quantity-stepper__input"
+                    step="0.01"
+                    [formField]="quantityForm.quantity"
+                  />
+                  <button
+                    type="button"
+                    class="quantity-stepper__btn"
+                    (click)="adjustQuantity(1)"
+                    aria-label="Increase quantity"
+                  >
+                    <svg
+                      class="icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                  </button>
+                </div>
                 @if (quantityForm.quantity().invalid() && quantityForm.quantity().touched()) {
                   <span class="field-error">Quantity must be greater than 0.</span>
                 }
@@ -259,29 +300,75 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                   <span class="field-error">Please select a product.</span>
                 }
 
-                <label class="field-label" for="add-item-unit">Unit</label>
-                <select
-                  id="add-item-unit"
-                  class="field-input"
-                  [value]="selectedUnitId()"
-                  (change)="onUnitChange($event)"
-                >
-                  @for (unit of unitsService.units(); track unit.id) {
-                    <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
-                  }
-                </select>
-
-                <label class="field-label" for="add-item-quantity">Quantity</label>
-                <input
-                  id="add-item-quantity"
-                  type="number"
-                  class="field-input data-font"
-                  step="0.01"
-                  [formField]="itemForm.quantity"
-                />
-                @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
-                  <span class="field-error">Quantity must be greater than 0.</span>
-                }
+                <div class="field-row">
+                  <div class="field-group">
+                    <label class="field-label" for="add-item-quantity">Quantity</label>
+                    <div class="quantity-stepper">
+                      <button
+                        type="button"
+                        class="quantity-stepper__btn"
+                        (click)="adjustItemQuantity(-1)"
+                        aria-label="Decrease quantity"
+                      >
+                        <svg
+                          class="icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </button>
+                      <input
+                        id="add-item-quantity"
+                        type="number"
+                        class="field-input data-font quantity-stepper__input"
+                        step="0.01"
+                        [formField]="itemForm.quantity"
+                      />
+                      <button
+                        type="button"
+                        class="quantity-stepper__btn"
+                        (click)="adjustItemQuantity(1)"
+                        aria-label="Increase quantity"
+                      >
+                        <svg
+                          class="icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <line x1="12" y1="5" x2="12" y2="19" />
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </button>
+                    </div>
+                    @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
+                      <span class="field-error">Quantity must be greater than 0.</span>
+                    }
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="add-item-unit">Unit</label>
+                    <select
+                      id="add-item-unit"
+                      class="field-input"
+                      [value]="selectedUnitId()"
+                      (change)="onUnitChange($event)"
+                    >
+                      @for (unit of unitsService.units(); track unit.id) {
+                        <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
+                      }
+                    </select>
+                  </div>
+                </div>
 
                 <label class="field-label" for="add-item-note">Note</label>
                 <input
@@ -477,6 +564,76 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
       font-style: italic;
       color: rgba(20, 32, 29, 0.65);
     }
+
+    .field-row {
+      display: flex;
+      gap: 0.75rem;
+
+      .field-group {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .field-label {
+        margin-top: 0.75rem;
+      }
+    }
+
+    .quantity-stepper {
+      display: flex;
+      align-items: stretch;
+      border: 1px solid rgba(199, 208, 205, 0.6);
+      border-radius: 0.625rem;
+      overflow: hidden;
+      background-color: var(--color-paper);
+
+      &:focus-within {
+        border-color: var(--color-accent);
+      }
+    }
+
+    .quantity-stepper__input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      border-radius: 0;
+      text-align: center;
+      -moz-appearance: textfield;
+
+      &:focus-visible {
+        outline: none;
+      }
+
+      &::-webkit-inner-spin-button,
+      &::-webkit-outer-spin-button {
+        appearance: none;
+        margin: 0;
+      }
+    }
+
+    .quantity-stepper__btn {
+      flex-shrink: 0;
+      width: 2.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: rgba(20, 32, 29, 0.55);
+      cursor: pointer;
+      transition:
+        background-color 0.15s ease-out,
+        color 0.15s ease-out;
+
+      &:hover {
+        background-color: rgba(15, 138, 108, 0.08);
+        color: var(--color-accent);
+      }
+
+      &:active {
+        background-color: rgba(15, 138, 108, 0.16);
+      }
+    }
   `,
 })
 export class ShoppingListDetail {
@@ -558,6 +715,20 @@ export class ShoppingListDetail {
 
   protected onUnitChange(event: Event): void {
     this.selectedUnitId.set((event.target as HTMLSelectElement).value);
+  }
+
+  protected adjustItemQuantity(delta: number): void {
+    this.itemModel.update((value) => ({
+      ...value,
+      quantity: Math.max(0.01, Math.round((value.quantity + delta) * 100) / 100),
+    }));
+  }
+
+  protected adjustQuantity(delta: number): void {
+    this.quantityModel.update((value) => ({
+      ...value,
+      quantity: Math.max(0.01, Math.round((value.quantity + delta) * 100) / 100),
+    }));
   }
 
   protected toggleStatus(status: 'active' | 'completed'): void {
