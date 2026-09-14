@@ -100,6 +100,18 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
           </div>
         </div>
 
+        @if (totalItemsCount() > 0) {
+          <div class="progress">
+            <div class="progress__label">
+              <span class="data-font">{{ purchasedItemsCount() }} of {{ totalItemsCount() }} purchased</span>
+              <span class="data-font">{{ progressPercent() }}%</span>
+            </div>
+            <div class="progress__track">
+              <div class="progress__fill" [style.width.%]="progressPercent()"></div>
+            </div>
+          </div>
+        }
+
         @if (itemsByCategory().length === 0) {
           <p class="empty-state">No items yet — add the first one using the + button.</p>
         } @else {
@@ -340,6 +352,33 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
       gap: 1rem;
     }
 
+    .progress {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .progress__label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+      color: rgba(20, 32, 29, 0.65);
+    }
+
+    .progress__track {
+      height: 5px;
+      border-radius: 999px;
+      background-color: rgba(199, 208, 205, 0.5);
+      overflow: hidden;
+    }
+
+    .progress__fill {
+      height: 100%;
+      border-radius: 999px;
+      background-color: var(--color-accent);
+    }
+
     .status-chip {
       padding: 0.25rem 1rem;
       border-radius: 999px;
@@ -455,6 +494,17 @@ export class ShoppingListDetail {
   protected readonly sortedProducts = computed(() =>
     [...this.productsService.products()].sort((a, b) => a.name.localeCompare(b.name)),
   );
+
+  protected readonly totalItemsCount = computed(() => this.list()?.items.length ?? 0);
+
+  protected readonly purchasedItemsCount = computed(
+    () => this.list()?.items.filter((item) => item.purchased).length ?? 0,
+  );
+
+  protected readonly progressPercent = computed(() => {
+    const total = this.totalItemsCount();
+    return total === 0 ? 0 : Math.round((this.purchasedItemsCount() / total) * 100);
+  });
 
   protected readonly itemsByCategory = computed(() => {
     const groups = new Map<string, ShoppingListItem[]>();
