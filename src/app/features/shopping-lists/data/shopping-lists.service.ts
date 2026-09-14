@@ -53,6 +53,10 @@ export class ShoppingListsService {
     this.store.update(id, { status });
   }
 
+  rename(id: ShoppingListId, name: string): void {
+    this.store.update(id, { name });
+  }
+
   removeList(id: ShoppingListId): void {
     this.store.remove(id);
   }

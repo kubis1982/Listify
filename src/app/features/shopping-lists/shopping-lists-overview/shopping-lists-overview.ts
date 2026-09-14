@@ -3,6 +3,7 @@ import {
   afterRenderEffect,
   Component,
   computed,
+  effect,
   ElementRef,
   inject,
   signal,
@@ -94,6 +95,26 @@ interface NewListFormValue {
                     <button
                       type="button"
                       class="icon-btn"
+                      (click)="startEdit(list)"
+                      [attr.aria-label]="'Edit ' + list.name"
+                    >
+                      <svg
+                        class="icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
                       (click)="remove(list.id)"
                       [attr.aria-label]="'Delete ' + list.name"
                     >
@@ -161,6 +182,26 @@ interface NewListFormValue {
                     <button
                       type="button"
                       class="icon-btn"
+                      (click)="startEdit(list)"
+                      [attr.aria-label]="'Edit ' + list.name"
+                    >
+                      <svg
+                        class="icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
                       (click)="remove(list.id)"
                       [attr.aria-label]="'Delete ' + list.name"
                     >
@@ -190,7 +231,11 @@ interface NewListFormValue {
       }
     </div>
 
-    <app-fab-panel title="New shopping list" fabLabel="Add shopping list" [(open)]="isPanelOpen">
+    <app-fab-panel
+      [title]="editingId() ? 'Edit list' : 'New shopping list'"
+      fabLabel="Add shopping list"
+      [(open)]="isPanelOpen"
+    >
       <form novalidate (submit)="handleSubmit($event)">
         <label class="field-label" for="new-list-name">Name</label>
         <input
@@ -203,7 +248,12 @@ interface NewListFormValue {
         @if (newListForm.name().invalid() && newListForm.name().touched()) {
           <span class="field-error">Name is required.</span>
         }
-        <button type="submit" class="btn-accent-pill-lg full-width">Create list</button>
+        <div class="form-actions">
+          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">Cancel</button>
+          <button type="submit" class="btn-accent-pill-lg">
+            {{ editingId() ? 'Save' : 'Create list' }}
+          </button>
+        </div>
       </form>
     </app-fab-panel>
   `,
@@ -239,6 +289,7 @@ export class ShoppingListsOverview {
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 
+  protected readonly editingId = signal<ShoppingListId | null>(null);
   protected readonly isPanelOpen = signal(false);
   private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
   private readonly importInput = viewChild<ElementRef<HTMLInputElement>>('importInput');
@@ -254,10 +305,29 @@ export class ShoppingListsOverview {
         this.nameInput()?.nativeElement.focus();
       }
     });
+
+    effect(() => {
+      if (!this.isPanelOpen()) {
+        this.editingId.set(null);
+        this.newListForm().reset({ name: '' });
+      }
+    });
   }
 
   protected toggleStatus(id: ShoppingListId, status: ShoppingList['status']): void {
     this.shoppingListsService.setStatus(id, status === 'active' ? 'completed' : 'active');
+  }
+
+  protected startEdit(list: ShoppingList): void {
+    this.editingId.set(list.id);
+    this.model.set({ name: list.name });
+    this.isPanelOpen.set(true);
+  }
+
+  protected cancelEdit(): void {
+    this.editingId.set(null);
+    this.newListForm().reset({ name: '' });
+    this.isPanelOpen.set(false);
   }
 
   protected async remove(id: ShoppingListId): Promise<void> {
@@ -279,6 +349,14 @@ export class ShoppingListsOverview {
     if (!name) {
       return;
     }
+
+    const editingId = this.editingId();
+    if (editingId) {
+      this.shoppingListsService.rename(editingId, name);
+      this.cancelEdit();
+      return;
+    }
+
     const list = this.shoppingListsService.addList(name);
     this.newListForm().reset({ name: '' });
     this.router.navigate(['/lists', list.id]);
