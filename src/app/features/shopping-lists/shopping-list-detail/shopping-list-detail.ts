@@ -302,7 +302,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      color: rgba(23, 30, 25, 0.65);
+      color: rgba(20, 32, 29, 0.65);
       text-decoration: none;
       font-weight: 700;
       margin-bottom: 2rem;
@@ -344,9 +344,9 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      background-color: rgba(202, 0, 19, 0.1);
+      background-color: rgba(15, 138, 108, 0.1);
       color: var(--color-accent);
-      border: 1px solid rgba(202, 0, 19, 0.2);
+      border: 1px solid rgba(15, 138, 108, 0.2);
     }
 
     .status-chip--completed {
@@ -386,8 +386,8 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
     .checkbox-face {
       width: 2rem;
       height: 2rem;
-      border-radius: 0.75rem;
-      border: 2px solid rgba(183, 198, 194, 0.5);
+      border-radius: 0.625rem;
+      border: 2px solid rgba(199, 208, 205, 0.7);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -433,7 +433,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
     .item-card__note {
       font-size: 0.875rem;
       font-style: italic;
-      color: rgba(23, 30, 25, 0.65);
+      color: rgba(20, 32, 29, 0.65);
     }
   `,
 })

@@ -15,21 +15,21 @@ html {
         tertiary: mat.$blue-palette,
       ),
       typography: (
-        plain-family: 'Nunito, system-ui, sans-serif',
-        brand-family: 'Nunito, system-ui, sans-serif',
+        plain-family: 'Manrope, system-ui, sans-serif',
+        brand-family: 'Manrope, system-ui, sans-serif',
       ),
       density: -1,
     )
   );
 
-  // "Sophisticated Playful" design system tokens (see .superdesign/design-system.md).
+  // "Fresh Mint" design system tokens (see .superdesign/design-system.md).
   // Kept as plain CSS variables — separate from Material's --mat-sys-* tokens —
   // since they drive the bespoke (non-Material) redesigned surfaces.
-  --color-ink: #171e19;
-  --color-paper: #eeebe3;
+  --color-ink: #14201d;
+  --color-paper: #f4f6f5;
   --color-surface: #ffffff;
-  --color-sage: #b7c6c2;
-  --color-accent: #ca0013;
+  --color-sage: #c7d0cd;
+  --color-accent: #0f8a6c;
 
   // Semantic "purchased"/"done" accent — deliberately separate from the
   // brand accent above per Material's own guidance that semantic color is
@@ -47,7 +47,7 @@ body {
 
   background-color: var(--color-paper);
   color: var(--color-ink);
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-family: 'Manrope', system-ui, sans-serif;
 
   margin: 0;
   height: 100%;
@@ -90,13 +90,13 @@ select:focus-visible {
   h1 {
     margin: 0;
     font-size: 2.25rem;
-    font-weight: 900;
-    letter-spacing: -0.02em;
+    font-weight: 800;
+    letter-spacing: -0.01em;
   }
 }
 
 .empty-state {
-  color: rgba(23, 30, 25, 0.65);
+  color: rgba(20, 32, 29, 0.65);
 }
 
 .section-heading {
@@ -108,7 +108,7 @@ select:focus-visible {
   h2 {
     margin: 0;
     font-size: 11px;
-    font-weight: 900;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -117,7 +117,7 @@ select:focus-visible {
 .section-rule {
   height: 1px;
   flex: 1;
-  background-color: rgba(183, 198, 194, 0.4);
+  background-color: rgba(199, 208, 205, 0.4);
 }
 
 .list-group {
@@ -133,10 +133,10 @@ select:focus-visible {
   align-items: center;
   gap: 1rem;
   background-color: var(--color-surface);
-  border: 1px solid rgba(183, 198, 194, 0.3);
-  border-radius: 2rem;
+  border: 1px solid rgba(199, 208, 205, 0.5);
+  border-radius: 0.875rem;
   padding: 1.5rem;
-  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px rgba(20, 32, 29, 0.05);
   transition: transform 0.15s ease-out;
 
   &:hover {
@@ -171,14 +171,14 @@ a.list-card__name {
 
 .list-card__name--done {
   text-decoration: line-through;
-  color: rgba(23, 30, 25, 0.6);
+  color: rgba(20, 32, 29, 0.6);
 }
 
 .list-card__meta {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(23, 30, 25, 0.65);
+  color: rgba(20, 32, 29, 0.65);
 }
 
 .list-card__actions {
@@ -193,12 +193,12 @@ a.list-card__name {
   left: 0;
   top: 1.5rem;
   bottom: 1.5rem;
-  width: 6px;
-  border-radius: 0 999px 999px 0;
+  width: 4px;
+  border-radius: 3px;
 }
 
 .accent-bar--active {
-  background-color: rgba(202, 0, 19, 0.2);
+  background-color: rgba(15, 138, 108, 0.2);
 }
 
 .accent-bar--completed {
@@ -210,8 +210,8 @@ a.list-card__name {
   align-items: center;
   gap: 0.5rem;
   background: transparent;
-  border: 1px solid rgba(183, 198, 194, 0.4);
-  border-radius: 999px;
+  border: 1px solid rgba(199, 208, 205, 0.6);
+  border-radius: 0.75rem;
   padding: 0.5rem 1rem;
   font: inherit;
   font-size: 0.875rem;
@@ -229,12 +229,12 @@ a.list-card__name {
   background-color: var(--color-accent);
   color: #ffffff;
   border: none;
-  border-radius: 999px;
+  border-radius: 0.75rem;
   padding: 0.75rem 2rem;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 25px -8px rgba(202, 0, 19, 0.4);
+  box-shadow: 0 6px 16px -6px rgba(15, 138, 108, 0.4);
   transition: transform 0.15s ease-out;
 
   &:hover {
@@ -252,7 +252,7 @@ a.list-card__name {
   border: none;
   padding: 0.5rem;
   border-radius: 999px;
-  color: rgba(23, 30, 25, 0.6);
+  color: rgba(20, 32, 29, 0.6);
   cursor: pointer;
   transition: color 0.15s ease-out;
 
@@ -286,14 +286,12 @@ a.list-card__name {
 }
 
 .pill {
-  padding: 0.125rem 0.5rem;
-  border-radius: 0.5rem;
+  padding: 0.125rem 0.5625rem;
+  border-radius: 0.4375rem;
   background-color: var(--color-paper);
   font-size: 11px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.01em;
-  color: rgba(23, 30, 25, 0.7);
+  font-weight: 500;
+  color: rgba(20, 32, 29, 0.7);
 }
 
 .fab-wrap {
@@ -310,7 +308,7 @@ a.list-card__name {
 .fab {
   width: 4rem;
   height: 4rem;
-  border-radius: 999px;
+  border-radius: 1rem;
   border: none;
   background-color: var(--color-accent);
   color: #ffffff;
@@ -318,7 +316,7 @@ a.list-card__name {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 20px 40px -10px rgba(202, 0, 19, 0.45);
+  box-shadow: 0 8px 20px -6px rgba(15, 138, 108, 0.4);
   transition: transform 0.15s ease-out;
 
   &:hover {
@@ -330,9 +328,9 @@ a.list-card__name {
   width: 22.5rem;
   max-width: calc(100vw - 3rem);
   background-color: var(--color-surface);
-  border: 1px solid rgba(183, 198, 194, 0.3);
-  border-radius: 2rem;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(199, 208, 205, 0.5);
+  border-radius: 1.25rem;
+  box-shadow: 0 20px 45px -12px rgba(20, 32, 29, 0.16);
   padding: 2rem;
 }
 
@@ -355,22 +353,30 @@ a.list-card__name {
   gap: 0.25rem;
 }
 
-.add-panel form .btn-accent-pill-lg {
+.add-panel form .form-actions {
+  display: flex;
+  gap: 0.75rem;
   margin-top: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 0.75rem;
-  font-weight: 900;
-  box-shadow: none;
+
+  .btn-accent-pill-lg,
+  .btn-outline-pill {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .btn-accent-pill-lg {
+    font-size: 0.875rem;
+    box-shadow: none;
+  }
 }
 
 .field-label {
   display: block;
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(23, 30, 25, 0.65);
+  color: rgba(20, 32, 29, 0.65);
   margin-top: 0.75rem;
 }
 
@@ -378,17 +384,30 @@ a.list-card__name {
   width: 100%;
   box-sizing: border-box;
   background-color: var(--color-paper);
-  border: 1px solid rgba(183, 198, 194, 0.4);
-  border-radius: 1rem;
+  border: 1px solid rgba(199, 208, 205, 0.6);
+  border-radius: 0.625rem;
   padding: 0.75rem 1rem;
   font: inherit;
   font-size: 0.875rem;
   font-weight: 700;
+  line-height: 1.25rem;
   color: var(--color-ink);
+  vertical-align: top;
 
   &:focus-visible {
     border-color: var(--color-accent);
   }
+}
+
+select.field-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='rgba(20,32,29,0.55)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 14px 14px;
 }
 
 .data-font {
@@ -422,7 +441,7 @@ a.list-card__name {
     max-width: 100%;
     max-height: 80dvh;
     overflow-y: auto;
-    border-radius: 1.5rem 1.5rem 0 0;
+    border-radius: 1.25rem 1.25rem 0 0;
     padding: 1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom));
     box-sizing: border-box;
   }
@@ -439,7 +458,7 @@ a.list-card__name {
 
 .confirm-dialog__message {
   margin: 0 0 1.5rem;
-  color: rgba(23, 30, 25, 0.75);
+  color: rgba(20, 32, 29, 0.75);
   line-height: 1.5;
 }
 

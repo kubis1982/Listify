@@ -12,14 +12,15 @@
   gap: 1.5rem;
   padding-inline: 1.5rem;
   padding-block: 1rem;
-  background-color: var(--color-ink);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid rgba(199, 208, 205, 0.6);
 }
 
 .brand {
-  font-weight: 900;
+  font-weight: 800;
   font-size: 1.125rem;
-  letter-spacing: -0.02em;
-  color: var(--color-paper);
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
   flex: 1;
 }
 
@@ -31,13 +32,13 @@
   min-height: 2.75rem;
   background: transparent;
   border: none;
-  border-radius: 999px;
-  color: var(--color-sage);
+  border-radius: 0.625rem;
+  color: rgba(20, 32, 29, 0.6);
   cursor: pointer;
   transition: color 0.15s ease-out;
 
   &:hover {
-    color: var(--color-paper);
+    color: var(--color-ink);
   }
 }
 
@@ -63,7 +64,8 @@
     flex-direction: column;
     gap: 0;
     padding: 0.5rem 1.5rem 1rem;
-    background-color: var(--color-ink);
+    background-color: var(--color-surface);
+    border-bottom: 1px solid rgba(199, 208, 205, 0.6);
 
     &.open {
       display: flex;
@@ -81,17 +83,17 @@
 
 .nav-link {
   padding: 0.5rem 1rem;
-  border-radius: 999px;
+  border-radius: 0.75rem;
   font-size: 0.875rem;
   font-weight: 700;
-  color: var(--color-sage);
+  color: rgba(20, 32, 29, 0.65);
   text-decoration: none;
   transition:
     background-color 0.15s ease-out,
     color 0.15s ease-out;
 
   &:hover {
-    color: var(--color-paper);
+    color: var(--color-ink);
   }
 
   &.active {
