@@ -45,7 +45,15 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
                   type="button"
                   class="icon-btn"
                   (click)="startEdit(unit)"
-                  [attr.aria-label]="'Edit ' + unit.name"
+                  [disabled]="usedUnitIds().has(unit.id)"
+                  [attr.aria-label]="
+                    usedUnitIds().has(unit.id)
+                      ? 'Cannot edit ' + unit.name + ' — used by a product'
+                      : 'Edit ' + unit.name
+                  "
+                  [attr.title]="
+                    usedUnitIds().has(unit.id) ? 'Cannot edit — used by a product' : null
+                  "
                 >
                   <svg
                     class="icon"

@@ -44,7 +44,15 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
                   type="button"
                   class="icon-btn"
                   (click)="startEdit(category)"
-                  [attr.aria-label]="'Edit ' + category.name"
+                  [disabled]="usedCategoryIds().has(category.id)"
+                  [attr.aria-label]="
+                    usedCategoryIds().has(category.id)
+                      ? 'Cannot edit ' + category.name + ' — used by a product'
+                      : 'Edit ' + category.name
+                  "
+                  [attr.title]="
+                    usedCategoryIds().has(category.id) ? 'Cannot edit — used by a product' : null
+                  "
                 >
                   <svg
                     class="icon"
