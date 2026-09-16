@@ -1,33 +1,33 @@
-# Przegląd aplikacji
+# Application overview
 
-Listify to aplikacja do zarządzania listami zakupów, produktami, jednostkami miary i kategoriami. Poniżej znajduje się krótki przegląd głównych widoków aplikacji wraz ze zrzutami ekranu.
+Listify is an application for managing shopping lists, products, units of measure, and categories. Below is a short overview of the application's main views, with screenshots.
 
-## Listy zakupów
+## Shopping lists
 
-Widok główny aplikacji — pozwala tworzyć, edytować, oznaczać jako ukończone oraz usuwać listy zakupów.
+The main view of the application — lets you create, edit, mark as complete, and delete shopping lists.
 
-![Listy zakupów](screenshots/shopping-lists.png)
+![Shopping lists](screenshots/shopping-lists.png)
 
-### Szczegóły listy zakupów
+### Shopping list detail
 
-Po wejściu w konkretną listę użytkownik widzi produkty pogrupowane według kategorii, może odznaczać zakupione pozycje i śledzić postęp realizacji listy.
+Opening a specific list shows its products grouped by category. Users can check off purchased items and track the list's completion progress.
 
-![Szczegóły listy zakupów](screenshots/shopping-list-detail.png)
+![Shopping list detail](screenshots/shopping-list-detail.png)
 
-## Produkty
+## Products
 
-Zarządzanie słownikiem produktów wraz z przypisaną jednostką miary i kategorią.
+Manage the product dictionary, each product with an assigned unit of measure and category.
 
-![Produkty](screenshots/products.png)
+![Products](screenshots/products.png)
 
-## Jednostki miary
+## Units of measure
 
-Zarządzanie jednostkami miary używanymi przy produktach (np. kilogram, sztuka). Jedną z jednostek można oznaczyć jako domyślną.
+Manage the units of measure used by products (e.g. kilogram, piece). One unit can be marked as the default.
 
-![Jednostki miary](screenshots/units.png)
+![Units of measure](screenshots/units.png)
 
-## Kategorie
+## Categories
 
-Zarządzanie kategoriami, do których przypisywane są produkty.
+Manage the categories that products can be assigned to.
 
-![Kategorie](screenshots/categories.png)
+![Categories](screenshots/categories.png)
