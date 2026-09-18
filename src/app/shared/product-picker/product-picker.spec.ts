@@ -1,4 +1,3 @@
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { CategoriesService } from '../../features/categories/data/categories.service';
@@ -33,7 +32,6 @@ describe('ProductPicker', () => {
     localStorage.clear();
     TestBed.configureTestingModule({
       imports: [ProductPicker],
-      providers: [provideAnimationsAsync('noop')],
     });
 
     const unitsService = TestBed.inject(UnitsService);
