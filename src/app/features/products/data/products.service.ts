@@ -8,8 +8,10 @@ export class ProductsService {
 
   readonly products = this.store.items;
 
-  add(product: Omit<Product, 'id'>): void {
-    this.store.add({ ...product, id: crypto.randomUUID() });
+  add(product: Omit<Product, 'id'>): Product {
+    const created: Product = { ...product, id: crypto.randomUUID() };
+    this.store.add(created);
+    return created;
   }
 
   update(id: ProductId, changes: Partial<Omit<Product, 'id'>>): void {
