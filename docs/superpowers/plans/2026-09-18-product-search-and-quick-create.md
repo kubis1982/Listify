@@ -100,6 +100,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { UnitsService } from '../../units/data/units.service';
+import { Product } from '../data/product.model';
 import { ProductsService } from '../data/products.service';
 import { CreateProductDialog, CreateProductDialogData } from './create-product-dialog';
 
@@ -405,7 +406,6 @@ git commit -m "feat(products): add CreateProductDialog for quick product creatio
 ### Task 3: `ProductPicker` component (search + create, Signal Forms custom control)
 
 **Files:**
-- Modify: `src/app/app.config.ts` (add a Material animations provider — required once any Material component with its own open/close animation, like `MatAutocomplete`, is rendered)
 - Create: `src/app/shared/product-picker/product-picker.ts`
 - Test: `src/app/shared/product-picker/product-picker.spec.ts`
 
@@ -419,7 +419,6 @@ git commit -m "feat(products): add CreateProductDialog for quick product creatio
 Create `src/app/shared/product-picker/product-picker.spec.ts`:
 
 ```ts
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { CategoriesService } from '../../features/categories/data/categories.service';
@@ -454,7 +453,6 @@ describe('ProductPicker', () => {
     localStorage.clear();
     TestBed.configureTestingModule({
       imports: [ProductPicker],
-      providers: [provideAnimationsAsync('noop')],
     });
 
     const unitsService = TestBed.inject(UnitsService);
@@ -564,33 +562,9 @@ describe('ProductPicker', () => {
 Run: `npm test -- --include src/app/shared/product-picker/product-picker.spec.ts --watch=false`
 Expected: FAIL — `product-picker.ts` doesn't exist yet.
 
-- [ ] **Step 3: Add the animations provider**
+No `app.config.ts` change is needed: Angular Material 22's animation-aware components (including `MatAutocomplete`) call an internal `_animationsDisabled()` helper (`node_modules/@angular/material/fesm2022/_animation-chunk.mjs`) that injects `ANIMATION_MODULE_TYPE`/`MATERIAL_ANIMATIONS` with `{ optional: true }` and falls back to CSS-only, non-throwing behavior when neither is provided — no `AnimationDriver` registration is required. (An earlier version of this plan called for adding `provideAnimationsAsync('noop')`; that function is `@deprecated` as of Angular 20.2, slated for removal in v23, and — per the source above — was never actually necessary for this Material version. Do not add it.)
 
-In `src/app/app.config.ts`, add the import and provider (Material components like `MatAutocomplete` declare open/close animations and need a driver registered, even a no-op one, or Angular throws at runtime when such a component renders):
-
-```ts
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { routes } from './app.routes';
-import { provideServiceWorker } from '@angular/service-worker';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withComponentInputBinding()),
-    provideServiceWorker('ngsw-worker.js', {
-      enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000',
-    }),
-    provideAnimationsAsync('noop'),
-  ],
-};
-```
-
-`'noop'` keeps bundle size down (no `@angular/animations` runtime is loaded) while satisfying Material's `AnimationDriver` requirement — the autocomplete panel will open/close instantly rather than fading, which is an acceptable default for this app's otherwise-bespoke, non-Material UI.
-
-- [ ] **Step 4: Implement `ProductPicker`**
+- [ ] **Step 3: Implement `ProductPicker`**
 
 Create `src/app/shared/product-picker/product-picker.ts`:
 
@@ -720,15 +694,15 @@ export class ProductPicker implements FormValueControl<ProductId> {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [ ] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --include src/app/shared/product-picker/product-picker.spec.ts --watch=false`
 Expected: PASS (all 6 tests). If the "shows no options when the query is blank" test fails because the panel doesn't render `@empty` content for an empty `filteredProducts()` array even with a blank query, double check the `@if (queryText().trim() !== '')` guard inside `@empty` is present — with a blank query, `filteredProducts()` is `[]`, so `@empty` fires, but the inner `@if` suppresses the create option, leaving the panel with zero `mat-option`s.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add src/app/app.config.ts src/app/shared/product-picker/
+git add src/app/shared/product-picker/
 git commit -m "feat(shared): add ProductPicker search-and-create combobox"
 ```
 
@@ -764,20 +738,7 @@ async function selectProductViaPicker(root: HTMLElement, productName: string): P
 }
 ```
 
-In the `TestBed.configureTestingModule` call inside the first `describe('ShoppingListDetail', ...)` block (lines 14-18), add the animations provider:
-
-```ts
-    TestBed.configureTestingModule({
-      imports: [ShoppingListDetail],
-      providers: [provideRouter([]), provideAnimationsAsync('noop')],
-    });
-```
-
-Add the import at the top of the file:
-
-```ts
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-```
+No change is needed to `TestBed.configureTestingModule`'s `providers` (lines 14-18) — `MatAutocomplete` doesn't require an animations provider in this Angular Material version (see Task 3's note on `_animationsDisabled()`).
 
 Add `afterEach` cleanup for the autocomplete/dialog overlay, right after the `beforeEach` in the first `describe` block:
 
