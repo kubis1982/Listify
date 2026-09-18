@@ -52,3 +52,6 @@ Thumbs.db
 # Superdesign scratch workspace
 /.superdesign
 /.superdesign/tmp/
+
+# Obsidian
+/.obsidian
