@@ -1,8 +1,16 @@
+import { registerLocaleData } from '@angular/common';
+import localePl from '@angular/common/locales/pl';
 import { ApplicationRef, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { I18n } from '../../../core/i18n/i18n.service';
 import { ShoppingListsService } from '../data/shopping-lists.service';
 import { ShoppingListsOverview } from './shopping-lists-overview';
+
+// DatePipe throws NG0701 for locale 'pl' unless its locale data is registered.
+// app.config.ts registers it for the running app, but this spec is loaded in
+// isolation by the test runner, so it must register it too.
+registerLocaleData(localePl);
 
 function clickConfirmDialogButton(which: 'cancel' | 'confirm'): void {
   const buttons = document.querySelectorAll<HTMLButtonElement>('.confirm-dialog__actions button');
@@ -169,5 +177,42 @@ describe('ShoppingListsOverview', () => {
 
     expect(shoppingListsService.lists()).toEqual([]);
     expect(document.body.textContent).toContain('Import failed');
+  });
+
+  it('renders the page in Polish once Polish is selected', () => {
+    const fixture = TestBed.createComponent(ShoppingListsOverview);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('No shopping lists yet');
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Listy zakupów');
+    expect(root.textContent).toContain('Nie masz jeszcze żadnej listy');
+  });
+
+  it('formats the created-at date in the selected language', () => {
+    localStorage.setItem(
+      'listify:shopping-lists',
+      JSON.stringify([
+        {
+          id: '1',
+          name: 'Weekly groceries',
+          createdAt: '2026-03-05T12:00:00.000Z',
+          status: 'active',
+          items: [],
+        },
+      ]),
+    );
+    const fixture = TestBed.createComponent(ShoppingListsOverview);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('Added Mar 5, 2026');
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Dodano 5 mar 2026');
   });
 });

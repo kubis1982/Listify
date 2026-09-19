@@ -1,5 +1,6 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { I18n } from '../../core/i18n/i18n.service';
 import { CategoriesService } from '../../features/categories/data/categories.service';
 import { UnitsService } from '../../features/units/data/units.service';
 import { Product } from '../../features/products/data/product.model';
@@ -161,5 +162,34 @@ describe('ProductPicker', () => {
     input.dispatchEvent(new Event('blur'));
 
     expect(touched).toBe(true);
+  });
+
+  it('renders the search hint in the selected language', () => {
+    const fixture = createPicker();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Start typing to search products.',
+    );
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Zacznij pisać, aby wyszukać produkty.',
+    );
+  });
+
+  it('gives the results panel a translated accessible name', async () => {
+    const fixture = createPicker();
+    await typeQuery(fixture.nativeElement, 'mil');
+
+    const panel = document.querySelector('[role="listbox"]')!;
+    expect(panel.getAttribute('aria-label')).toBe('Product search results');
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect(panel.getAttribute('aria-label')).toBe('Wyniki wyszukiwania produktów');
   });
 });

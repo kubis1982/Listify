@@ -1,5 +1,6 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { I18n } from '../../../core/i18n/i18n.service';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { UnitsService } from '../../units/data/units.service';
 import { ProductsService } from '../data/products.service';
@@ -20,6 +21,19 @@ describe('ProductsManager', () => {
     const fixture = TestBed.createComponent(ProductsManager);
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('No products yet');
+  });
+
+  it('renders the page in Polish once Polish is selected', () => {
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('No products yet');
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Produkty');
+    expect(root.textContent).toContain('Nie masz jeszcze produktów');
   });
 
   it('adds a product using the selected default unit and category', () => {

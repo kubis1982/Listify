@@ -9,6 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
+import { I18n } from '../../../core/i18n/i18n.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { ProductsService } from '../../products/data/products.service';
@@ -27,11 +28,11 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
   template: `
     <div class="page">
       <div class="page-header">
-        <h1>Categories</h1>
+        <h1>{{ t('categories.title') }}</h1>
       </div>
 
       @if (categoriesService.categories().length === 0) {
-        <p class="empty-state">No categories yet — add the first one using the + button.</p>
+        <p class="empty-state">{{ t('categories.empty') }}</p>
       } @else {
         <div class="list-group">
           @for (category of sortedCategories(); track category.id) {
@@ -47,11 +48,11 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
                   [disabled]="usedCategoryIds().has(category.id)"
                   [attr.aria-label]="
                     usedCategoryIds().has(category.id)
-                      ? 'Cannot edit ' + category.name + ' — used by a product'
-                      : 'Edit ' + category.name
+                      ? t('categories.cannotEditFor', { name: category.name })
+                      : t('categories.editFor', { name: category.name })
                   "
                   [attr.title]="
-                    usedCategoryIds().has(category.id) ? 'Cannot edit — used by a product' : null
+                    usedCategoryIds().has(category.id) ? t('categories.cannotEdit') : null
                   "
                 >
                   <svg
@@ -75,12 +76,12 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
                   [disabled]="usedCategoryIds().has(category.id)"
                   [attr.aria-label]="
                     usedCategoryIds().has(category.id)
-                      ? 'Cannot delete ' + category.name + ' — used by a product'
-                      : 'Delete ' + category.name
+                      ? t('categories.cannotDeleteFor', { name: category.name })
+                      : t('categories.deleteFor', { name: category.name })
                   "
                   [attr.title]="
                     usedCategoryIds().has(category.id)
-                      ? 'Cannot delete — used by a product'
+                      ? t('categories.cannotDelete')
                       : null
                   "
                 >
@@ -109,13 +110,13 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
     </div>
 
     <app-fab-panel
-      [title]="editingId() ? 'Edit category' : 'Add category'"
-      fabLabel="Add category"
+      [title]="editingId() ? t('categories.panelEdit') : t('categories.panelAdd')"
+      [fabLabel]="t('categories.panelAdd')"
       [(open)]="isPanelOpen"
       (cancelled)="cancelEdit()"
     >
       <form novalidate (submit)="handleSubmit($event)">
-        <label class="field-label" for="category-name">Name</label>
+        <label class="field-label" for="category-name">{{ t('common.name') }}</label>
         <input
           #nameInput
           id="category-name"
@@ -124,17 +125,17 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
           [formField]="categoryForm.name"
         />
         @if (categoryForm.name().invalid() && categoryForm.name().touched()) {
-          <span class="field-error">Name is required.</span>
+          <span class="field-error">{{ t('common.nameRequired') }}</span>
         }
 
         @if (duplicateNameError()) {
-          <p class="field-error" role="alert">A category with this name already exists.</p>
+          <p class="field-error" role="alert">{{ t('categories.duplicate') }}</p>
         }
 
         <div class="form-actions">
-          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">Cancel</button>
+          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">{{ t('common.cancel') }}</button>
           <button type="submit" class="btn-accent-pill-lg">
-            {{ editingId() ? 'Save' : 'Add' }}
+            {{ editingId() ? t('common.save') : t('common.add') }}
           </button>
         </div>
       </form>
@@ -145,6 +146,7 @@ export class CategoriesManager {
   protected readonly categoriesService = inject(CategoriesService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly productsService = inject(ProductsService);
+  protected readonly t = inject(I18n).t;
 
   protected readonly editingId = signal<CategoryId | null>(null);
   protected readonly duplicateNameError = signal(false);
@@ -203,8 +205,8 @@ export class CategoriesManager {
     }
 
     const confirmed = await this.confirmDialogService.confirm({
-      title: 'Delete this category?',
-      message: 'This will permanently remove the category.',
+      title: this.t('categories.deleteTitle'),
+      message: this.t('categories.deleteMessage'),
     });
     if (confirmed) {
       this.categoriesService.remove(id);

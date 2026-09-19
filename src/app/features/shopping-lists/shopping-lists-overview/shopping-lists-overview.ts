@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
+import { I18n } from '../../../core/i18n/i18n.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { parseShoppingListExport, ShoppingListImportError } from '../data/shopping-list-export';
@@ -27,7 +28,7 @@ interface NewListFormValue {
   template: `
     <div class="page">
       <div class="page-header">
-        <h1>Shopping lists</h1>
+        <h1>{{ t('lists.title') }}</h1>
         <button type="button" class="btn-outline-pill" (click)="triggerImport()">
           <svg
             class="icon"
@@ -43,7 +44,7 @@ interface NewListFormValue {
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          Import
+          {{ t('lists.import') }}
         </button>
         <input
           #importInput
@@ -55,12 +56,12 @@ interface NewListFormValue {
       </div>
 
       @if (shoppingListsService.lists().length === 0) {
-        <p class="empty-state">No shopping lists yet — add the first one using the + button.</p>
+        <p class="empty-state">{{ t('lists.empty') }}</p>
       } @else {
         @if (activeLists().length > 0) {
           <section class="list-section">
             <div class="section-heading">
-              <h2>Active Lists</h2>
+              <h2>{{ t('lists.activeSection') }}</h2>
               <span class="section-rule"></span>
             </div>
             <div class="list-group">
@@ -69,14 +70,18 @@ interface NewListFormValue {
                   <span class="accent-bar accent-bar--active" aria-hidden="true"></span>
                   <div class="list-card__body">
                     <a class="list-card__name" [routerLink]="['/lists', list.id]">{{ list.name }}</a>
-                    <span class="list-card__meta">Added {{ list.createdAt | date: 'MMM d, y' }}</span>
+                    <span class="list-card__meta">{{
+                      t('lists.added', {
+                        date: (list.createdAt | date: 'mediumDate' : undefined : language()) ?? '',
+                      })
+                    }}</span>
                   </div>
                   <div class="list-card__actions">
                     <button
                       type="button"
                       class="btn-outline-pill"
                       (click)="toggleStatus(list.id, list.status)"
-                      [attr.aria-label]="'Mark ' + list.name + ' complete'"
+                      [attr.aria-label]="t('lists.markCompleteFor', { name: list.name })"
                     >
                       <svg
                         class="icon icon--success"
@@ -91,13 +96,13 @@ interface NewListFormValue {
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                         <polyline points="22 4 12 14.01 9 11.01" />
                       </svg>
-                      <span class="btn-outline-pill__label">Mark complete</span>
+                      <span class="btn-outline-pill__label">{{ t('lists.markComplete') }}</span>
                     </button>
                     <button
                       type="button"
                       class="icon-btn"
                       (click)="startEdit(list)"
-                      [attr.aria-label]="'Edit ' + list.name"
+                      [attr.aria-label]="t('lists.editFor', { name: list.name })"
                     >
                       <svg
                         class="icon"
@@ -117,7 +122,7 @@ interface NewListFormValue {
                       type="button"
                       class="icon-btn"
                       (click)="remove(list.id)"
-                      [attr.aria-label]="'Delete ' + list.name"
+                      [attr.aria-label]="t('lists.deleteFor', { name: list.name })"
                     >
                       <svg
                         class="icon"
@@ -146,7 +151,7 @@ interface NewListFormValue {
         @if (completedLists().length > 0) {
           <section class="list-section list-section--completed">
             <div class="section-heading">
-              <h2>Completed</h2>
+              <h2>{{ t('lists.completedSection') }}</h2>
               <span class="section-rule"></span>
             </div>
             <div class="list-group">
@@ -157,14 +162,18 @@ interface NewListFormValue {
                     <a class="list-card__name list-card__name--done" [routerLink]="['/lists', list.id]">{{
                       list.name
                     }}</a>
-                    <span class="list-card__meta">Added {{ list.createdAt | date: 'MMM d, y' }}</span>
+                    <span class="list-card__meta">{{
+                      t('lists.added', {
+                        date: (list.createdAt | date: 'mediumDate' : undefined : language()) ?? '',
+                      })
+                    }}</span>
                   </div>
                   <div class="list-card__actions">
                     <button
                       type="button"
                       class="btn-outline-pill"
                       (click)="toggleStatus(list.id, list.status)"
-                      [attr.aria-label]="'Restore ' + list.name"
+                      [attr.aria-label]="t('lists.restoreFor', { name: list.name })"
                     >
                       <svg
                         class="icon"
@@ -179,13 +188,13 @@ interface NewListFormValue {
                         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                         <polyline points="3 3 3 8 8 8" />
                       </svg>
-                      <span class="btn-outline-pill__label">Restore</span>
+                      <span class="btn-outline-pill__label">{{ t('lists.restore') }}</span>
                     </button>
                     <button
                       type="button"
                       class="icon-btn"
                       (click)="startEdit(list)"
-                      [attr.aria-label]="'Edit ' + list.name"
+                      [attr.aria-label]="t('lists.editFor', { name: list.name })"
                     >
                       <svg
                         class="icon"
@@ -205,7 +214,7 @@ interface NewListFormValue {
                       type="button"
                       class="icon-btn"
                       (click)="remove(list.id)"
-                      [attr.aria-label]="'Delete ' + list.name"
+                      [attr.aria-label]="t('lists.deleteFor', { name: list.name })"
                     >
                       <svg
                         class="icon"
@@ -234,13 +243,13 @@ interface NewListFormValue {
     </div>
 
     <app-fab-panel
-      [title]="editingId() ? 'Edit list' : 'New shopping list'"
-      fabLabel="Add shopping list"
+      [title]="editingId() ? t('lists.panelEdit') : t('lists.panelNew')"
+      [fabLabel]="t('lists.fabLabel')"
       [(open)]="isPanelOpen"
       (cancelled)="cancelEdit()"
     >
       <form novalidate (submit)="handleSubmit($event)">
-        <label class="field-label" for="new-list-name">Name</label>
+        <label class="field-label" for="new-list-name">{{ t('common.name') }}</label>
         <input
           #nameInput
           id="new-list-name"
@@ -249,12 +258,14 @@ interface NewListFormValue {
           [formField]="newListForm.name"
         />
         @if (newListForm.name().invalid() && newListForm.name().touched()) {
-          <span class="field-error">Name is required.</span>
+          <span class="field-error">{{ t('common.nameRequired') }}</span>
         }
         <div class="form-actions">
-          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">Cancel</button>
+          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">
+            {{ t('common.cancel') }}
+          </button>
           <button type="submit" class="btn-accent-pill-lg">
-            {{ editingId() ? 'Save' : 'Create list' }}
+            {{ editingId() ? t('common.save') : t('lists.create') }}
           </button>
         </div>
       </form>
@@ -278,6 +289,9 @@ export class ShoppingListsOverview {
   protected readonly shoppingListsService = inject(ShoppingListsService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18n);
+  protected readonly t = this.i18n.t;
+  protected readonly language = this.i18n.language;
 
   protected readonly activeLists = computed(() =>
     this.shoppingListsService
@@ -335,8 +349,8 @@ export class ShoppingListsOverview {
 
   protected async remove(id: ShoppingListId): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm({
-      title: 'Delete this shopping list?',
-      message: 'This will permanently remove the list and its items.',
+      title: this.t('lists.deleteTitle'),
+      message: this.t('lists.deleteMessage'),
     });
     if (confirmed) {
       this.shoppingListsService.removeList(id);
@@ -385,8 +399,8 @@ export class ShoppingListsOverview {
     } catch (error) {
       if (error instanceof ShoppingListImportError) {
         await this.confirmDialogService.alert({
-          title: 'Import failed',
-          message: "We couldn't read this file — check it's a valid Listify export.",
+          title: this.t('lists.importFailedTitle'),
+          message: this.t('lists.importFailedMessage'),
         });
       }
     }

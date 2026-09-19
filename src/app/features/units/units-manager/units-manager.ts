@@ -9,6 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
+import { I18n } from '../../../core/i18n/i18n.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { ProductsService } from '../../products/data/products.service';
@@ -28,11 +29,11 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
   template: `
     <div class="page">
       <div class="page-header">
-        <h1>Units of measure</h1>
+        <h1>{{ t('units.title') }}</h1>
       </div>
 
       @if (unitsService.units().length === 0) {
-        <p class="empty-state">No units yet — add the first one using the + button.</p>
+        <p class="empty-state">{{ t('units.empty') }}</p>
       } @else {
         <div class="list-group">
           @for (unit of sortedUnits(); track unit.id) {
@@ -49,10 +50,10 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
                   [disabled]="unit.isDefault"
                   [attr.aria-label]="
                     unit.isDefault
-                      ? unit.name + ' is already the default unit'
-                      : 'Set ' + unit.name + ' as default'
+                      ? t('units.alreadyDefault', { name: unit.name })
+                      : t('units.setDefault', { name: unit.name })
                   "
-                  [attr.title]="unit.isDefault ? null : 'Set as default'"
+                  [attr.title]="unit.isDefault ? null : t('units.setDefaultTitle')"
                 >
                   <svg
                     class="icon"
@@ -76,11 +77,11 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
                   [disabled]="usedUnitIds().has(unit.id)"
                   [attr.aria-label]="
                     usedUnitIds().has(unit.id)
-                      ? 'Cannot edit ' + unit.name + ' — used by a product'
-                      : 'Edit ' + unit.name
+                      ? t('units.cannotEditFor', { name: unit.name })
+                      : t('units.editFor', { name: unit.name })
                   "
                   [attr.title]="
-                    usedUnitIds().has(unit.id) ? 'Cannot edit — used by a product' : null
+                    usedUnitIds().has(unit.id) ? t('units.cannotEdit') : null
                   "
                 >
                   <svg
@@ -104,11 +105,11 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
                   [disabled]="usedUnitIds().has(unit.id)"
                   [attr.aria-label]="
                     usedUnitIds().has(unit.id)
-                      ? 'Cannot delete ' + unit.name + ' — used by a product'
-                      : 'Delete ' + unit.name
+                      ? t('units.cannotDeleteFor', { name: unit.name })
+                      : t('units.deleteFor', { name: unit.name })
                   "
                   [attr.title]="
-                    usedUnitIds().has(unit.id) ? 'Cannot delete — used by a product' : null
+                    usedUnitIds().has(unit.id) ? t('units.cannotDelete') : null
                   "
                 >
                   <svg
@@ -136,13 +137,13 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
     </div>
 
     <app-fab-panel
-      [title]="editingId() ? 'Edit unit' : 'Add unit'"
-      fabLabel="Add unit"
+      [title]="editingId() ? t('units.panelEdit') : t('units.panelAdd')"
+      [fabLabel]="t('units.panelAdd')"
       [(open)]="isPanelOpen"
       (cancelled)="cancelEdit()"
     >
       <form novalidate (submit)="handleSubmit($event)">
-        <label class="field-label" for="unit-symbol">Symbol</label>
+        <label class="field-label" for="unit-symbol">{{ t('units.symbol') }}</label>
         <input
           #symbolInput
           id="unit-symbol"
@@ -151,23 +152,23 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
           [formField]="unitForm.symbol"
         />
         @if (unitForm.symbol().invalid() && unitForm.symbol().touched()) {
-          <span class="field-error">Symbol is required.</span>
+          <span class="field-error">{{ t('units.symbolRequired') }}</span>
         }
 
-        <label class="field-label" for="unit-name">Name</label>
+        <label class="field-label" for="unit-name">{{ t('common.name') }}</label>
         <input id="unit-name" type="text" class="field-input" [formField]="unitForm.name" />
         @if (unitForm.name().invalid() && unitForm.name().touched()) {
-          <span class="field-error">Name is required.</span>
+          <span class="field-error">{{ t('common.nameRequired') }}</span>
         }
 
         @if (duplicateSymbolError()) {
-          <p class="field-error" role="alert">A unit with this symbol already exists.</p>
+          <p class="field-error" role="alert">{{ t('units.duplicate') }}</p>
         }
 
         <div class="form-actions">
-          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">Cancel</button>
+          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">{{ t('common.cancel') }}</button>
           <button type="submit" class="btn-accent-pill-lg">
-            {{ editingId() ? 'Save' : 'Add' }}
+            {{ editingId() ? t('common.save') : t('common.add') }}
           </button>
         </div>
       </form>
@@ -178,6 +179,7 @@ export class UnitsManager {
   protected readonly unitsService = inject(UnitsService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly productsService = inject(ProductsService);
+  protected readonly t = inject(I18n).t;
 
   protected readonly editingId = signal<UnitId | null>(null);
   protected readonly duplicateSymbolError = signal(false);
@@ -243,8 +245,8 @@ export class UnitsManager {
     }
 
     const confirmed = await this.confirmDialogService.confirm({
-      title: 'Delete this unit?',
-      message: 'This will permanently remove the unit.',
+      title: this.t('units.deleteTitle'),
+      message: this.t('units.deleteMessage'),
     });
     if (confirmed) {
       this.unitsService.remove(id);

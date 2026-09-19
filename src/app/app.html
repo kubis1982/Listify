@@ -1,11 +1,12 @@
 <header class="app-header">
   <span class="brand">Listify</span>
+  <app-language-switcher />
   <button
     type="button"
     class="menu-toggle"
     aria-controls="main-nav"
     [attr.aria-expanded]="isMenuOpen()"
-    [attr.aria-label]="isMenuOpen() ? 'Close menu' : 'Open menu'"
+    [attr.aria-label]="isMenuOpen() ? t('nav.closeMenu') : t('nav.openMenu')"
     (click)="toggleMenu()"
   >
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -14,11 +15,11 @@
       <line x1="4" y1="18" x2="20" y2="18" />
     </svg>
   </button>
-  <nav id="main-nav" aria-label="Main navigation" class="nav-links" [class.open]="isMenuOpen()">
-    <a class="nav-link" routerLink="/lists" routerLinkActive="active" (click)="closeMenu()">Shopping lists</a>
-    <a class="nav-link" routerLink="/products" routerLinkActive="active" (click)="closeMenu()">Products</a>
-    <a class="nav-link" routerLink="/units" routerLinkActive="active" (click)="closeMenu()">Units</a>
-    <a class="nav-link" routerLink="/categories" routerLinkActive="active" (click)="closeMenu()">Categories</a>
+  <nav id="main-nav" [attr.aria-label]="t('nav.label')" class="nav-links" [class.open]="isMenuOpen()">
+    <a class="nav-link" routerLink="/lists" routerLinkActive="active" (click)="closeMenu()">{{ t('nav.lists') }}</a>
+    <a class="nav-link" routerLink="/products" routerLinkActive="active" (click)="closeMenu()">{{ t('nav.products') }}</a>
+    <a class="nav-link" routerLink="/units" routerLinkActive="active" (click)="closeMenu()">{{ t('nav.units') }}</a>
+    <a class="nav-link" routerLink="/categories" routerLinkActive="active" (click)="closeMenu()">{{ t('nav.categories') }}</a>
   </nav>
 </header>
 

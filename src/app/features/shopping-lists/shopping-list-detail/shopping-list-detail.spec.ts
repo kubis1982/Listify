@@ -2,6 +2,7 @@ import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
+import { I18n } from '../../../core/i18n/i18n.service';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../../units/data/units.service';
@@ -39,6 +40,24 @@ describe('ShoppingListDetail', () => {
     fixture.componentRef.setInput('id', 'missing');
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('List not found');
+  });
+
+  it('renders the page in Polish once Polish is selected', () => {
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('Back to lists');
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Powrót do list');
+    expect(root.textContent).toContain('Brak pozycji');
   });
 
   it('adds an item built from the selected product, unit, and category', async () => {
@@ -115,6 +134,11 @@ describe('ShoppingListDetail', () => {
     fixture.detectChanges();
 
     expect(root.textContent).toContain('Quantity updated for existing item.');
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Zaktualizowano ilość istniejącej pozycji.');
   });
 
   it('clears the feedback message a few seconds after it appears', async () => {

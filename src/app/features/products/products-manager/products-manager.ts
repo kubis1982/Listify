@@ -9,6 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
+import { I18n } from '../../../core/i18n/i18n.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { CategoriesService } from '../../categories/data/categories.service';
@@ -30,11 +31,11 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
   template: `
     <div class="page">
       <div class="page-header">
-        <h1>Products</h1>
+        <h1>{{ t('products.title') }}</h1>
       </div>
 
       @if (productsService.products().length === 0) {
-        <p class="empty-state">No products yet — add the first one using the + button.</p>
+        <p class="empty-state">{{ t('products.empty') }}</p>
       } @else {
         <div class="list-group">
           @for (product of sortedProducts(); track product.id) {
@@ -50,7 +51,7 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
                   type="button"
                   class="icon-btn"
                   (click)="startEdit(product)"
-                  [attr.aria-label]="'Edit ' + product.name"
+                  [attr.aria-label]="t('products.editFor', { name: product.name })"
                 >
                   <svg
                     class="icon"
@@ -70,7 +71,7 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
                   type="button"
                   class="icon-btn"
                   (click)="remove(product.id)"
-                  [attr.aria-label]="'Delete ' + product.name"
+                  [attr.aria-label]="t('products.deleteFor', { name: product.name })"
                 >
                   <svg
                     class="icon"
@@ -97,13 +98,13 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
     </div>
 
     <app-fab-panel
-      [title]="editingId() ? 'Edit product' : 'Add product'"
-      fabLabel="Add product"
+      [title]="editingId() ? t('products.panelEdit') : t('products.panelAdd')"
+      [fabLabel]="t('products.panelAdd')"
       [(open)]="isPanelOpen"
       (cancelled)="cancelEdit()"
     >
       <form novalidate (submit)="handleSubmit($event)">
-        <label class="field-label" for="product-name">Name</label>
+        <label class="field-label" for="product-name">{{ t('common.name') }}</label>
         <input
           #nameInput
           id="product-name"
@@ -112,39 +113,41 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
           [formField]="productForm.name"
         />
         @if (productForm.name().invalid() && productForm.name().touched()) {
-          <span class="field-error">Name is required.</span>
+          <span class="field-error">{{ t('common.nameRequired') }}</span>
         }
 
-        <label class="field-label" for="product-unit">Default unit</label>
+        <label class="field-label" for="product-unit">{{ t('products.defaultUnit') }}</label>
         <select id="product-unit" class="field-input" [formField]="productForm.defaultUnitId">
-          <option value="" disabled>Select a unit</option>
+          <option value="" disabled>{{ t('products.selectUnit') }}</option>
           @for (unit of unitsService.units(); track unit.id) {
             <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
           }
         </select>
         @if (productForm.defaultUnitId().invalid() && productForm.defaultUnitId().touched()) {
-          <span class="field-error">A unit is required.</span>
+          <span class="field-error">{{ t('products.unitRequired') }}</span>
         }
 
-        <label class="field-label" for="product-category">Category</label>
+        <label class="field-label" for="product-category">{{ t('products.category') }}</label>
         <select id="product-category" class="field-input" [formField]="productForm.categoryId">
-          <option value="" disabled>Select a category</option>
+          <option value="" disabled>{{ t('products.selectCategory') }}</option>
           @for (category of categoriesService.categories(); track category.id) {
             <option [value]="category.id">{{ category.name }}</option>
           }
         </select>
         @if (productForm.categoryId().invalid() && productForm.categoryId().touched()) {
-          <span class="field-error">A category is required.</span>
+          <span class="field-error">{{ t('products.categoryRequired') }}</span>
         }
 
         @if (duplicateNameError()) {
-          <p class="field-error" role="alert">A product with this name already exists.</p>
+          <p class="field-error" role="alert">{{ t('products.duplicate') }}</p>
         }
 
         <div class="form-actions">
-          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">Cancel</button>
+          <button type="button" class="btn-outline-pill" (click)="cancelEdit()">
+            {{ t('common.cancel') }}
+          </button>
           <button type="submit" class="btn-accent-pill-lg">
-            {{ editingId() ? 'Save' : 'Add' }}
+            {{ editingId() ? t('common.save') : t('common.add') }}
           </button>
         </div>
       </form>
@@ -152,6 +155,7 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
   `,
 })
 export class ProductsManager {
+  protected readonly t = inject(I18n).t;
   protected readonly productsService = inject(ProductsService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   protected readonly unitsService = inject(UnitsService);
@@ -196,12 +200,12 @@ export class ProductsManager {
 
   protected unitLabel(unitId: string): string {
     const unit = this.unitsService.units().find((u) => u.id === unitId);
-    return unit ? `${unit.name} (${unit.symbol})` : 'Unknown unit';
+    return unit ? `${unit.name} (${unit.symbol})` : this.t('products.unknownUnit');
   }
 
   protected categoryLabel(categoryId: string): string {
     const category = this.categoriesService.categories().find((c) => c.id === categoryId);
-    return category ? category.name : 'Unknown category';
+    return category ? category.name : this.t('products.unknownCategory');
   }
 
   protected startEdit(product: Product): void {
@@ -226,8 +230,8 @@ export class ProductsManager {
 
   protected async remove(id: ProductId): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm({
-      title: 'Delete this product?',
-      message: 'This will permanently remove the product.',
+      title: this.t('products.deleteTitle'),
+      message: this.t('products.deleteMessage'),
     });
     if (confirmed) {
       this.productsService.remove(id);

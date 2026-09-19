@@ -46,6 +46,9 @@ Thumbs.db
 # Superpowers scratch workspace
 /.superpowers/
 
+# Git worktrees used for isolated feature work
+/.worktrees/
+
 # Playwright MCP
 /.playwright-mcp/
 

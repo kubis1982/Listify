@@ -1,5 +1,6 @@
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { Component, inject } from '@angular/core';
+import { I18n } from '../../core/i18n/i18n.service';
 
 export interface ConfirmDialogData {
   readonly title: string;
@@ -20,11 +21,11 @@ export interface ConfirmDialogData {
       <div class="confirm-dialog__actions">
         @if (!data.hideCancel) {
           <button type="button" class="btn-outline-pill" (click)="cancel()">
-            {{ data.cancelLabel ?? 'Cancel' }}
+            {{ data.cancelLabel ?? t('common.cancel') }}
           </button>
         }
         <button type="button" class="btn-accent-pill-lg" (click)="confirm()">
-          {{ data.confirmLabel ?? 'Delete' }}
+          {{ data.confirmLabel ?? t('common.delete') }}
         </button>
       </div>
     </div>
@@ -32,6 +33,7 @@ export interface ConfirmDialogData {
 })
 export class ConfirmDialog {
   protected readonly data = inject<ConfirmDialogData>(DIALOG_DATA);
+  protected readonly t = inject(I18n).t;
   private readonly dialogRef = inject<DialogRef<boolean>>(DialogRef);
 
   protected confirm(): void {
