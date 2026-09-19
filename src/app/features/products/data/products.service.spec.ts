@@ -25,6 +25,13 @@ describe('ProductsService', () => {
     expect(service.products()[0].id).toBeTruthy();
   });
 
+  it('returns the created product, including its generated id', () => {
+    const service = TestBed.inject(ProductsService);
+    const created = service.add({ name: 'Milk 3.2%', defaultUnitId: 'unit-1', categoryId: 'category-1' });
+    expect(created).toEqual(service.products()[0]);
+    expect(created.id).toBeTruthy();
+  });
+
   it('updates an existing product', () => {
     const service = TestBed.inject(ProductsService);
     service.add({ name: 'Milk 3.2%', defaultUnitId: 'unit-1', categoryId: 'category-1' });

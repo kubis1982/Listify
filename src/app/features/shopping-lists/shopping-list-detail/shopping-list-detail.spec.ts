@@ -8,6 +8,19 @@ import { UnitsService } from '../../units/data/units.service';
 import { ShoppingListsService } from '../data/shopping-lists.service';
 import { ShoppingListDetail } from './shopping-list-detail';
 
+async function selectProductViaPicker(root: HTMLElement, productName: string): Promise<void> {
+  const input = root.querySelector<HTMLInputElement>('#add-item-product')!;
+  input.value = productName;
+  input.dispatchEvent(new Event('input'));
+  await TestBed.inject(ApplicationRef).whenStable();
+
+  const option = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
+    (el) => el.textContent?.trim() === productName,
+  )!;
+  option.click();
+  await TestBed.inject(ApplicationRef).whenStable();
+}
+
 describe('ShoppingListDetail', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -17,6 +30,10 @@ describe('ShoppingListDetail', () => {
     });
   });
 
+  afterEach(() => {
+    document.querySelectorAll('.cdk-overlay-container').forEach((container) => container.remove());
+  });
+
   it('shows "List not found" for an unknown id', () => {
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', 'missing');
@@ -24,7 +41,7 @@ describe('ShoppingListDetail', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('List not found');
   });
 
-  it('adds an item built from the selected product, unit, and category', () => {
+  it('adds an item built from the selected product, unit, and category', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ name: 'litre', symbol: 'l' });
     const unitId = unitsService.units()[0].id;
@@ -33,7 +50,6 @@ describe('ShoppingListDetail', () => {
     const categoryId = categoriesService.categories()[0].id;
     const productsService = TestBed.inject(ProductsService);
     productsService.add({ name: 'Milk', defaultUnitId: unitId, categoryId });
-    const productId = productsService.products()[0].id;
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
@@ -46,10 +62,7 @@ describe('ShoppingListDetail', () => {
     root.querySelector<HTMLButtonElement>('.fab')!.click();
     fixture.detectChanges();
 
-    const productSelect = root.querySelector<HTMLSelectElement>('select')!;
-    productSelect.value = productId;
-    productSelect.dispatchEvent(new Event('input'));
-    productSelect.dispatchEvent(new Event('change'));
+    await selectProductViaPicker(root, 'Milk');
     fixture.detectChanges();
 
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -67,7 +80,7 @@ describe('ShoppingListDetail', () => {
     );
   });
 
-  it('shows a feedback message when the submitted item merges into an existing unpurchased item', () => {
+  it('shows a feedback message when the submitted item merges into an existing unpurchased item', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ name: 'litre', symbol: 'l' });
     const unitId = unitsService.units()[0].id;
@@ -76,7 +89,6 @@ describe('ShoppingListDetail', () => {
     const categoryId = categoriesService.categories()[0].id;
     const productsService = TestBed.inject(ProductsService);
     productsService.add({ name: 'Milk', defaultUnitId: unitId, categoryId });
-    const productId = productsService.products()[0].id;
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
@@ -96,10 +108,7 @@ describe('ShoppingListDetail', () => {
     root.querySelector<HTMLButtonElement>('.fab')!.click();
     fixture.detectChanges();
 
-    const productSelect = root.querySelector<HTMLSelectElement>('select')!;
-    productSelect.value = productId;
-    productSelect.dispatchEvent(new Event('input'));
-    productSelect.dispatchEvent(new Event('change'));
+    await selectProductViaPicker(root, 'Milk');
     fixture.detectChanges();
 
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -108,7 +117,7 @@ describe('ShoppingListDetail', () => {
     expect(root.textContent).toContain('Quantity updated for existing item.');
   });
 
-  it('clears the feedback message a few seconds after it appears', () => {
+  it('clears the feedback message a few seconds after it appears', async () => {
     vi.useFakeTimers();
     try {
       const unitsService = TestBed.inject(UnitsService);
@@ -119,7 +128,6 @@ describe('ShoppingListDetail', () => {
       const categoryId = categoriesService.categories()[0].id;
       const productsService = TestBed.inject(ProductsService);
       productsService.add({ name: 'Milk', defaultUnitId: unitId, categoryId });
-      const productId = productsService.products()[0].id;
       const shoppingListsService = TestBed.inject(ShoppingListsService);
       shoppingListsService.addList('Weekly groceries');
       const listId = shoppingListsService.lists()[0].id;
@@ -139,10 +147,22 @@ describe('ShoppingListDetail', () => {
       root.querySelector<HTMLButtonElement>('.fab')!.click();
       fixture.detectChanges();
 
-      const productSelect = root.querySelector<HTMLSelectElement>('select')!;
-      productSelect.value = productId;
-      productSelect.dispatchEvent(new Event('input'));
-      productSelect.dispatchEvent(new Event('change'));
+      // whenStable() can hang under vi.useFakeTimers() — the zoneless scheduler's
+      // stability check relies on a macrotask that fake timers intercept without
+      // advancing. Use plain microtask ticks instead, as the brief anticipates.
+      const productInput = root.querySelector<HTMLInputElement>('#add-item-product')!;
+      productInput.value = 'Milk';
+      productInput.dispatchEvent(new Event('input'));
+      await Promise.resolve();
+      await Promise.resolve();
+      fixture.detectChanges();
+
+      const option = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
+        (el) => el.textContent?.trim() === 'Milk',
+      )!;
+      option.click();
+      await Promise.resolve();
+      await Promise.resolve();
       fixture.detectChanges();
 
       root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -182,8 +202,64 @@ describe('ShoppingListDetail', () => {
     fixture.detectChanges();
 
     const selects = root.querySelectorAll('select');
-    expect(selects.length).toBe(2);
+    expect(selects.length).toBe(1);
     expect(root.textContent).not.toContain('Category');
+  });
+
+  it('creates a new product from the search field and adds it to the list', async () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const unitId = unitsService.units()[0].id;
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const categoryId = categoriesService.categories()[0].id;
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const input = root.querySelector<HTMLInputElement>('#add-item-product')!;
+    input.value = 'Oat milk';
+    input.dispatchEvent(new Event('input'));
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const createOption = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
+      (el) => el.textContent?.trim() === 'Create product "Oat milk"',
+    )!;
+    createOption.click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const createProductUnitSelect = document.querySelector<HTMLSelectElement>('#create-product-unit')!;
+    createProductUnitSelect.value = unitId;
+    createProductUnitSelect.dispatchEvent(new Event('input'));
+    const createProductCategorySelect = document.querySelector<HTMLSelectElement>(
+      '#create-product-category',
+    )!;
+    createProductCategorySelect.value = categoryId;
+    createProductCategorySelect.dispatchEvent(new Event('input'));
+    createProductUnitSelect.closest('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await TestBed.inject(ApplicationRef).whenStable();
+    fixture.detectChanges();
+
+    root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    const productsService = TestBed.inject(ProductsService);
+    expect(productsService.products()).toEqual([
+      expect.objectContaining({ name: 'Oat milk', defaultUnitId: unitId, categoryId }),
+    ]);
+    const items = shoppingListsService.lists()[0].items;
+    expect(items.length).toBe(1);
+    expect(items[0]).toEqual(
+      expect.objectContaining({ productName: 'Oat milk', unitLabel: 'l', categoryName: 'Dairy' }),
+    );
   });
 
   it('groups items into sections by category, sorted alphabetically', () => {
@@ -311,6 +387,75 @@ describe('ShoppingListDetail', () => {
 
     expect(shoppingListsService.lists()[0].items[0].quantity).toBe(5);
     expect(root.querySelector('.add-panel')).toBeNull();
+  });
+
+  it('focuses the product field when opening the add-item panel', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({
+      name: 'Milk',
+      defaultUnitId: unitsService.units()[0].id,
+      categoryId: categoriesService.categories()[0].id,
+    });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const productInput = root.querySelector<HTMLInputElement>('#add-item-product')!;
+    expect(document.activeElement).toBe(productInput);
+  });
+
+  it('clears the product field when the add-item form is cancelled after typing without selecting', async () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({
+      name: 'Milk',
+      defaultUnitId: unitsService.units()[0].id,
+      categoryId: categoriesService.categories()[0].id,
+    });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const productInput = root.querySelector<HTMLInputElement>('#add-item-product')!;
+    productInput.value = 'Choc';
+    productInput.dispatchEvent(new Event('input'));
+    await TestBed.inject(ApplicationRef).whenStable();
+    fixture.detectChanges();
+
+    const cancelButton = Array.from(root.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Cancel',
+    )!;
+    cancelButton.click();
+    fixture.detectChanges();
+
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const reopenedProductInput = root.querySelector<HTMLInputElement>('#add-item-product')!;
+    expect(reopenedProductInput.value).toBe('');
   });
 
   it('hides the add-item form and disables item actions for a completed list', () => {

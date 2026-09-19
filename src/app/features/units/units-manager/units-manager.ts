@@ -139,6 +139,7 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
       [title]="editingId() ? 'Edit unit' : 'Add unit'"
       fabLabel="Add unit"
       [(open)]="isPanelOpen"
+      (cancelled)="cancelEdit()"
     >
       <form novalidate (submit)="handleSubmit($event)">
         <label class="field-label" for="unit-symbol">Symbol</label>

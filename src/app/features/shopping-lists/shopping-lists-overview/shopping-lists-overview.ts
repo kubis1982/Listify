@@ -76,6 +76,7 @@ interface NewListFormValue {
                       type="button"
                       class="btn-outline-pill"
                       (click)="toggleStatus(list.id, list.status)"
+                      [attr.aria-label]="'Mark ' + list.name + ' complete'"
                     >
                       <svg
                         class="icon icon--success"
@@ -90,7 +91,7 @@ interface NewListFormValue {
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                         <polyline points="22 4 12 14.01 9 11.01" />
                       </svg>
-                      Mark complete
+                      <span class="btn-outline-pill__label">Mark complete</span>
                     </button>
                     <button
                       type="button"
@@ -163,6 +164,7 @@ interface NewListFormValue {
                       type="button"
                       class="btn-outline-pill"
                       (click)="toggleStatus(list.id, list.status)"
+                      [attr.aria-label]="'Restore ' + list.name"
                     >
                       <svg
                         class="icon"
@@ -177,7 +179,7 @@ interface NewListFormValue {
                         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                         <polyline points="3 3 3 8 8 8" />
                       </svg>
-                      Restore
+                      <span class="btn-outline-pill__label">Restore</span>
                     </button>
                     <button
                       type="button"
@@ -235,6 +237,7 @@ interface NewListFormValue {
       [title]="editingId() ? 'Edit list' : 'New shopping list'"
       fabLabel="Add shopping list"
       [(open)]="isPanelOpen"
+      (cancelled)="cancelEdit()"
     >
       <form novalidate (submit)="handleSubmit($event)">
         <label class="field-label" for="new-list-name">Name</label>

@@ -42,6 +42,39 @@ html {
 
   // Tabular figures for quantities, so they line up at a glance.
   --app-font-data: 'IBM Plex Mono', ui-monospace, monospace;
+
+  // Re-skins the one Material component this app renders (`MatAutocomplete`
+  // in `ProductPicker`) with the "Fresh Mint" tokens above instead of
+  // Material's own M3 surface tokens, which otherwise flip to a dark panel
+  // under `prefers-color-scheme: dark` — a look the rest of this light-only
+  // design system never follows.
+  @include mat.autocomplete-overrides(
+    (
+      container-shape: 0.625rem,
+      container-elevation-shadow: 0 16px 32px -12px rgba(20, 32, 29, 0.18),
+      background-color: var(--color-surface),
+    )
+  );
+
+  @include mat.option-overrides(
+    (
+      label-text-color: var(--color-ink),
+      label-text-size: 0.875rem,
+      label-text-weight: 600,
+      hover-state-layer-color: rgba(15, 138, 108, 0.08),
+      focus-state-layer-color: rgba(15, 138, 108, 0.08),
+      selected-state-layer-color: rgba(15, 138, 108, 0.14),
+      selected-state-label-text-color: var(--color-accent),
+    )
+  );
+}
+
+// The panel's own border isn't exposed as a Material token; match the
+// hairline `.field-input` sits on so the panel reads as that field's
+// continuation rather than a foreign overlay.
+.mat-mdc-autocomplete-panel {
+  border: 1px solid rgba(199, 208, 205, 0.6);
+  margin-top: 0.375rem;
 }
 
 body {
@@ -460,6 +493,17 @@ select.field-input {
   .field-input {
     // 16px prevents iOS Safari from auto-zooming the page on input focus.
     font-size: 1rem;
+  }
+
+  // Collapse the "Mark complete" / "Restore" pill to an icon-only button so it
+  // doesn't fight the list name/meta column for space, matching the adjacent
+  // icon-btn actions. The accessible name is provided via aria-label instead.
+  .list-card__actions .btn-outline-pill {
+    padding: 0.5rem;
+  }
+
+  .list-card__actions .btn-outline-pill__label {
+    display: none;
   }
 }
 

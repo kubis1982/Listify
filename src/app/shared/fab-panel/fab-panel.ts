@@ -1,7 +1,10 @@
-import { Component, input, model } from '@angular/core';
+import { Component, input, model, output } from '@angular/core';
 
 @Component({
   selector: 'app-fab-panel',
+  host: {
+    '(document:keydown.escape)': 'onEscape()',
+  },
   template: `
     <div class="fab-wrap">
       @if (open()) {
@@ -40,8 +43,15 @@ export class FabPanel {
   readonly title = input.required<string>();
   readonly fabLabel = input.required<string>();
   readonly open = model(false);
+  readonly cancelled = output<void>();
 
   protected toggle(): void {
     this.open.update((isOpen) => !isOpen);
+  }
+
+  protected onEscape(): void {
+    if (this.open()) {
+      this.cancelled.emit();
+    }
   }
 }
