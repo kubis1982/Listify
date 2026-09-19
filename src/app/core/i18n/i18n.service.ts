@@ -26,7 +26,7 @@ function readBrowserLanguage(): Language | null {
   return isLanguage(base) ? base : null;
 }
 
-function interpolate(template: string, params: Record<string, string | number>): string {
+export function interpolate(template: string, params: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (placeholder, name: string) =>
     name in params ? String(params[name]) : placeholder,
   );

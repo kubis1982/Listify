@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { I18n } from './i18n.service';
+import { I18n, interpolate } from './i18n.service';
 
 function setBrowserLanguage(tag: string): void {
   Object.defineProperty(navigator, 'language', { value: tag, configurable: true });
@@ -41,8 +41,12 @@ describe('I18n', () => {
     expect(i18n.t('common.cancel')).toBe('Anuluj');
   });
 
-  it('substitutes parameters into a translation', () => {
-    expect(TestBed.inject(I18n).t('language.label')).toBe('Language');
+  it('substitutes named parameters into a template', () => {
+    expect(interpolate('Set {name} as default', { name: 'kg' })).toBe('Set kg as default');
+  });
+
+  it('leaves a template with no placeholders unchanged when params are given', () => {
+    expect(interpolate('No placeholders here', { name: 'kg' })).toBe('No placeholders here');
   });
 
   it('persists the selected language', () => {
