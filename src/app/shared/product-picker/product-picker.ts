@@ -57,7 +57,23 @@ const CREATE_OPTION = Symbol('create-product-option');
       } @empty {
         @if (queryText().trim() !== '') {
           <mat-option [value]="createOptionValue">
-            Create product "{{ queryText().trim() }}"
+            <span class="product-picker__create-option">
+              <svg
+                class="icon icon--sm"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <line x1="12" y1="8" x2="12" y2="16" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+              </svg>
+              Create product "{{ queryText().trim() }}"
+            </span>
           </mat-option>
         }
       }
@@ -69,6 +85,17 @@ const CREATE_OPTION = Symbol('create-product-option');
       font-size: 0.7rem;
       color: rgba(20, 32, 29, 0.65);
       margin-top: 0.25rem;
+    }
+
+    /* Marks the "create a new product" row as an action rather than a
+       search result, echoing the accent weight .btn-accent-pill-lg uses
+       for the app's other primary actions. */
+    .product-picker__create-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--color-accent);
+      font-weight: 700;
     }
   `,
 })
