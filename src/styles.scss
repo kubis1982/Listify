@@ -494,6 +494,17 @@ select.field-input {
     // 16px prevents iOS Safari from auto-zooming the page on input focus.
     font-size: 1rem;
   }
+
+  // Collapse the "Mark complete" / "Restore" pill to an icon-only button so it
+  // doesn't fight the list name/meta column for space, matching the adjacent
+  // icon-btn actions. The accessible name is provided via aria-label instead.
+  .list-card__actions .btn-outline-pill {
+    padding: 0.5rem;
+  }
+
+  .list-card__actions .btn-outline-pill__label {
+    display: none;
+  }
 }
 
 .confirm-dialog {
