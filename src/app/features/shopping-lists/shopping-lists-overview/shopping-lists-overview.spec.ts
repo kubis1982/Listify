@@ -213,8 +213,6 @@ describe('ShoppingListsOverview', () => {
     TestBed.inject(I18n).setLanguage('pl');
     fixture.detectChanges();
 
-    // Angular's DatePipe keeps the 'MMM d, y' token order fixed across locales,
-    // only localizing the month name/case — it does not reorder to 'd MMM y'.
-    expect(root.textContent).toContain('Dodano mar 5, 2026');
+    expect(root.textContent).toContain('Dodano 5 mar 2026');
   });
 });

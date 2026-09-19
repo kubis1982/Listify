@@ -72,7 +72,7 @@ interface NewListFormValue {
                     <a class="list-card__name" [routerLink]="['/lists', list.id]">{{ list.name }}</a>
                     <span class="list-card__meta">{{
                       t('lists.added', {
-                        date: (list.createdAt | date: 'MMM d, y' : undefined : language()) ?? '',
+                        date: (list.createdAt | date: 'mediumDate' : undefined : language()) ?? '',
                       })
                     }}</span>
                   </div>
@@ -164,7 +164,7 @@ interface NewListFormValue {
                     }}</a>
                     <span class="list-card__meta">{{
                       t('lists.added', {
-                        date: (list.createdAt | date: 'MMM d, y' : undefined : language()) ?? '',
+                        date: (list.createdAt | date: 'mediumDate' : undefined : language()) ?? '',
                       })
                     }}</span>
                   </div>
