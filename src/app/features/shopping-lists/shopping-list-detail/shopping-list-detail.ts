@@ -11,6 +11,8 @@ import {
 } from '@angular/core';
 import { FormField, form, min, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
+import { I18n } from '../../../core/i18n/i18n.service';
+import { TranslationKey } from '../../../core/i18n/translations/en';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { ProductPicker } from '../../../shared/product-picker/product-picker';
 import { CategoriesService } from '../../categories/data/categories.service';
@@ -52,7 +54,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
           <line x1="19" y1="12" x2="5" y2="12" />
           <polyline points="12 19 5 12 12 5" />
         </svg>
-        <span>Back to lists</span>
+        <span>{{ t('listDetail.back') }}</span>
       </a>
 
       @if (list(); as currentList) {
@@ -63,7 +65,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
               class="status-chip"
               [class.status-chip--completed]="currentList.status === 'completed'"
             >
-              {{ currentList.status === 'active' ? 'Active' : 'Completed' }}
+              {{ currentList.status === 'active' ? t('listDetail.statusActive') : t('listDetail.statusCompleted') }}
             </span>
           </div>
           <div class="list-header__actions">
@@ -72,13 +74,13 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
               class="btn-accent-pill-lg"
               (click)="toggleStatus(currentList.status)"
             >
-              {{ currentList.status === 'active' ? 'Mark completed' : 'Mark active' }}
+              {{ currentList.status === 'active' ? t('listDetail.markCompleted') : t('listDetail.markActive') }}
             </button>
             <button
               type="button"
               class="btn-outline-pill"
               (click)="shareList()"
-              [attr.aria-label]="'Share ' + currentList.name"
+              [attr.aria-label]="t('listDetail.shareFor', { name: currentList.name })"
             >
               <svg
                 class="icon"
@@ -96,7 +98,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                 <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
                 <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
               </svg>
-              Share
+              {{ t('listDetail.share') }}
             </button>
           </div>
         </div>
@@ -104,7 +106,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
         @if (totalItemsCount() > 0) {
           <div class="progress">
             <div class="progress__label">
-              <span class="data-font">{{ purchasedItemsCount() }} of {{ totalItemsCount() }} purchased</span>
+              <span class="data-font">{{ t('listDetail.progress', { purchased: purchasedItemsCount(), total: totalItemsCount() }) }}</span>
               <span class="data-font">{{ progressPercent() }}%</span>
             </div>
             <div class="progress__track">
@@ -114,7 +116,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
         }
 
         @if (itemsByCategory().length === 0) {
-          <p class="empty-state">No items yet — add the first one using the + button.</p>
+          <p class="empty-state">{{ t('listDetail.empty') }}</p>
         } @else {
           @for (group of itemsByCategory(); track group.categoryName) {
             <div class="section-heading">
@@ -131,7 +133,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                       [id]="'check-' + item.id"
                       [checked]="item.purchased"
                       [disabled]="currentList.status === 'completed'"
-                      [attr.aria-label]="item.productName + ' purchased'"
+                      [attr.aria-label]="t('listDetail.itemPurchased', { name: item.productName })"
                       (change)="togglePurchased(item.id, item.purchased)"
                     />
                     <label
@@ -172,7 +174,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                       class="icon-btn"
                       [disabled]="currentList.status === 'completed'"
                       (click)="startEditItem(item)"
-                      [attr.aria-label]="'Edit ' + item.productName + ' quantity'"
+                      [attr.aria-label]="t('listDetail.editQuantityFor', { name: item.productName })"
                     >
                       <svg
                         class="icon"
@@ -193,7 +195,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                       class="icon-btn"
                       [disabled]="currentList.status === 'completed'"
                       (click)="removeItem(item.id)"
-                      [attr.aria-label]="'Remove ' + item.productName"
+                      [attr.aria-label]="t('listDetail.removeFor', { name: item.productName })"
                     >
                       <svg
                         class="icon"
@@ -220,23 +222,23 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
         }
 
         @if (currentList.status === 'completed') {
-          <p class="empty-state">This list is completed. Mark it active again to add items.</p>
+          <p class="empty-state">{{ t('listDetail.completedNotice') }}</p>
         } @else {
           <app-fab-panel
-            [title]="editingItemId() ? 'Edit quantity' : 'Add item'"
-            fabLabel="Add item"
+            [title]="editingItemId() ? t('listDetail.panelEditQuantity') : t('listDetail.panelAddItem')"
+            [fabLabel]="t('listDetail.panelAddItem')"
             [(open)]="isItemPanelOpen"
             (cancelled)="cancel()"
           >
             @if (editingItemId()) {
               <form novalidate (submit)="saveItemQuantity($event)">
-                <label class="field-label" for="edit-item-quantity">Quantity</label>
+                <label class="field-label" for="edit-item-quantity">{{ t('common.quantity') }}</label>
                 <div class="quantity-stepper">
                   <button
                     type="button"
                     class="quantity-stepper__btn"
                     (click)="adjustQuantity(-1)"
-                    aria-label="Decrease quantity"
+                    [attr.aria-label]="t('common.decreaseQuantity')"
                   >
                     <svg
                       class="icon"
@@ -263,7 +265,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                     type="button"
                     class="quantity-stepper__btn"
                     (click)="adjustQuantity(1)"
-                    aria-label="Increase quantity"
+                    [attr.aria-label]="t('common.increaseQuantity')"
                   >
                     <svg
                       class="icon"
@@ -281,35 +283,35 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                   </button>
                 </div>
                 @if (quantityForm.quantity().invalid() && quantityForm.quantity().touched()) {
-                  <span class="field-error">Quantity must be greater than 0.</span>
+                  <span class="field-error">{{ t('common.quantityInvalid') }}</span>
                 }
 
                 <div class="form-actions">
-                  <button type="button" class="btn-outline-pill" (click)="cancel()">Cancel</button>
-                  <button type="submit" class="btn-accent-pill-lg">Save</button>
+                  <button type="button" class="btn-outline-pill" (click)="cancel()">{{ t('common.cancel') }}</button>
+                  <button type="submit" class="btn-accent-pill-lg">{{ t('common.save') }}</button>
                 </div>
               </form>
             } @else {
               <form novalidate (submit)="addItem($event)">
-                <label class="field-label" for="add-item-product">Product</label>
+                <label class="field-label" for="add-item-product">{{ t('listDetail.product') }}</label>
                 <app-product-picker
                   [inputId]="'add-item-product'"
                   [products]="sortedProducts()"
                   [formField]="itemForm.productId"
                 />
                 @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
-                  <span class="field-error">Please select a product.</span>
+                  <span class="field-error">{{ t('listDetail.productRequired') }}</span>
                 }
 
                 <div class="field-row">
                   <div class="field-group">
-                    <label class="field-label" for="add-item-quantity">Quantity</label>
+                    <label class="field-label" for="add-item-quantity">{{ t('common.quantity') }}</label>
                     <div class="quantity-stepper">
                       <button
                         type="button"
                         class="quantity-stepper__btn"
                         (click)="adjustItemQuantity(-1)"
-                        aria-label="Decrease quantity"
+                        [attr.aria-label]="t('common.decreaseQuantity')"
                       >
                         <svg
                           class="icon"
@@ -335,7 +337,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                         type="button"
                         class="quantity-stepper__btn"
                         (click)="adjustItemQuantity(1)"
-                        aria-label="Increase quantity"
+                        [attr.aria-label]="t('common.increaseQuantity')"
                       >
                         <svg
                           class="icon"
@@ -353,11 +355,11 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                       </button>
                     </div>
                     @if (itemForm.quantity().invalid() && itemForm.quantity().touched()) {
-                      <span class="field-error">Quantity must be greater than 0.</span>
+                      <span class="field-error">{{ t('common.quantityInvalid') }}</span>
                     }
                   </div>
                   <div class="field-group">
-                    <label class="field-label" for="add-item-unit">Unit</label>
+                    <label class="field-label" for="add-item-unit">{{ t('listDetail.unit') }}</label>
                     <select
                       id="add-item-unit"
                       class="field-input"
@@ -371,7 +373,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                   </div>
                 </div>
 
-                <label class="field-label" for="add-item-note">Note</label>
+                <label class="field-label" for="add-item-note">{{ t('listDetail.note') }}</label>
                 <input
                   id="add-item-note"
                   type="text"
@@ -380,18 +382,18 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                 />
 
                 <div class="form-actions">
-                  <button type="button" class="btn-outline-pill" (click)="cancel()">Cancel</button>
-                  <button type="submit" class="btn-accent-pill-lg">Add to list</button>
+                  <button type="button" class="btn-outline-pill" (click)="cancel()">{{ t('common.cancel') }}</button>
+                  <button type="submit" class="btn-accent-pill-lg">{{ t('listDetail.addToList') }}</button>
                 </div>
-                @if (feedbackMessage()) {
-                  <p class="field-info" role="status">{{ feedbackMessage() }}</p>
+                @if (feedbackKey(); as key) {
+                  <p class="field-info" role="status">{{ t(key) }}</p>
                 }
               </form>
             }
           </app-fab-panel>
         }
       } @else {
-        <p>List not found.</p>
+        <p>{{ t('listDetail.notFound') }}</p>
       }
     </div>
   `,
@@ -640,6 +642,8 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
 export class ShoppingListDetail {
   readonly id = input.required<string>();
 
+  protected readonly t = inject(I18n).t;
+
   protected readonly shoppingListsService = inject(ShoppingListsService);
   protected readonly productsService = inject(ProductsService);
   protected readonly unitsService = inject(UnitsService);
@@ -681,12 +685,12 @@ export class ShoppingListDetail {
 
   protected readonly isItemPanelOpen = signal(false);
   protected readonly editingItemId = signal<ShoppingListItemId | null>(null);
-  protected readonly feedbackMessage = signal<string | null>(null);
+  protected readonly feedbackKey = signal<TranslationKey | null>(null);
   private feedbackTimeoutId?: ReturnType<typeof setTimeout>;
 
   private readonly itemModel = signal<ItemFormValue>({ ...EMPTY_ITEM_FORM });
   protected readonly itemForm = form(this.itemModel, (path) => {
-    required(path.productId, { message: 'Please select a product.' });
+    required(path.productId, { message: this.t('listDetail.productRequired') });
     required(path.quantity);
     min(path.quantity, 0.01);
   });
@@ -847,14 +851,14 @@ export class ShoppingListDetail {
     );
 
     this.itemForm().reset({ ...EMPTY_ITEM_FORM });
-    this.showFeedback(merged ? 'Quantity updated for existing item.' : null);
+    this.showFeedback(merged ? 'listDetail.mergedFeedback' : null);
   }
 
-  private showFeedback(message: string | null): void {
+  private showFeedback(key: TranslationKey | null): void {
     clearTimeout(this.feedbackTimeoutId);
-    this.feedbackMessage.set(message);
-    if (message) {
-      this.feedbackTimeoutId = setTimeout(() => this.feedbackMessage.set(null), 3000);
+    this.feedbackKey.set(key);
+    if (key) {
+      this.feedbackTimeoutId = setTimeout(() => this.feedbackKey.set(null), 3000);
     }
   }
 }
