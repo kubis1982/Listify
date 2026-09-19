@@ -39,14 +39,16 @@ const CREATE_OPTION = Symbol('create-product-option');
       autocomplete="off"
       [value]="queryText()"
       [matAutocomplete]="auto"
+      [attr.aria-describedby]="queryText().trim() === '' ? hintId() : null"
       (input)="onQueryInput($event)"
       (blur)="touch.emit()"
     />
     @if (queryText().trim() === '') {
-      <span class="product-picker__hint">Start typing to search products.</span>
+      <span [id]="hintId()" class="product-picker__hint">Start typing to search products.</span>
     }
     <mat-autocomplete
       #auto="matAutocomplete"
+      aria-label="Product search results"
       [displayWith]="displayProduct"
       (optionSelected)="onOptionSelected($event)"
     >
@@ -82,6 +84,7 @@ export class ProductPicker implements FormValueControl<ProductId> {
 
   protected readonly queryText = signal('');
   protected readonly createOptionValue = CREATE_OPTION;
+  protected readonly hintId = computed(() => `${this.inputId()}-hint`);
 
   protected readonly filteredProducts = computed(() => {
     const query = this.queryText().trim().toLowerCase();
@@ -91,15 +94,38 @@ export class ProductPicker implements FormValueControl<ProductId> {
     return this.products().filter((product) => product.name.toLowerCase().includes(query));
   });
 
+  // Tracks the last `value()` this effect reacted to, so it only runs its sync
+  // logic on an actual selection transition — not on every unrelated change to
+  // `products()` while `value()` stays put. See the constructor effect below.
+  private previousValueId: ProductId | '' = '';
+  // Set immediately before an internal `value.set('')` call caused by the user
+  // editing the query away from their current selection (see `onQueryInput`).
+  // Consumed by the very next effect run so that specific transition doesn't
+  // clear `queryText` out from under the text the user is actively typing.
+  private suppressNextQuerySync = false;
+
   constructor() {
     // Keeps the displayed text in sync when `value` changes from outside this
     // component (e.g. a bound Signal Forms field initialized from an existing
-    // shopping-list item). When `value` refers to a product this component was
-    // never told about via `products()` — notably one just created through the
-    // dialog in `onOptionSelected`, which sets the display text itself — this
-    // deliberately leaves the existing display text alone instead of clearing it.
+    // shopping-list item, or a form reset). When `value` refers to a product
+    // this component was never told about via `products()` — notably one just
+    // created through the dialog in `onOptionSelected`, which sets the display
+    // text itself — this deliberately leaves the existing display text alone
+    // instead of clearing it.
     effect(() => {
       const id = this.value();
+      if (id === this.previousValueId) {
+        // No real transition (e.g. `products()` changed for an unrelated
+        // reason); don't touch `queryText`. Returning before reading
+        // `products()` also keeps this effect from re-running on further
+        // unrelated `products()` changes until `value()` changes again.
+        return;
+      }
+      this.previousValueId = id;
+      if (this.suppressNextQuerySync) {
+        this.suppressNextQuerySync = false;
+        return;
+      }
       if (!id) {
         this.queryText.set('');
         return;
@@ -126,7 +152,25 @@ export class ProductPicker implements FormValueControl<ProductId> {
   };
 
   protected onQueryInput(event: Event): void {
-    this.queryText.set((event.target as HTMLInputElement).value);
+    const newText = (event.target as HTMLInputElement).value;
+    this.queryText.set(newText);
+
+    // If the user edits the text away from the product `value` currently
+    // points to (without picking a new option), that selection is stale —
+    // clear it so a submit can't silently use a product the input no longer
+    // displays. `suppressNextQuerySync` stops the sync effect from reacting
+    // to this particular `value.set('')` by wiping the text just typed.
+    const currentValue = this.value();
+    if (currentValue) {
+      const selectedName = this.products().find(
+        (product) => product.id === currentValue,
+      )?.name;
+      if (selectedName !== newText) {
+        this.suppressNextQuerySync = true;
+        this.value.set('');
+      }
+    }
+
     // MatAutocompleteTrigger only opens the panel from its own native `input`
     // listener when the input already has focus (see `_handleInput` in
     // @angular/material/fesm2022/autocomplete.mjs). Driving the panel
@@ -146,6 +190,17 @@ export class ProductPicker implements FormValueControl<ProductId> {
         this.value.set(created.id);
         this.queryText.set(created.name);
       }
+      // CDK Dialog's `restoreFocus` can't be relied on here: opening the
+      // dialog happens synchronously inside the autocomplete's
+      // `optionSelected` handler, which itself runs *before*
+      // `MatAutocompleteTrigger` focuses this input back
+      // (see `_setValueAndClose` in @angular/material/autocomplete). By the
+      // time `Dialog.open()` captures "the element to restore focus to", it's
+      // the clicked `mat-option`, not this input — and that option is gone
+      // once the panel closes, so nothing ends up focused. Explicitly
+      // refocus the input ourselves on both outcomes to satisfy the spec
+      // ("focus returns to the search input").
+      this.inputRef().nativeElement.focus();
       return;
     }
     this.value.set(selected);
@@ -154,7 +209,7 @@ export class ProductPicker implements FormValueControl<ProductId> {
   private openCreateDialog(initialName: string): Promise<Product | undefined> {
     const dialogRef = this.dialog.open<Product | undefined, CreateProductDialogData>(
       CreateProductDialog,
-      { data: { initialName } },
+      { data: { initialName }, ariaLabel: 'Create product' },
     );
     return firstValueFrom(dialogRef.closed);
   }

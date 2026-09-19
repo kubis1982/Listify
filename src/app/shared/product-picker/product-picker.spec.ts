@@ -64,9 +64,10 @@ describe('ProductPicker', () => {
     return fixture;
   }
 
-  it('shows no options when the query is blank', () => {
-    createPicker();
+  it('shows no options and the search hint when the query is blank', () => {
+    const fixture = createPicker();
     expect(document.querySelectorAll('mat-option').length).toBe(0);
+    expect(fixture.nativeElement.textContent).toContain('Start typing to search products.');
   });
 
   it('filters products by case-insensitive substring match', async () => {
@@ -119,6 +120,7 @@ describe('ProductPicker', () => {
     const created = productsService.products().find((p) => p.name === 'Eggs')!;
     expect(fixture.componentInstance.value()).toBe(created.id);
     expect(fixture.nativeElement.querySelector('input').value).toBe('Eggs');
+    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('input'));
   });
 
   it('leaves the value unchanged when the create dialog is cancelled', async () => {
@@ -132,5 +134,32 @@ describe('ProductPicker', () => {
 
     expect(fixture.componentInstance.value()).toBe('');
     expect(fixture.nativeElement.querySelector('input').value).toBe('Eggs');
+    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('input'));
+  });
+
+  it('clears the value when the query is edited away from the selected product', async () => {
+    const fixture = createPicker();
+    await typeQuery(fixture.nativeElement, 'mil');
+    clickOption('Milk');
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(fixture.componentInstance.value()).toBe(milk.id);
+
+    await typeQuery(fixture.nativeElement, 'Something else');
+
+    expect(fixture.componentInstance.value()).toBe('');
+    expect(fixture.nativeElement.querySelector('input').value).toBe('Something else');
+  });
+
+  it('emits touch when the input loses focus', () => {
+    const fixture = createPicker();
+    let touched = false;
+    fixture.componentInstance.touch.subscribe(() => {
+      touched = true;
+    });
+
+    const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input')!;
+    input.dispatchEvent(new Event('blur'));
+
+    expect(touched).toBe(true);
   });
 });
