@@ -22,6 +22,12 @@ export const en = {
   'nav.products': 'Products',
   'nav.units': 'Units',
   'nav.categories': 'Categories',
+
+  'picker.hint': 'Start typing to search products.',
+  'picker.results': 'Product search results',
+  'picker.createOption': 'Create product "{name}"',
+
+  'productDialog.title': 'Create product',
 } as const;
 
 export type TranslationKey = keyof typeof en;

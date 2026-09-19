@@ -24,4 +24,10 @@ export const pl: Record<TranslationKey, string> = {
   'nav.products': 'Produkty',
   'nav.units': 'Jednostki',
   'nav.categories': 'Kategorie',
+
+  'picker.hint': 'Zacznij pisać, aby wyszukać produkty.',
+  'picker.results': 'Wyniki wyszukiwania produktów',
+  'picker.createOption': 'Utwórz produkt „{name}”',
+
+  'productDialog.title': 'Nowy produkt',
 };

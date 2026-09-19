@@ -19,6 +19,7 @@ import {
   MatOption,
 } from '@angular/material/autocomplete';
 import { firstValueFrom } from 'rxjs';
+import { I18n } from '../../core/i18n/i18n.service';
 import {
   CreateProductDialog,
   CreateProductDialogData,
@@ -44,11 +45,11 @@ const CREATE_OPTION = Symbol('create-product-option');
       (blur)="touch.emit()"
     />
     @if (queryText().trim() === '') {
-      <span [id]="hintId()" class="product-picker__hint">Start typing to search products.</span>
+      <span [id]="hintId()" class="product-picker__hint">{{ t('picker.hint') }}</span>
     }
     <mat-autocomplete
       #auto="matAutocomplete"
-      aria-label="Product search results"
+      [attr.aria-label]="t('picker.results')"
       [displayWith]="displayProduct"
       (optionSelected)="onOptionSelected($event)"
     >
@@ -72,7 +73,7 @@ const CREATE_OPTION = Symbol('create-product-option');
                 <line x1="12" y1="8" x2="12" y2="16" />
                 <line x1="8" y1="12" x2="16" y2="12" />
               </svg>
-              Create product "{{ queryText().trim() }}"
+              {{ t('picker.createOption', { name: queryText().trim() }) }}
             </span>
           </mat-option>
         }
@@ -106,6 +107,7 @@ export class ProductPicker implements FormValueControl<ProductId> {
   readonly touch = output<void>();
 
   private readonly dialog = inject(Dialog);
+  protected readonly t = inject(I18n).t;
   private readonly inputRef = viewChild.required<ElementRef<HTMLInputElement>>('inputEl');
   private readonly autoTrigger = viewChild.required(MatAutocompleteTrigger);
 
@@ -246,7 +248,7 @@ export class ProductPicker implements FormValueControl<ProductId> {
   private openCreateDialog(initialName: string): Promise<Product | undefined> {
     const dialogRef = this.dialog.open<Product | undefined, CreateProductDialogData>(
       CreateProductDialog,
-      { data: { initialName }, ariaLabel: 'Create product' },
+      { data: { initialName }, ariaLabel: this.t('productDialog.title') },
     );
     return firstValueFrom(dialogRef.closed);
   }
