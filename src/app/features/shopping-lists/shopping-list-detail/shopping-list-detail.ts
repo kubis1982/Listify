@@ -12,6 +12,7 @@ import {
 import { FormField, form, min, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
+import { ProductPicker } from '../../../shared/product-picker/product-picker';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../../units/data/units.service';
@@ -34,7 +35,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
 
 @Component({
   selector: 'app-shopping-list-detail',
-  imports: [RouterLink, FormField, FabPanel],
+  imports: [RouterLink, FormField, FabPanel, ProductPicker],
   template: `
     <div class="page">
       <a class="back-link" routerLink="/lists">
@@ -290,12 +291,11 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
             } @else {
               <form novalidate (submit)="addItem($event)">
                 <label class="field-label" for="add-item-product">Product</label>
-                <select id="add-item-product" class="field-input" [formField]="itemForm.productId">
-                  <option value="" disabled>Select a product</option>
-                  @for (product of sortedProducts(); track product.id) {
-                    <option [value]="product.id">{{ product.name }}</option>
-                  }
-                </select>
+                <app-product-picker
+                  [inputId]="'add-item-product'"
+                  [products]="sortedProducts()"
+                  [formField]="itemForm.productId"
+                />
                 @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
                   <span class="field-error">Please select a product.</span>
                 }
