@@ -62,7 +62,12 @@ const LANGUAGE_NAME_KEYS: Record<Language, TranslationKey> = {
     }
 
     .language-switcher__option--active {
-      background-color: var(--color-accent);
+      /* A dedicated shade, darker than --color-accent (#0f8a6c), so white
+         text on this small (12px/800) label clears the WCAG AA 4.5:1
+         contrast minimum — verified ≈5.15:1. Scoped to this component only;
+         --color-accent itself is used unchanged in ~15 other places in the
+         app and redesigning it globally is out of scope for this fix. */
+      background-color: #0e7c61;
       color: #ffffff;
     }
   `,
