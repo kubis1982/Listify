@@ -307,26 +307,26 @@ Adding an element to the header may require `await whenStable()` in
   of user-facing text after this work; a literal left behind in a template
   simply stays English in both languages. The review step for each area is a
   read-through of the template for remaining quoted text.
-- **Bundle growth.** Two dictionaries of 111 strings plus the Polish locale
+- **Bundle growth.** Two dictionaries of 115 strings plus the Polish locale
   data add a few tens of kilobytes to the initial bundle, against a 500 kB
   warning budget. Acceptable, and the cost of guaranteed offline operation.
 
 ## Scope
 
-Walking all 11 templates and their components gives **111 keys**:
+Walking all 11 templates and their components gives **115 keys**:
 
 | Namespace | Keys |
 |---|---|
 | `common.*` | 11 |
 | `nav.*` | 7 |
 | `language.*` | 3 |
-| `lists.*` | 17 |
+| `lists.*` | 20 |
 | `listDetail.*` | 22 |
 | `products.*` | 17 |
 | `productDialog.*` | 1 |
 | `picker.*` | 3 |
 | `units.*` | 18 |
-| `categories.*` | 12 |
+| `categories.*` | 13 |
 
 The count is well below a per-template tally of the literals because
 repeated labels — Cancel, Save, Add, Name, "Name is required.", the quantity
