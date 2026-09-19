@@ -30,14 +30,14 @@ describe('LanguageSwitcher', () => {
     expect(pressed).toEqual(['true', 'false']);
   });
 
-  it('names each language in full for screen readers', () => {
+  it('names each language in full for screen readers, including the visible code', () => {
     const fixture = TestBed.createComponent(LanguageSwitcher);
     fixture.detectChanges();
 
     const names = buttons(fixture.nativeElement as HTMLElement).map((b) =>
       b.getAttribute('aria-label'),
     );
-    expect(names).toEqual(['English', 'Polish']);
+    expect(names).toEqual(['English (EN)', 'Polish (PL)']);
   });
 
   it('switches the language when a button is clicked, and relabels itself', () => {
@@ -51,7 +51,7 @@ describe('LanguageSwitcher', () => {
     const names = buttons(fixture.nativeElement as HTMLElement).map((b) =>
       b.getAttribute('aria-label'),
     );
-    expect(names).toEqual(['Angielski', 'Polski']);
+    expect(names).toEqual(['Angielski (EN)', 'Polski (PL)']);
   });
 
   it('labels the group for assistive technology', () => {

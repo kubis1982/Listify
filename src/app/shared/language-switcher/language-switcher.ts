@@ -18,7 +18,7 @@ const LANGUAGE_NAME_KEYS: Record<Language, TranslationKey> = {
           class="language-switcher__option"
           [class.language-switcher__option--active]="language === i18n.language()"
           [attr.aria-pressed]="language === i18n.language()"
-          [attr.aria-label]="t(nameKeys[language])"
+          [attr.aria-label]="ariaLabelFor(language)"
           (click)="select(language)"
         >
           {{ language.toUpperCase() }}
@@ -80,5 +80,12 @@ export class LanguageSwitcher {
 
   protected select(language: Language): void {
     this.i18n.setLanguage(language);
+  }
+
+  // The visible label is always the fixed code ("EN"/"PL"), independent of
+  // the active UI language, so the accessible name must include that same
+  // code (WCAG 2.5.3 Label in Name) alongside the translated language name.
+  protected ariaLabelFor(language: Language): string {
+    return `${this.t(this.nameKeys[language])} (${language.toUpperCase()})`;
   }
 }
