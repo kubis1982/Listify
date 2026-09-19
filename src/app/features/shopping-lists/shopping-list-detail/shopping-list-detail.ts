@@ -748,7 +748,7 @@ export class ShoppingListDetail {
       return;
     }
     const json = JSON.stringify(toShoppingListExport(currentList), null, 2);
-    const file = new File([json], toExportFilename(currentList.name), { type: 'application/json' });
+    const file = new File([json], toExportFilename(currentList.name), { type: 'text/plain' });
 
     const shared = await this.tryNativeShare(file, currentList.name);
     if (!shared) {

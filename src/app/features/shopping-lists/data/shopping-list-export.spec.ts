@@ -146,12 +146,12 @@ describe('parseShoppingListExport', () => {
 });
 
 describe('toExportFilename', () => {
-  it('slugifies the list name into a .json filename', () => {
-    expect(toExportFilename('Weekly groceries')).toBe('weekly-groceries.json');
+  it('slugifies the list name into a .txt filename', () => {
+    expect(toExportFilename('Weekly groceries')).toBe('weekly-groceries.txt');
   });
 
   it('falls back to a generic name when the list name has no usable characters', () => {
-    expect(toExportFilename('   ')).toBe('shopping-list.json');
-    expect(toExportFilename('!!!')).toBe('shopping-list.json');
+    expect(toExportFilename('   ')).toBe('shopping-list.txt');
+    expect(toExportFilename('!!!')).toBe('shopping-list.txt');
   });
 });

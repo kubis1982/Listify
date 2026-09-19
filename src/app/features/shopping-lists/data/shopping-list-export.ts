@@ -60,7 +60,7 @@ export function toExportFilename(listName: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return `${slug || 'shopping-list'}.json`;
+  return `${slug || 'shopping-list'}.txt`;
 }
 
 function isValidExport(value: unknown): value is ShoppingListExport {

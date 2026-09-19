@@ -48,7 +48,7 @@ interface NewListFormValue {
         <input
           #importInput
           type="file"
-          accept="application/json,.json"
+          accept="text/plain,.txt,application/json,.json"
           hidden
           (change)="handleImportFileSelected($event)"
         />

@@ -538,7 +538,7 @@ describe('ShoppingListDetail sharing', () => {
     return listId;
   }
 
-  it('downloads a JSON file when the Web Share API is unavailable', async () => {
+  it('downloads a text file when the Web Share API is unavailable', async () => {
     const listId = setupListWithItem();
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -574,7 +574,7 @@ describe('ShoppingListDetail sharing', () => {
     expect(shareSpy).toHaveBeenCalledTimes(1);
     const [callArgs] = shareSpy.mock.calls[0];
     expect(callArgs.title).toBe('Weekly groceries');
-    expect(callArgs.files[0].name).toBe('weekly-groceries.json');
+    expect(callArgs.files[0].name).toBe('weekly-groceries.txt');
   });
 
   it('does not fall back to download when the user cancels the native share sheet', async () => {
