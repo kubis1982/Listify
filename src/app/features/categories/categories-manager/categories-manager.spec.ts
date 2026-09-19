@@ -1,5 +1,6 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { I18n } from '../../../core/i18n/i18n.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../../units/data/units.service';
 import { CategoriesService } from '../data/categories.service';
@@ -145,5 +146,18 @@ describe('CategoriesManager', () => {
     fixture.detectChanges();
 
     expect(categoriesService.categories().length).toBe(1);
+  });
+
+  it('renders the page in Polish once Polish is selected', () => {
+    const fixture = TestBed.createComponent(CategoriesManager);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('No categories yet');
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Kategorie');
+    expect(root.textContent).toContain('Nie masz jeszcze kategorii');
   });
 });

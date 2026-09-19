@@ -49,4 +49,18 @@ export const pl: Record<TranslationKey, string> = {
   'units.duplicate': 'Jednostka o tym symbolu już istnieje.',
   'units.deleteTitle': 'Usunąć tę jednostkę?',
   'units.deleteMessage': 'Jednostka zostanie trwale usunięta.',
+
+  'categories.title': 'Kategorie',
+  'categories.empty': 'Nie masz jeszcze kategorii — dodaj pierwszą przyciskiem +.',
+  'categories.cannotEditFor': 'Nie można edytować {name} — kategoria jest używana przez produkt',
+  'categories.cannotEdit': 'Nie można edytować — kategoria jest używana przez produkt',
+  'categories.editFor': 'Edytuj {name}',
+  'categories.cannotDeleteFor': 'Nie można usunąć {name} — kategoria jest używana przez produkt',
+  'categories.cannotDelete': 'Nie można usunąć — kategoria jest używana przez produkt',
+  'categories.deleteFor': 'Usuń {name}',
+  'categories.panelEdit': 'Edytuj kategorię',
+  'categories.panelAdd': 'Dodaj kategorię',
+  'categories.duplicate': 'Kategoria o tej nazwie już istnieje.',
+  'categories.deleteTitle': 'Usunąć tę kategorię?',
+  'categories.deleteMessage': 'Kategoria zostanie trwale usunięta.',
 };

@@ -47,6 +47,20 @@ export const en = {
   'units.duplicate': 'A unit with this symbol already exists.',
   'units.deleteTitle': 'Delete this unit?',
   'units.deleteMessage': 'This will permanently remove the unit.',
+
+  'categories.title': 'Categories',
+  'categories.empty': 'No categories yet — add the first one using the + button.',
+  'categories.cannotEditFor': 'Cannot edit {name} — used by a product',
+  'categories.cannotEdit': 'Cannot edit — used by a product',
+  'categories.editFor': 'Edit {name}',
+  'categories.cannotDeleteFor': 'Cannot delete {name} — used by a product',
+  'categories.cannotDelete': 'Cannot delete — used by a product',
+  'categories.deleteFor': 'Delete {name}',
+  'categories.panelEdit': 'Edit category',
+  'categories.panelAdd': 'Add category',
+  'categories.duplicate': 'A category with this name already exists.',
+  'categories.deleteTitle': 'Delete this category?',
+  'categories.deleteMessage': 'This will permanently remove the category.',
 } as const;
 
 export type TranslationKey = keyof typeof en;
