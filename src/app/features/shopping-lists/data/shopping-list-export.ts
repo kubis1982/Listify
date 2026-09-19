@@ -58,6 +58,14 @@ export function toExportFilename(listName: string): string {
   const slug = listName
     .trim()
     .toLowerCase()
+    // Split accented letters into base + combining mark, then drop the marks,
+    // so "świąteczne" slugs to "swiateczne" rather than losing the letters
+    // entirely to the [^a-z0-9] filter below. `ß` has no such decomposition
+    // and needs its own replacement.
+    .replace(/ß/g, 'ss')
+    .replace(/ł/g, 'l')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
   return `${slug || 'shopping-list'}.txt`;

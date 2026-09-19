@@ -154,4 +154,13 @@ describe('toExportFilename', () => {
     expect(toExportFilename('   ')).toBe('shopping-list.txt');
     expect(toExportFilename('!!!')).toBe('shopping-list.txt');
   });
+
+  it('transliterates diacritics in the filename instead of dropping them', () => {
+    expect(toExportFilename('Zakupy świąteczne')).toBe('zakupy-swiateczne.txt');
+    expect(toExportFilename('Grüße')).toBe('grusse.txt');
+  });
+
+  it('keeps Polish ł in the filename', () => {
+    expect(toExportFilename('Małe zakupy')).toBe('male-zakupy.txt');
+  });
 });
