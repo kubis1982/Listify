@@ -690,7 +690,7 @@ export class ShoppingListDetail {
 
   private readonly itemModel = signal<ItemFormValue>({ ...EMPTY_ITEM_FORM });
   protected readonly itemForm = form(this.itemModel, (path) => {
-    required(path.productId, { message: this.t('listDetail.productRequired') });
+    required(path.productId, { message: () => this.t('listDetail.productRequired') });
     required(path.quantity);
     min(path.quantity, 0.01);
   });

@@ -85,6 +85,15 @@ describe('App', () => {
     expect((element.querySelector('nav') as HTMLElement).classList.contains('open')).toBe(false);
   });
 
+  it('places the language switcher in the header, outside the collapsible nav', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('header app-language-switcher')).toBeTruthy();
+    expect(element.querySelector('#main-nav app-language-switcher')).toBeFalsy();
+  });
+
   it('keeps nav links clickable even while the menu toggle is closed', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();

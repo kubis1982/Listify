@@ -49,7 +49,7 @@ const CREATE_OPTION = Symbol('create-product-option');
     }
     <mat-autocomplete
       #auto="matAutocomplete"
-      [attr.aria-label]="t('picker.results')"
+      [aria-label]="t('picker.results')"
       [displayWith]="displayProduct"
       (optionSelected)="onOptionSelected($event)"
     >

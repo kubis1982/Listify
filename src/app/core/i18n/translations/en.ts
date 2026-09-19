@@ -7,6 +7,7 @@ export const en = {
   'common.increaseQuantity': 'Increase quantity',
   'common.name': 'Name',
   'common.nameRequired': 'Name is required.',
+  'common.ok': 'OK',
   'common.quantity': 'Quantity',
   'common.quantityInvalid': 'Quantity must be greater than 0.',
   'common.save': 'Save',

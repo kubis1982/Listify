@@ -212,11 +212,17 @@ describe('UnitsManager', () => {
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
     expect(root.textContent).toContain('Units of measure');
+    expect(root.querySelector<HTMLButtonElement>('.fab')!.getAttribute('aria-label')).toBe(
+      'Add unit',
+    );
 
     TestBed.inject(I18n).setLanguage('pl');
     fixture.detectChanges();
 
     expect(root.textContent).toContain('Jednostki miary');
     expect(root.textContent).toContain('Nie masz jeszcze jednostek');
+    expect(root.querySelector<HTMLButtonElement>('.fab')!.getAttribute('aria-label')).toBe(
+      'Dodaj jednostkę',
+    );
   });
 });

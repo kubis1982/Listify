@@ -134,6 +134,11 @@ describe('ShoppingListDetail', () => {
     fixture.detectChanges();
 
     expect(root.textContent).toContain('Quantity updated for existing item.');
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Zaktualizowano ilość istniejącej pozycji.');
   });
 
   it('clears the feedback message a few seconds after it appears', async () => {

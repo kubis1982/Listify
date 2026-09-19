@@ -179,4 +179,17 @@ describe('ProductPicker', () => {
       'Zacznij pisać, aby wyszukać produkty.',
     );
   });
+
+  it('gives the results panel a translated accessible name', async () => {
+    const fixture = createPicker();
+    await typeQuery(fixture.nativeElement, 'mil');
+
+    const panel = document.querySelector('[role="listbox"]')!;
+    expect(panel.getAttribute('aria-label')).toBe('Product search results');
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect(panel.getAttribute('aria-label')).toBe('Wyniki wyszukiwania produktów');
+  });
 });

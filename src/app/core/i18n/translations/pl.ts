@@ -9,6 +9,7 @@ export const pl: Record<TranslationKey, string> = {
   'common.increaseQuantity': 'Zwiększ ilość',
   'common.name': 'Nazwa',
   'common.nameRequired': 'Nazwa jest wymagana.',
+  'common.ok': 'OK',
   'common.quantity': 'Ilość',
   'common.quantityInvalid': 'Ilość musi być większa niż 0.',
   'common.save': 'Zapisz',
