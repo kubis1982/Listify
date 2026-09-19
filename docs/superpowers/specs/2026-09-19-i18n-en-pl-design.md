@@ -36,9 +36,13 @@ language could be added.
   which this design rejects.
 - README and the documents under `docs/`. They are developer documentation,
   not part of the product.
-- Plural forms / ICU messages. The current UI contains no counters — no
-  "3 items" style string exists anywhere in the templates. If one is
-  introduced later, plural support is added then, for that string.
+- Plural forms / ICU messages. The UI contains exactly one counted string,
+  the progress line in `shopping-list-detail.ts:107`
+  (`"{purchased} of {total} purchased"`). Its Polish rendering,
+  `"Kupiono {purchased} z {total}"`, puts no noun in agreement with either
+  number, so it is correct for every count with plain parameter
+  substitution. If a string that genuinely inflects with a count appears
+  later, plural support is added then, for that string.
 - Lazy-loaded translation files. Both dictionaries ship in the main bundle.
 - Right-to-left layouts, and any third language.
 
@@ -303,12 +307,31 @@ Adding an element to the header may require `await whenStable()` in
   of user-facing text after this work; a literal left behind in a template
   simply stays English in both languages. The review step for each area is a
   read-through of the template for remaining quoted text.
-- **Bundle growth.** Two dictionaries of roughly 200 strings plus the Polish
-  locale data add a few tens of kilobytes to the initial bundle, against a
-  500 kB warning budget. Acceptable, and the cost of guaranteed offline
-  operation.
+- **Bundle growth.** Two dictionaries of 111 strings plus the Polish locale
+  data add a few tens of kilobytes to the initial bundle, against a 500 kB
+  warning budget. Acceptable, and the cost of guaranteed offline operation.
 
-## Scope estimate
+## Scope
 
-Roughly 180–220 keys across the 11 templates. The exact count is established
-while writing the implementation plan, by walking each template in turn.
+Walking all 11 templates and their components gives **111 keys**:
+
+| Namespace | Keys |
+|---|---|
+| `common.*` | 11 |
+| `nav.*` | 7 |
+| `language.*` | 3 |
+| `lists.*` | 17 |
+| `listDetail.*` | 22 |
+| `products.*` | 17 |
+| `productDialog.*` | 1 |
+| `picker.*` | 3 |
+| `units.*` | 18 |
+| `categories.*` | 12 |
+
+The count is well below a per-template tally of the literals because
+repeated labels — Cancel, Save, Add, Name, "Name is required.", the quantity
+stepper's controls — collapse into `common.*`, and the quick-create product
+dialog reuses the `products.*` field labels rather than duplicating them.
+
+The full key list with both languages' values lives in the implementation
+plan, which introduces the keys area by area.
