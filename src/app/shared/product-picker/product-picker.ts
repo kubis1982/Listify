@@ -141,6 +141,16 @@ export class ProductPicker implements FormValueControl<ProductId> {
     this.inputRef().nativeElement.focus(options);
   }
 
+  // Called by the parent after it resets the bound form field back to an
+  // empty value. When the user typed a query without ever completing a
+  // selection, `value` was already `''` (or was cleared as they typed — see
+  // `onQueryInput`), so the form reset doesn't produce a `value()` transition
+  // and the sync effect above never fires to clear the stale `queryText`.
+  resetQuery(): void {
+    this.queryText.set('');
+    this.previousValueId = this.value();
+  }
+
   protected readonly displayProduct = (value: ProductId | typeof CREATE_OPTION): string => {
     if (value === CREATE_OPTION) {
       // The trigger writes this display value straight into the native input on

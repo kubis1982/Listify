@@ -389,6 +389,75 @@ describe('ShoppingListDetail', () => {
     expect(root.querySelector('.add-panel')).toBeNull();
   });
 
+  it('focuses the product field when opening the add-item panel', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({
+      name: 'Milk',
+      defaultUnitId: unitsService.units()[0].id,
+      categoryId: categoriesService.categories()[0].id,
+    });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const productInput = root.querySelector<HTMLInputElement>('#add-item-product')!;
+    expect(document.activeElement).toBe(productInput);
+  });
+
+  it('clears the product field when the add-item form is cancelled after typing without selecting', async () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({
+      name: 'Milk',
+      defaultUnitId: unitsService.units()[0].id,
+      categoryId: categoriesService.categories()[0].id,
+    });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const productInput = root.querySelector<HTMLInputElement>('#add-item-product')!;
+    productInput.value = 'Choc';
+    productInput.dispatchEvent(new Event('input'));
+    await TestBed.inject(ApplicationRef).whenStable();
+    fixture.detectChanges();
+
+    const cancelButton = Array.from(root.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Cancel',
+    )!;
+    cancelButton.click();
+    fixture.detectChanges();
+
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const reopenedProductInput = root.querySelector<HTMLInputElement>('#add-item-product')!;
+    expect(reopenedProductInput.value).toBe('');
+  });
+
   it('hides the add-item form and disables item actions for a completed list', () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ name: 'litre', symbol: 'l' });

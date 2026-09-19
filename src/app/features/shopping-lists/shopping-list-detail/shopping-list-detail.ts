@@ -697,6 +697,7 @@ export class ShoppingListDetail {
   });
 
   private readonly quantityInput = viewChild<ElementRef<HTMLInputElement>>('quantityInput');
+  private readonly productPicker = viewChild(ProductPicker);
 
   protected readonly selectedUnitId = linkedSignal(() => {
     const product = this.productsService
@@ -707,8 +708,13 @@ export class ShoppingListDetail {
 
   constructor() {
     afterRenderEffect(() => {
-      if (this.isItemPanelOpen() && this.editingItemId()) {
+      if (!this.isItemPanelOpen()) {
+        return;
+      }
+      if (this.editingItemId()) {
         this.quantityInput()?.nativeElement.focus();
+      } else {
+        this.productPicker()?.focus();
       }
     });
   }
@@ -795,6 +801,7 @@ export class ShoppingListDetail {
     this.editingItemId.set(null);
     this.itemForm().reset({ ...EMPTY_ITEM_FORM });
     this.quantityForm().reset({ ...EMPTY_QUANTITY_FORM });
+    this.productPicker()?.resetQuery();
     this.isItemPanelOpen.set(false);
   }
 
