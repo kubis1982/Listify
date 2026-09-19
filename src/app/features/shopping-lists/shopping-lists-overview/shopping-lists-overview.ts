@@ -235,6 +235,7 @@ interface NewListFormValue {
       [title]="editingId() ? 'Edit list' : 'New shopping list'"
       fabLabel="Add shopping list"
       [(open)]="isPanelOpen"
+      (cancelled)="cancelEdit()"
     >
       <form novalidate (submit)="handleSubmit($event)">
         <label class="field-label" for="new-list-name">Name</label>

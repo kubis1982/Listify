@@ -100,6 +100,7 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
       [title]="editingId() ? 'Edit product' : 'Add product'"
       fabLabel="Add product"
       [(open)]="isPanelOpen"
+      (cancelled)="cancelEdit()"
     >
       <form novalidate (submit)="handleSubmit($event)">
         <label class="field-label" for="product-name">Name</label>

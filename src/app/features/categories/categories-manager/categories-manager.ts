@@ -112,6 +112,7 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
       [title]="editingId() ? 'Edit category' : 'Add category'"
       fabLabel="Add category"
       [(open)]="isPanelOpen"
+      (cancelled)="cancelEdit()"
     >
       <form novalidate (submit)="handleSubmit($event)">
         <label class="field-label" for="category-name">Name</label>

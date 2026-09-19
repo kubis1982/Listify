@@ -226,6 +226,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
             [title]="editingItemId() ? 'Edit quantity' : 'Add item'"
             fabLabel="Add item"
             [(open)]="isItemPanelOpen"
+            (cancelled)="cancel()"
           >
             @if (editingItemId()) {
               <form novalidate (submit)="saveItemQuantity($event)">
