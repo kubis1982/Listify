@@ -1,5 +1,6 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { I18n } from '../../../core/i18n/i18n.service';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../data/units.service';
@@ -204,5 +205,18 @@ describe('UnitsManager', () => {
     );
     expect(button).not.toBeNull();
     expect(button!.disabled).toBe(true);
+  });
+
+  it('renders the page in Polish once Polish is selected', async () => {
+    const fixture = TestBed.createComponent(UnitsManager);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('Units of measure');
+
+    TestBed.inject(I18n).setLanguage('pl');
+    fixture.detectChanges();
+
+    expect(root.textContent).toContain('Jednostki miary');
+    expect(root.textContent).toContain('Nie masz jeszcze jednostek');
   });
 });

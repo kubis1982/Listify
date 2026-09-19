@@ -28,6 +28,25 @@ export const en = {
   'picker.createOption': 'Create product "{name}"',
 
   'productDialog.title': 'Create product',
+
+  'units.title': 'Units of measure',
+  'units.empty': 'No units yet — add the first one using the + button.',
+  'units.alreadyDefault': '{name} is already the default unit',
+  'units.setDefault': 'Set {name} as default',
+  'units.setDefaultTitle': 'Set as default',
+  'units.cannotEditFor': 'Cannot edit {name} — used by a product',
+  'units.cannotEdit': 'Cannot edit — used by a product',
+  'units.editFor': 'Edit {name}',
+  'units.cannotDeleteFor': 'Cannot delete {name} — used by a product',
+  'units.cannotDelete': 'Cannot delete — used by a product',
+  'units.deleteFor': 'Delete {name}',
+  'units.panelEdit': 'Edit unit',
+  'units.panelAdd': 'Add unit',
+  'units.symbol': 'Symbol',
+  'units.symbolRequired': 'Symbol is required.',
+  'units.duplicate': 'A unit with this symbol already exists.',
+  'units.deleteTitle': 'Delete this unit?',
+  'units.deleteMessage': 'This will permanently remove the unit.',
 } as const;
 
 export type TranslationKey = keyof typeof en;

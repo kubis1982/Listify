@@ -30,4 +30,23 @@ export const pl: Record<TranslationKey, string> = {
   'picker.createOption': 'Utwórz produkt „{name}”',
 
   'productDialog.title': 'Nowy produkt',
+
+  'units.title': 'Jednostki miary',
+  'units.empty': 'Nie masz jeszcze jednostek — dodaj pierwszą przyciskiem +.',
+  'units.alreadyDefault': '{name} jest już jednostką domyślną',
+  'units.setDefault': 'Ustaw {name} jako domyślną',
+  'units.setDefaultTitle': 'Ustaw jako domyślną',
+  'units.cannotEditFor': 'Nie można edytować {name} — jednostka jest używana przez produkt',
+  'units.cannotEdit': 'Nie można edytować — jednostka jest używana przez produkt',
+  'units.editFor': 'Edytuj {name}',
+  'units.cannotDeleteFor': 'Nie można usunąć {name} — jednostka jest używana przez produkt',
+  'units.cannotDelete': 'Nie można usunąć — jednostka jest używana przez produkt',
+  'units.deleteFor': 'Usuń {name}',
+  'units.panelEdit': 'Edytuj jednostkę',
+  'units.panelAdd': 'Dodaj jednostkę',
+  'units.symbol': 'Symbol',
+  'units.symbolRequired': 'Symbol jest wymagany.',
+  'units.duplicate': 'Jednostka o tym symbolu już istnieje.',
+  'units.deleteTitle': 'Usunąć tę jednostkę?',
+  'units.deleteMessage': 'Jednostka zostanie trwale usunięta.',
 };
