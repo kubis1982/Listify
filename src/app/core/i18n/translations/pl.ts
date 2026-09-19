@@ -16,4 +16,12 @@ export const pl: Record<TranslationKey, string> = {
   'language.label': 'Język',
   'language.en': 'Angielski',
   'language.pl': 'Polski',
+
+  'nav.label': 'Nawigacja główna',
+  'nav.openMenu': 'Otwórz menu',
+  'nav.closeMenu': 'Zamknij menu',
+  'nav.lists': 'Listy zakupów',
+  'nav.products': 'Produkty',
+  'nav.units': 'Jednostki',
+  'nav.categories': 'Kategorie',
 };

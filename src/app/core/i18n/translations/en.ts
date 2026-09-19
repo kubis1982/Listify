@@ -14,6 +14,14 @@ export const en = {
   'language.label': 'Language',
   'language.en': 'English',
   'language.pl': 'Polish',
+
+  'nav.label': 'Main navigation',
+  'nav.openMenu': 'Open menu',
+  'nav.closeMenu': 'Close menu',
+  'nav.lists': 'Shopping lists',
+  'nav.products': 'Products',
+  'nav.units': 'Units',
+  'nav.categories': 'Categories',
 } as const;
 
 export type TranslationKey = keyof typeof en;
