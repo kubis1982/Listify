@@ -298,6 +298,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                   [inputId]="'add-item-product'"
                   [products]="sortedProducts()"
                   [formField]="itemForm.productId"
+                  (productCreated)="focusItemQuantity()"
                 />
                 @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
                   <span class="field-error">{{ t('listDetail.productRequired') }}</span>
@@ -327,6 +328,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                         </svg>
                       </button>
                       <input
+                        #addItemQuantityInput
                         id="add-item-quantity"
                         type="number"
                         class="field-input data-font quantity-stepper__input"
@@ -702,6 +704,9 @@ export class ShoppingListDetail {
   });
 
   private readonly quantityInput = viewChild<ElementRef<HTMLInputElement>>('quantityInput');
+  private readonly addItemQuantityInput = viewChild<ElementRef<HTMLInputElement>>(
+    'addItemQuantityInput',
+  );
   private readonly productPicker = viewChild(ProductPicker);
 
   protected readonly selectedUnitId = linkedSignal(() => {
@@ -722,6 +727,10 @@ export class ShoppingListDetail {
         this.productPicker()?.focus();
       }
     });
+  }
+
+  protected focusItemQuantity(): void {
+    this.addItemQuantityInput()?.nativeElement.focus();
   }
 
   protected onUnitChange(event: Event): void {

@@ -286,6 +286,52 @@ describe('ShoppingListDetail', () => {
     );
   });
 
+  it('focuses the quantity field after creating a product from the add-item form', async () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ name: 'litre', symbol: 'l' });
+    const unitId = unitsService.units()[0].id;
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const categoryId = categoriesService.categories()[0].id;
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const input = root.querySelector<HTMLInputElement>('#add-item-product')!;
+    input.value = 'Oat milk';
+    input.dispatchEvent(new Event('input'));
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const createOption = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
+      (el) => el.textContent?.trim() === 'Create product "Oat milk"',
+    )!;
+    createOption.click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const createProductUnitSelect = document.querySelector<HTMLSelectElement>('#create-product-unit')!;
+    createProductUnitSelect.value = unitId;
+    createProductUnitSelect.dispatchEvent(new Event('input'));
+    const createProductCategorySelect = document.querySelector<HTMLSelectElement>(
+      '#create-product-category',
+    )!;
+    createProductCategorySelect.value = categoryId;
+    createProductCategorySelect.dispatchEvent(new Event('input'));
+    createProductUnitSelect.closest('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await TestBed.inject(ApplicationRef).whenStable();
+    fixture.detectChanges();
+
+    const quantityInput = root.querySelector<HTMLInputElement>('#add-item-quantity')!;
+    expect(document.activeElement).toBe(quantityInput);
+  });
+
   it('groups items into sections by category, sorted alphabetically', () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ name: 'litre', symbol: 'l' });

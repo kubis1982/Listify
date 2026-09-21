@@ -105,6 +105,7 @@ export class ProductPicker implements FormValueControl<ProductId> {
   readonly inputId = input.required<string>();
   readonly value = model.required<ProductId>();
   readonly touch = output<void>();
+  readonly productCreated = output<void>();
 
   private readonly dialog = inject(Dialog);
   protected readonly t = inject(I18n).t;
@@ -228,6 +229,12 @@ export class ProductPicker implements FormValueControl<ProductId> {
       if (created) {
         this.value.set(created.id);
         this.queryText.set(created.name);
+        // Focus is deliberately left to the consumer here (see
+        // `productCreated`): a freshly created product usually means the
+        // next thing the user wants to fill in is elsewhere in the form
+        // (e.g. quantity), not back in this search input.
+        this.productCreated.emit();
+        return;
       }
       // CDK Dialog's `restoreFocus` can't be relied on here: opening the
       // dialog happens synchronously inside the autocomplete's
@@ -237,8 +244,7 @@ export class ProductPicker implements FormValueControl<ProductId> {
       // time `Dialog.open()` captures "the element to restore focus to", it's
       // the clicked `mat-option`, not this input — and that option is gone
       // once the panel closes, so nothing ends up focused. Explicitly
-      // refocus the input ourselves on both outcomes to satisfy the spec
-      // ("focus returns to the search input").
+      // refocus the input ourselves when the dialog was cancelled.
       this.inputRef().nativeElement.focus();
       return;
     }

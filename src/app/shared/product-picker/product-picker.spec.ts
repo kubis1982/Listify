@@ -95,6 +95,10 @@ describe('ProductPicker', () => {
 
   it('selecting the create action opens the dialog and selects the created product on save', async () => {
     const fixture = createPicker();
+    let productCreated = false;
+    fixture.componentInstance.productCreated.subscribe(() => {
+      productCreated = true;
+    });
     await typeQuery(fixture.nativeElement, 'Eggs');
     clickOption('Create product "Eggs"');
     await TestBed.inject(ApplicationRef).whenStable();
@@ -121,7 +125,7 @@ describe('ProductPicker', () => {
     const created = productsService.products().find((p) => p.name === 'Eggs')!;
     expect(fixture.componentInstance.value()).toBe(created.id);
     expect(fixture.nativeElement.querySelector('input').value).toBe('Eggs');
-    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('input'));
+    expect(productCreated).toBe(true);
   });
 
   it('leaves the value unchanged when the create dialog is cancelled', async () => {
