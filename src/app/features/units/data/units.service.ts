@@ -13,14 +13,17 @@ export class UnitsService {
     if (unit.isDefault) {
       this.clearDefault();
     }
-    this.store.add({ ...unit, id: crypto.randomUUID() });
+    this.store.add({ ...unit, symbol: unit.symbol.toLowerCase(), id: crypto.randomUUID() });
   }
 
   update(id: UnitId, changes: Partial<Omit<Unit, 'id'>>): void {
     if (changes.isDefault) {
       this.clearDefault(id);
     }
-    this.store.update(id, changes);
+    this.store.update(id, {
+      ...changes,
+      ...(changes.symbol !== undefined ? { symbol: changes.symbol.toLowerCase() } : {}),
+    });
   }
 
   remove(id: UnitId): void {

@@ -6,7 +6,7 @@ import { ShoppingListsService } from './shopping-lists.service';
 
 describe('ShoppingListsService', () => {
   const product: Product = { id: 'p1', name: 'Milk 3.2%', defaultUnitId: 'u1', categoryId: 'c1' };
-  const unit: Unit = { id: 'u1', name: 'litre', symbol: 'l' };
+  const unit: Unit = { id: 'u1', symbol: 'l' };
   const category: Category = { id: 'c1', name: 'Dairy' };
 
   beforeEach(() => {

@@ -37,24 +37,23 @@ describe('UnitsManager', () => {
 
     const inputs = root.querySelectorAll<HTMLInputElement>('input[type="text"]');
 
-    setInputValue(inputs[0], 'kg');
-    setInputValue(inputs[1], 'Kilogram');
+    setInputValue(inputs[0], 'KG');
     fixture.detectChanges();
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     fixture.detectChanges();
 
     expect(root.querySelectorAll('.list-card').length).toBe(1);
-    expect(root.textContent).toContain('Kilogram (kg)');
+    expect(root.textContent).toContain('kg');
   });
 
   it('removes a unit after the user confirms in the dialog', async () => {
     const fixture = TestBed.createComponent(UnitsManager);
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     fixture.detectChanges();
 
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('button[aria-label="Delete Litre"]')!
+      .querySelector<HTMLButtonElement>('button[aria-label="Delete l"]')!
       .click();
     await TestBed.inject(ApplicationRef).whenStable();
 
@@ -67,11 +66,11 @@ describe('UnitsManager', () => {
   it('keeps the unit when the user cancels the delete dialog', async () => {
     const fixture = TestBed.createComponent(UnitsManager);
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     fixture.detectChanges();
 
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('button[aria-label="Delete Litre"]')!
+      .querySelector<HTMLButtonElement>('button[aria-label="Delete l"]')!
       .click();
     await TestBed.inject(ApplicationRef).whenStable();
 
@@ -87,7 +86,7 @@ describe('UnitsManager', () => {
     const categoriesService = TestBed.inject(CategoriesService);
     const productsService = TestBed.inject(ProductsService);
 
-    unitsService.add({ name: 'Litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     categoriesService.add({ name: 'Beverages' });
     fixture.detectChanges();
 
@@ -97,7 +96,7 @@ describe('UnitsManager', () => {
     fixture.detectChanges();
 
     const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-      'button[aria-label="Cannot delete Litre — used by a product"]',
+      'button[aria-label="Cannot delete l — used by a product"]',
     );
     expect(button).not.toBeNull();
     expect(button!.disabled).toBe(true);
@@ -111,11 +110,11 @@ describe('UnitsManager', () => {
   it('resets to add mode when editing is cancelled', () => {
     const fixture = TestBed.createComponent(UnitsManager);
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    root.querySelector<HTMLButtonElement>('button[aria-label="Edit Litre"]')!.click();
+    root.querySelector<HTMLButtonElement>('button[aria-label="Edit l"]')!.click();
     fixture.detectChanges();
 
     expect(root.textContent).toContain('Edit unit');
@@ -154,12 +153,12 @@ describe('UnitsManager', () => {
   it('highlights the default unit with the default-accent star', () => {
     const fixture = TestBed.createComponent(UnitsManager);
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l', isDefault: true });
+    unitsService.add({ symbol: 'l', isDefault: true });
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
     const button = root.querySelector<HTMLButtonElement>(
-      'button[aria-label="Litre is already the default unit"]',
+      'button[aria-label="l is already the default unit"]',
     )!;
     expect(button.classList).toContain('icon-btn--default');
   });
@@ -167,11 +166,11 @@ describe('UnitsManager', () => {
   it('sets a unit as default when its "set as default" action is clicked', () => {
     const fixture = TestBed.createComponent(UnitsManager);
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    root.querySelector<HTMLButtonElement>('button[aria-label="Set Litre as default"]')!.click();
+    root.querySelector<HTMLButtonElement>('button[aria-label="Set l as default"]')!.click();
     fixture.detectChanges();
 
     expect(unitsService.units()[0].isDefault).toBe(true);
@@ -180,12 +179,12 @@ describe('UnitsManager', () => {
   it('switches the default unit when a different unit is set as default', () => {
     const fixture = TestBed.createComponent(UnitsManager);
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Kilogram', symbol: 'kg', isDefault: true });
-    unitsService.add({ name: 'Litre', symbol: 'l' });
+    unitsService.add({ symbol: 'kg', isDefault: true });
+    unitsService.add({ symbol: 'l' });
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    root.querySelector<HTMLButtonElement>('button[aria-label="Set Litre as default"]')!.click();
+    root.querySelector<HTMLButtonElement>('button[aria-label="Set l as default"]')!.click();
     fixture.detectChanges();
 
     const units = unitsService.units();
@@ -196,12 +195,12 @@ describe('UnitsManager', () => {
   it('disables the "set as default" action for the unit that is already default', () => {
     const fixture = TestBed.createComponent(UnitsManager);
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l', isDefault: true });
+    unitsService.add({ symbol: 'l', isDefault: true });
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
     const button = root.querySelector<HTMLButtonElement>(
-      'button[aria-label="Litre is already the default unit"]',
+      'button[aria-label="l is already the default unit"]',
     );
     expect(button).not.toBeNull();
     expect(button!.disabled).toBe(true);

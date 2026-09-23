@@ -128,7 +128,7 @@ describe('CategoriesManager', () => {
     const productsService = TestBed.inject(ProductsService);
 
     categoriesService.add({ name: 'Dairy' });
-    unitsService.add({ name: 'Kilogram', symbol: 'kg' });
+    unitsService.add({ symbol: 'kg' });
     fixture.detectChanges();
 
     const categoryId = categoriesService.categories()[0].id;

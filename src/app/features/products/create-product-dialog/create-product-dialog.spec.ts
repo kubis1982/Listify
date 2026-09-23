@@ -35,7 +35,7 @@ describe('CreateProductDialog', () => {
 
   it('pre-fills the default unit when one is marked default, leaves category empty', async () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l', isDefault: true });
+    unitsService.add({ symbol: 'l', isDefault: true });
     const defaultUnitId = unitsService.units()[0].id;
 
     openDialog('Oat milk');
@@ -49,7 +49,7 @@ describe('CreateProductDialog', () => {
 
   it('blocks submit and shows an error when the name duplicates an existing product', async () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
@@ -83,7 +83,7 @@ describe('CreateProductDialog', () => {
 
   it('creates the product and closes with it on valid submit', async () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });

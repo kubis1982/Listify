@@ -57,7 +57,7 @@ interface CreateProductFormValue {
         >
           <option value="" disabled>{{ t('products.selectUnit') }}</option>
           @for (unit of unitsService.units(); track unit.id) {
-            <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
+            <option [value]="unit.id">{{ unit.symbol }}</option>
           }
         </select>
         @if (productForm.defaultUnitId().invalid() && productForm.defaultUnitId().touched()) {

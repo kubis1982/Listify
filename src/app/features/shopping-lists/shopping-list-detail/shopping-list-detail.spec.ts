@@ -62,7 +62,7 @@ describe('ShoppingListDetail', () => {
 
   it('adds an item built from the selected product, unit, and category', async () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
@@ -101,7 +101,7 @@ describe('ShoppingListDetail', () => {
 
   it('shows a feedback message when the submitted item merges into an existing unpurchased item', async () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
@@ -145,7 +145,7 @@ describe('ShoppingListDetail', () => {
     vi.useFakeTimers();
     try {
       const unitsService = TestBed.inject(UnitsService);
-      unitsService.add({ name: 'litre', symbol: 'l' });
+      unitsService.add({ symbol: 'l' });
       const unitId = unitsService.units()[0].id;
       const categoriesService = TestBed.inject(CategoriesService);
       categoriesService.add({ name: 'Dairy' });
@@ -204,7 +204,7 @@ describe('ShoppingListDetail', () => {
 
   it('does not show a category selector — category is derived from the product', () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
@@ -232,7 +232,7 @@ describe('ShoppingListDetail', () => {
 
   it('creates a new product from the search field and adds it to the list', async () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
@@ -288,7 +288,7 @@ describe('ShoppingListDetail', () => {
 
   it('focuses the quantity field after creating a product from the add-item form', async () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
@@ -334,7 +334,7 @@ describe('ShoppingListDetail', () => {
 
   it('groups items into sections by category, sorted alphabetically', () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Produce' });
@@ -380,7 +380,7 @@ describe('ShoppingListDetail', () => {
 
   it('marks an item as purchased when its checkbox is toggled', () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
@@ -415,7 +415,7 @@ describe('ShoppingListDetail', () => {
 
   it('edits the quantity of an item via the edit panel', () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
@@ -461,7 +461,7 @@ describe('ShoppingListDetail', () => {
 
   it('focuses the product field when opening the add-item panel', () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
@@ -488,7 +488,7 @@ describe('ShoppingListDetail', () => {
 
   it('clears the product field when the add-item form is cancelled after typing without selecting', async () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
@@ -530,7 +530,7 @@ describe('ShoppingListDetail', () => {
 
   it('hides the add-item form and disables item actions for a completed list', () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
@@ -585,7 +585,7 @@ describe('ShoppingListDetail sharing', () => {
 
   function setupListWithItem(): string {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);

@@ -36,7 +36,7 @@ describe('ProductPicker', () => {
     });
 
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);

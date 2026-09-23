@@ -120,7 +120,7 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
         <select id="product-unit" class="field-input" [formField]="productForm.defaultUnitId">
           <option value="" disabled>{{ t('products.selectUnit') }}</option>
           @for (unit of unitsService.units(); track unit.id) {
-            <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
+            <option [value]="unit.id">{{ unit.symbol }}</option>
           }
         </select>
         @if (productForm.defaultUnitId().invalid() && productForm.defaultUnitId().touched()) {
@@ -200,7 +200,7 @@ export class ProductsManager {
 
   protected unitLabel(unitId: string): string {
     const unit = this.unitsService.units().find((u) => u.id === unitId);
-    return unit ? `${unit.name} (${unit.symbol})` : this.t('products.unknownUnit');
+    return unit ? unit.symbol : this.t('products.unknownUnit');
   }
 
   protected categoryLabel(categoryId: string): string {

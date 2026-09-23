@@ -17,11 +17,10 @@ import { Unit, UnitId } from '../data/unit.model';
 import { UnitsService } from '../data/units.service';
 
 interface UnitFormValue {
-  name: string;
   symbol: string;
 }
 
-const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
+const EMPTY_UNIT_FORM: UnitFormValue = { symbol: '' };
 
 @Component({
   selector: 'app-units-manager',
@@ -39,7 +38,7 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
           @for (unit of sortedUnits(); track unit.id) {
             <div class="list-card">
               <div class="list-card__body">
-                <span class="list-card__name">{{ unit.name }} ({{ unit.symbol }})</span>
+                <span class="list-card__name">{{ unit.symbol }}</span>
               </div>
               <div class="list-card__actions">
                 <button
@@ -50,8 +49,8 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
                   [disabled]="unit.isDefault"
                   [attr.aria-label]="
                     unit.isDefault
-                      ? t('units.alreadyDefault', { name: unit.name })
-                      : t('units.setDefault', { name: unit.name })
+                      ? t('units.alreadyDefault', { name: unit.symbol })
+                      : t('units.setDefault', { name: unit.symbol })
                   "
                   [attr.title]="unit.isDefault ? null : t('units.setDefaultTitle')"
                 >
@@ -77,8 +76,8 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
                   [disabled]="usedUnitIds().has(unit.id)"
                   [attr.aria-label]="
                     usedUnitIds().has(unit.id)
-                      ? t('units.cannotEditFor', { name: unit.name })
-                      : t('units.editFor', { name: unit.name })
+                      ? t('units.cannotEditFor', { name: unit.symbol })
+                      : t('units.editFor', { name: unit.symbol })
                   "
                   [attr.title]="
                     usedUnitIds().has(unit.id) ? t('units.cannotEdit') : null
@@ -105,8 +104,8 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
                   [disabled]="usedUnitIds().has(unit.id)"
                   [attr.aria-label]="
                     usedUnitIds().has(unit.id)
-                      ? t('units.cannotDeleteFor', { name: unit.name })
-                      : t('units.deleteFor', { name: unit.name })
+                      ? t('units.cannotDeleteFor', { name: unit.symbol })
+                      : t('units.deleteFor', { name: unit.symbol })
                   "
                   [attr.title]="
                     usedUnitIds().has(unit.id) ? t('units.cannotDelete') : null
@@ -155,12 +154,6 @@ const EMPTY_UNIT_FORM: UnitFormValue = { name: '', symbol: '' };
           <span class="field-error">{{ t('units.symbolRequired') }}</span>
         }
 
-        <label class="field-label" for="unit-name">{{ t('common.name') }}</label>
-        <input id="unit-name" type="text" class="field-input" [formField]="unitForm.name" />
-        @if (unitForm.name().invalid() && unitForm.name().touched()) {
-          <span class="field-error">{{ t('common.nameRequired') }}</span>
-        }
-
         @if (duplicateSymbolError()) {
           <p class="field-error" role="alert">{{ t('units.duplicate') }}</p>
         }
@@ -186,9 +179,7 @@ export class UnitsManager {
   protected readonly isPanelOpen = signal(false);
 
   protected readonly sortedUnits = computed(() =>
-    [...this.unitsService.units()].sort(
-      (a, b) => a.name.localeCompare(b.name) || a.symbol.localeCompare(b.symbol),
-    ),
+    [...this.unitsService.units()].sort((a, b) => a.symbol.localeCompare(b.symbol)),
   );
 
   protected readonly usedUnitIds = computed(
@@ -199,7 +190,6 @@ export class UnitsManager {
 
   private readonly model = signal<UnitFormValue>({ ...EMPTY_UNIT_FORM });
   protected readonly unitForm = form(this.model, (path) => {
-    required(path.name);
     required(path.symbol);
   });
 
@@ -225,7 +215,7 @@ export class UnitsManager {
 
   protected startEdit(unit: Unit): void {
     this.editingId.set(unit.id);
-    this.model.set({ name: unit.name, symbol: unit.symbol });
+    this.model.set({ symbol: unit.symbol });
     this.isPanelOpen.set(true);
   }
 
@@ -261,10 +251,9 @@ export class UnitsManager {
 
     const value = {
       ...this.model(),
-      name: this.model().name.trim(),
       symbol: this.model().symbol.trim(),
     };
-    if (!value.name || !value.symbol) {
+    if (!value.symbol) {
       return;
     }
 

@@ -369,7 +369,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                       (change)="onUnitChange($event)"
                     >
                       @for (unit of unitsService.units(); track unit.id) {
-                        <option [value]="unit.id">{{ unit.name }} ({{ unit.symbol }})</option>
+                        <option [value]="unit.id">{{ unit.symbol }}</option>
                       }
                     </select>
                   </div>

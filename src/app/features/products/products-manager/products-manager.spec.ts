@@ -38,7 +38,7 @@ describe('ProductsManager', () => {
 
   it('adds a product using the selected default unit and category', () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'litre', symbol: 'l' });
+    unitsService.add({ symbol: 'l' });
     const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
@@ -153,7 +153,7 @@ describe('ProductsManager', () => {
 
   it('pre-selects the default unit when adding a new product', () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l', isDefault: true });
+    unitsService.add({ symbol: 'l', isDefault: true });
     const defaultUnitId = unitsService.units()[0].id;
 
     const fixture = TestBed.createComponent(ProductsManager);
@@ -169,7 +169,7 @@ describe('ProductsManager', () => {
 
   it('keeps the default unit selected after the form resets following a successful add', () => {
     const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ name: 'Litre', symbol: 'l', isDefault: true });
+    unitsService.add({ symbol: 'l', isDefault: true });
     const defaultUnitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
