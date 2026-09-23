@@ -57,8 +57,6 @@ export const pl: Record<TranslationKey, string> = {
   'products.empty': 'Nie masz jeszcze produktów — dodaj pierwszy przyciskiem +.',
   'products.editFor': 'Edytuj {name}',
   'products.deleteFor': 'Usuń {name}',
-  'products.unknownUnit': 'Nieznana jednostka',
-  'products.unknownCategory': 'Nieznana kategoria',
   'products.panelEdit': 'Edytuj produkt',
   'products.panelAdd': 'Dodaj produkt',
   'products.defaultUnit': 'Jednostka domyślna',

@@ -55,8 +55,6 @@ export const en = {
   'products.empty': 'No products yet — add the first one using the + button.',
   'products.editFor': 'Edit {name}',
   'products.deleteFor': 'Delete {name}',
-  'products.unknownUnit': 'Unknown unit',
-  'products.unknownCategory': 'Unknown category',
   'products.panelEdit': 'Edit product',
   'products.panelAdd': 'Add product',
   'products.defaultUnit': 'Default unit',

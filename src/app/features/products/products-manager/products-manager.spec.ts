@@ -39,10 +39,8 @@ describe('ProductsManager', () => {
   it('adds a product using the selected default unit and category', () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });
-    const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
-    const categoryId = categoriesService.categories()[0].id;
 
     const fixture = TestBed.createComponent(ProductsManager);
     fixture.detectChanges();
@@ -56,9 +54,9 @@ describe('ProductsManager', () => {
     nameInput.dispatchEvent(new Event('input'));
 
     const selects = root.querySelectorAll<HTMLSelectElement>('select');
-    selects[0].value = unitId;
+    selects[0].value = 'l';
     selects[0].dispatchEvent(new Event('input'));
-    selects[1].value = categoryId;
+    selects[1].value = 'Dairy';
     selects[1].dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
@@ -67,14 +65,16 @@ describe('ProductsManager', () => {
 
     const productsService = TestBed.inject(ProductsService);
     expect(productsService.products()).toEqual([
-      expect.objectContaining({ name: 'Milk 3.2%', defaultUnitId: unitId, categoryId }),
+      expect.objectContaining({ name: 'Milk 3.2%', unitSymbol: 'l', categoryName: 'Dairy' }),
     ]);
-    expect(root.textContent).toContain('Milk 3.2%');
+    const meta = root.querySelector('.list-card__meta');
+    expect(meta?.textContent).toContain('l');
+    expect(meta?.textContent).toContain('Dairy');
   });
 
   it('removes a product after the user confirms in the dialog', async () => {
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({ name: 'Milk', defaultUnitId: 'u1', categoryId: 'c1' });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const fixture = TestBed.createComponent(ProductsManager);
     fixture.detectChanges();
 
@@ -91,7 +91,7 @@ describe('ProductsManager', () => {
 
   it('keeps the product when the user cancels the delete dialog', async () => {
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({ name: 'Milk', defaultUnitId: 'u1', categoryId: 'c1' });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const fixture = TestBed.createComponent(ProductsManager);
     fixture.detectChanges();
 
@@ -108,7 +108,7 @@ describe('ProductsManager', () => {
 
   it('resets to add mode when editing is cancelled', () => {
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({ name: 'Milk', defaultUnitId: 'u1', categoryId: 'c1' });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const fixture = TestBed.createComponent(ProductsManager);
     fixture.detectChanges();
 
@@ -154,7 +154,6 @@ describe('ProductsManager', () => {
   it('pre-selects the default unit when adding a new product', () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l', isDefault: true });
-    const defaultUnitId = unitsService.units()[0].id;
 
     const fixture = TestBed.createComponent(ProductsManager);
     fixture.detectChanges();
@@ -164,16 +163,14 @@ describe('ProductsManager', () => {
     fixture.detectChanges();
 
     const unitSelect = root.querySelectorAll<HTMLSelectElement>('select')[0];
-    expect(unitSelect.value).toBe(defaultUnitId);
+    expect(unitSelect.value).toBe('l');
   });
 
   it('keeps the default unit selected after the form resets following a successful add', () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l', isDefault: true });
-    const defaultUnitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
-    const categoryId = categoriesService.categories()[0].id;
 
     const fixture = TestBed.createComponent(ProductsManager);
     fixture.detectChanges();
@@ -186,7 +183,7 @@ describe('ProductsManager', () => {
     nameInput.value = 'Milk';
     nameInput.dispatchEvent(new Event('input'));
     const selects = root.querySelectorAll<HTMLSelectElement>('select');
-    selects[1].value = categoryId;
+    selects[1].value = 'Dairy';
     selects[1].dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
@@ -194,6 +191,33 @@ describe('ProductsManager', () => {
     fixture.detectChanges();
 
     const unitSelectAfterReset = root.querySelectorAll<HTMLSelectElement>('select')[0];
-    expect(unitSelectAfterReset.value).toBe(defaultUnitId);
+    expect(unitSelectAfterReset.value).toBe('l');
+  });
+
+  it('shows a stale unit and category as an extra selected option when editing a product whose values no longer exist', async () => {
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ symbol: 'kg' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Produce' });
+
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk"]')!.click();
+    fixture.detectChanges();
+
+    const [unitSelect, categorySelect] = Array.from(root.querySelectorAll<HTMLSelectElement>('select'));
+    expect(Array.from(unitSelect.options).map((option) => option.value)).toEqual(['', 'kg', 'l']);
+    expect(Array.from(categorySelect.options).map((option) => option.value)).toEqual([
+      '',
+      'Produce',
+      'Dairy',
+    ]);
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(unitSelect.value).toBe('l');
+    expect(categorySelect.value).toBe('Dairy');
   });
 });

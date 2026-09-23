@@ -19,11 +19,11 @@ import { ProductsService } from '../data/products.service';
 
 interface ProductFormValue {
   name: string;
-  defaultUnitId: string;
-  categoryId: string;
+  unitSymbol: string;
+  categoryName: string;
 }
 
-const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', categoryId: '' };
+const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', unitSymbol: '', categoryName: '' };
 
 @Component({
   selector: 'app-products-manager',
@@ -42,9 +42,7 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
             <div class="list-card">
               <div class="list-card__body">
                 <span class="list-card__name">{{ product.name }}</span>
-                <span class="list-card__meta"
-                  >{{ unitLabel(product.defaultUnitId) }} · {{ categoryLabel(product.categoryId) }}</span
-                >
+                <span class="list-card__meta">{{ product.unitSymbol }} · {{ product.categoryName }}</span>
               </div>
               <div class="list-card__actions">
                 <button
@@ -117,24 +115,24 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', defaultUnitId: '', cate
         }
 
         <label class="field-label" for="product-unit">{{ t('products.defaultUnit') }}</label>
-        <select id="product-unit" class="field-input" [formField]="productForm.defaultUnitId">
+        <select id="product-unit" class="field-input" [formField]="productForm.unitSymbol">
           <option value="" disabled>{{ t('products.selectUnit') }}</option>
-          @for (unit of unitsService.units(); track unit.id) {
-            <option [value]="unit.id">{{ unit.symbol }}</option>
+          @for (symbol of unitSymbolOptions(); track symbol) {
+            <option [value]="symbol">{{ symbol }}</option>
           }
         </select>
-        @if (productForm.defaultUnitId().invalid() && productForm.defaultUnitId().touched()) {
+        @if (productForm.unitSymbol().invalid() && productForm.unitSymbol().touched()) {
           <span class="field-error">{{ t('products.unitRequired') }}</span>
         }
 
         <label class="field-label" for="product-category">{{ t('products.category') }}</label>
-        <select id="product-category" class="field-input" [formField]="productForm.categoryId">
+        <select id="product-category" class="field-input" [formField]="productForm.categoryName">
           <option value="" disabled>{{ t('products.selectCategory') }}</option>
-          @for (category of categoriesService.categories(); track category.id) {
-            <option [value]="category.id">{{ category.name }}</option>
+          @for (name of categoryNameOptions(); track name) {
+            <option [value]="name">{{ name }}</option>
           }
         </select>
-        @if (productForm.categoryId().invalid() && productForm.categoryId().touched()) {
+        @if (productForm.categoryName().invalid() && productForm.categoryName().touched()) {
           <span class="field-error">{{ t('products.categoryRequired') }}</span>
         }
 
@@ -169,13 +167,25 @@ export class ProductsManager {
     [...this.productsService.products()].sort((a, b) => a.name.localeCompare(b.name)),
   );
 
+  protected readonly unitSymbolOptions = computed(() => {
+    const symbols = this.unitsService.units().map((unit) => unit.symbol);
+    const current = this.model().unitSymbol;
+    return current && !symbols.includes(current) ? [...symbols, current] : symbols;
+  });
+
+  protected readonly categoryNameOptions = computed(() => {
+    const names = this.categoriesService.categories().map((category) => category.name);
+    const current = this.model().categoryName;
+    return current && !names.includes(current) ? [...names, current] : names;
+  });
+
   private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
 
   private readonly model = signal<ProductFormValue>(this.buildEmptyProductForm());
   protected readonly productForm = form(this.model, (path) => {
     required(path.name);
-    required(path.defaultUnitId);
-    required(path.categoryId);
+    required(path.unitSymbol);
+    required(path.categoryName);
   });
 
   constructor() {
@@ -198,22 +208,12 @@ export class ProductsManager {
     });
   }
 
-  protected unitLabel(unitId: string): string {
-    const unit = this.unitsService.units().find((u) => u.id === unitId);
-    return unit ? unit.symbol : this.t('products.unknownUnit');
-  }
-
-  protected categoryLabel(categoryId: string): string {
-    const category = this.categoriesService.categories().find((c) => c.id === categoryId);
-    return category ? category.name : this.t('products.unknownCategory');
-  }
-
   protected startEdit(product: Product): void {
     this.editingId.set(product.id);
     this.model.set({
       name: product.name,
-      defaultUnitId: product.defaultUnitId,
-      categoryId: product.categoryId,
+      unitSymbol: product.unitSymbol,
+      categoryName: product.categoryName,
     });
     this.isPanelOpen.set(true);
   }
@@ -225,7 +225,7 @@ export class ProductsManager {
   }
 
   private buildEmptyProductForm(): ProductFormValue {
-    return { ...EMPTY_PRODUCT_FORM, defaultUnitId: this.unitsService.defaultUnit()?.id ?? '' };
+    return { ...EMPTY_PRODUCT_FORM, unitSymbol: this.unitsService.defaultUnit()?.symbol ?? '' };
   }
 
   protected async remove(id: ProductId): Promise<void> {
