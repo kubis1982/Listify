@@ -112,6 +112,7 @@ export const pl: Record<TranslationKey, string> = {
   'listDetail.product': 'Produkt',
   'listDetail.productRequired': 'Wybierz produkt.',
   'listDetail.unit': 'Jednostka',
+  'listDetail.unitRequired': 'Jednostka jest wymagana.',
   'listDetail.note': 'Notatka',
   'listDetail.addToList': 'Dodaj do listy',
   'listDetail.mergedFeedback': 'Zaktualizowano ilość istniejącej pozycji.',

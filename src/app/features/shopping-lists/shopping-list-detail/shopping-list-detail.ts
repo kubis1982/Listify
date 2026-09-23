@@ -2,6 +2,7 @@ import {
   afterRenderEffect,
   Component,
   computed,
+  effect,
   ElementRef,
   inject,
   input,
@@ -371,6 +372,9 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                         <option [value]="symbol">{{ symbol }}</option>
                       }
                     </select>
+                    @if (unitMissingError()) {
+                      <span class="field-error">{{ t('listDetail.unitRequired') }}</span>
+                    }
                   </div>
                 </div>
 
@@ -686,6 +690,7 @@ export class ShoppingListDetail {
   protected readonly isItemPanelOpen = signal(false);
   protected readonly editingItemId = signal<ShoppingListItemId | null>(null);
   protected readonly feedbackKey = signal<TranslationKey | null>(null);
+  protected readonly unitMissingError = signal(false);
   private feedbackTimeoutId?: ReturnType<typeof setTimeout>;
 
   private readonly itemModel = signal<ItemFormValue>({ ...EMPTY_ITEM_FORM });
@@ -730,6 +735,11 @@ export class ShoppingListDetail {
       } else {
         this.productPicker()?.focus();
       }
+    });
+
+    effect(() => {
+      this.selectedUnitSymbol();
+      this.unitMissingError.set(false);
     });
   }
 
@@ -819,6 +829,7 @@ export class ShoppingListDetail {
     this.editingItemId.set(null);
     this.itemForm().reset({ ...EMPTY_ITEM_FORM });
     this.quantityForm().reset({ ...EMPTY_QUANTITY_FORM });
+    this.unitMissingError.set(false);
     this.productPicker()?.resetQuery();
     this.isItemPanelOpen.set(false);
   }
@@ -848,8 +859,12 @@ export class ShoppingListDetail {
 
     const { productId, quantity, note } = this.itemModel();
     const product = this.productsService.products().find((p) => p.id === productId);
+    if (!product) {
+      return;
+    }
     const unitSymbol = this.selectedUnitSymbol().trim();
-    if (!product || !unitSymbol) {
+    if (!unitSymbol) {
+      this.unitMissingError.set(true);
       return;
     }
 

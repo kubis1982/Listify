@@ -519,6 +519,33 @@ describe('ShoppingListDetail', () => {
     await TestBed.inject(ApplicationRef).whenStable();
     expect(unitSelect.value).toBe('l');
   });
+
+  it('shows a required-unit error and does not add the item when the product has no resolvable unit', async () => {
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Milk', unitSymbol: '', categoryName: 'Dairy' });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    await selectProductViaPicker(root, 'Milk');
+    fixture.detectChanges();
+
+    root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    expect(shoppingListsService.lists()[0].items).toEqual([]);
+    expect(root.textContent).toContain('A unit is required.');
+  });
 });
 
 describe('ShoppingListDetail sharing', () => {

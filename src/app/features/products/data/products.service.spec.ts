@@ -88,4 +88,34 @@ describe('ProductsService', () => {
       { id: 'p1', name: 'Milk', unitSymbol: 'kg', categoryName: 'Dairy' },
     ]);
   });
+
+  it('resolves a partially-migrated record, keeping the already-set field and resolving the other from its legacy id', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ symbol: 'kg' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const categoryId = categoriesService.categories()[0].id;
+
+    localStorage.setItem(
+      'listify:products',
+      JSON.stringify([{ id: 'p1', name: 'Milk', unitSymbol: 'l', categoryId }]),
+    );
+
+    const service = TestBed.inject(ProductsService);
+    expect(service.products()).toEqual([
+      { id: 'p1', name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' },
+    ]);
+  });
+
+  it('drops malformed entries from a corrupted products list instead of throwing', () => {
+    localStorage.setItem(
+      'listify:products',
+      JSON.stringify([null, 'not-a-product', 42, { id: 'p1', name: 'Milk', unitSymbol: 'kg', categoryName: 'Dairy' }]),
+    );
+
+    const service = TestBed.inject(ProductsService);
+    expect(service.products()).toEqual([
+      { id: 'p1', name: 'Milk', unitSymbol: 'kg', categoryName: 'Dairy' },
+    ]);
+  });
 });

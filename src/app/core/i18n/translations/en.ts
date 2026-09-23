@@ -110,6 +110,7 @@ export const en = {
   'listDetail.product': 'Product',
   'listDetail.productRequired': 'Please select a product.',
   'listDetail.unit': 'Unit',
+  'listDetail.unitRequired': 'A unit is required.',
   'listDetail.note': 'Note',
   'listDetail.addToList': 'Add to list',
   'listDetail.mergedFeedback': 'Quantity updated for existing item.',

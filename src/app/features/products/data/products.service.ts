@@ -13,13 +13,25 @@ interface LegacyProductV1 {
   categoryName?: string;
 }
 
+function isLegacyProductLike(value: unknown): value is LegacyProductV1 {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { id?: unknown }).id === 'string' &&
+    typeof (value as { name?: unknown }).name === 'string'
+  );
+}
+
 @Service()
 export class ProductsService {
+  // Read during `store`'s field initializer below (via `migrate`), so both
+  // must stay declared before it — moving `store` above them would leave
+  // `migrateProduct` reading `undefined` during construction.
   private readonly unitsService = inject(UnitsService);
   private readonly categoriesService = inject(CategoriesService);
 
   private readonly store = createLocalStorageCollection<Product>('listify:products', {
-    migrate: (raw) => (raw as LegacyProductV1[]).map((item) => this.migrateProduct(item)),
+    migrate: (raw) => raw.filter(isLegacyProductLike).map((item) => this.migrateProduct(item)),
   });
 
   readonly products = this.store.items;
