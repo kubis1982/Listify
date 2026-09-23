@@ -12,7 +12,6 @@ import { FormField, form, required } from '@angular/forms/signals';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
-import { ProductsService } from '../../products/data/products.service';
 import { Category, CategoryId } from '../data/category.model';
 import { CategoriesService } from '../data/categories.service';
 
@@ -45,15 +44,7 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
                   type="button"
                   class="icon-btn"
                   (click)="startEdit(category)"
-                  [disabled]="usedCategoryIds().has(category.id)"
-                  [attr.aria-label]="
-                    usedCategoryIds().has(category.id)
-                      ? t('categories.cannotEditFor', { name: category.name })
-                      : t('categories.editFor', { name: category.name })
-                  "
-                  [attr.title]="
-                    usedCategoryIds().has(category.id) ? t('categories.cannotEdit') : null
-                  "
+                  [attr.aria-label]="t('categories.editFor', { name: category.name })"
                 >
                   <svg
                     class="icon"
@@ -73,17 +64,7 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
                   type="button"
                   class="icon-btn"
                   (click)="remove(category.id)"
-                  [disabled]="usedCategoryIds().has(category.id)"
-                  [attr.aria-label]="
-                    usedCategoryIds().has(category.id)
-                      ? t('categories.cannotDeleteFor', { name: category.name })
-                      : t('categories.deleteFor', { name: category.name })
-                  "
-                  [attr.title]="
-                    usedCategoryIds().has(category.id)
-                      ? t('categories.cannotDelete')
-                      : null
-                  "
+                  [attr.aria-label]="t('categories.deleteFor', { name: category.name })"
                 >
                   <svg
                     class="icon"
@@ -145,7 +126,6 @@ const EMPTY_CATEGORY_FORM: CategoryFormValue = { name: '' };
 export class CategoriesManager {
   protected readonly categoriesService = inject(CategoriesService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
-  private readonly productsService = inject(ProductsService);
   protected readonly t = inject(I18n).t;
 
   protected readonly editingId = signal<CategoryId | null>(null);
@@ -154,10 +134,6 @@ export class CategoriesManager {
 
   protected readonly sortedCategories = computed(() =>
     [...this.categoriesService.categories()].sort((a, b) => a.name.localeCompare(b.name)),
-  );
-
-  protected readonly usedCategoryIds = computed(
-    () => new Set(this.productsService.products().map((product) => product.categoryId)),
   );
 
   private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
@@ -200,10 +176,6 @@ export class CategoriesManager {
   }
 
   protected async remove(id: CategoryId): Promise<void> {
-    if (this.usedCategoryIds().has(id)) {
-      return;
-    }
-
     const confirmed = await this.confirmDialogService.confirm({
       title: this.t('categories.deleteTitle'),
       message: this.t('categories.deleteMessage'),

@@ -2,7 +2,6 @@ import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { ProductsService } from '../../products/data/products.service';
-import { UnitsService } from '../../units/data/units.service';
 import { CategoriesService } from '../data/categories.service';
 import { CategoriesManager } from './categories-manager';
 
@@ -121,31 +120,28 @@ describe('CategoriesManager', () => {
     expect(root.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('');
   });
 
-  it('disables delete for a category used by a product and does not remove it', () => {
+  it('allows deleting a category even while a product still holds its name as stored text', async () => {
     const fixture = TestBed.createComponent(CategoriesManager);
     const categoriesService = TestBed.inject(CategoriesService);
-    const unitsService = TestBed.inject(UnitsService);
     const productsService = TestBed.inject(ProductsService);
 
     categoriesService.add({ name: 'Dairy' });
-    unitsService.add({ symbol: 'kg' });
-    fixture.detectChanges();
-
-    const categoryId = categoriesService.categories()[0].id;
-    const unitId = unitsService.units()[0].id;
-    productsService.add({ name: 'Milk', categoryId, defaultUnitId: unitId });
+    productsService.add({ name: 'Milk', unitSymbol: 'kg', categoryName: 'Dairy' });
     fixture.detectChanges();
 
     const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-      'button[aria-label="Cannot delete Dairy — used by a product"]',
-    );
-    expect(button).not.toBeNull();
-    expect(button!.disabled).toBe(true);
+      'button[aria-label="Delete Dairy"]',
+    )!;
+    expect(button.disabled).toBe(false);
 
-    button!.click();
-    fixture.detectChanges();
+    button.click();
+    await TestBed.inject(ApplicationRef).whenStable();
 
-    expect(categoriesService.categories().length).toBe(1);
+    clickConfirmDialogButton('confirm');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(categoriesService.categories()).toEqual([]);
+    expect(productsService.products()[0].categoryName).toBe('Dairy');
   });
 
   it('renders the page in Polish once Polish is selected', () => {

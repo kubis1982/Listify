@@ -84,11 +84,7 @@ export const en = {
 
   'categories.title': 'Categories',
   'categories.empty': 'No categories yet — add the first one using the + button.',
-  'categories.cannotEditFor': 'Cannot edit {name} — used by a product',
-  'categories.cannotEdit': 'Cannot edit — used by a product',
   'categories.editFor': 'Edit {name}',
-  'categories.cannotDeleteFor': 'Cannot delete {name} — used by a product',
-  'categories.cannotDelete': 'Cannot delete — used by a product',
   'categories.deleteFor': 'Delete {name}',
   'categories.panelEdit': 'Edit category',
   'categories.panelAdd': 'Add category',

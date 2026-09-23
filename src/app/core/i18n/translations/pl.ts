@@ -86,11 +86,7 @@ export const pl: Record<TranslationKey, string> = {
 
   'categories.title': 'Kategorie',
   'categories.empty': 'Nie masz jeszcze kategorii — dodaj pierwszą przyciskiem +.',
-  'categories.cannotEditFor': 'Nie można edytować {name} — kategoria jest używana przez produkt',
-  'categories.cannotEdit': 'Nie można edytować — kategoria jest używana przez produkt',
   'categories.editFor': 'Edytuj {name}',
-  'categories.cannotDeleteFor': 'Nie można usunąć {name} — kategoria jest używana przez produkt',
-  'categories.cannotDelete': 'Nie można usunąć — kategoria jest używana przez produkt',
   'categories.deleteFor': 'Usuń {name}',
   'categories.panelEdit': 'Edytuj kategorię',
   'categories.panelAdd': 'Dodaj kategorię',
