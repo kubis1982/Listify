@@ -367,8 +367,8 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                       [value]="selectedUnitSymbol()"
                       (change)="onUnitChange($event)"
                     >
-                      @for (unit of unitsService.units(); track unit.id) {
-                        <option [value]="unit.symbol">{{ unit.symbol }}</option>
+                      @for (symbol of unitSymbolOptions(); track symbol) {
+                        <option [value]="symbol">{{ symbol }}</option>
                       }
                     </select>
                   </div>
@@ -712,6 +712,12 @@ export class ShoppingListDetail {
       .products()
       .find((p) => p.id === this.itemForm.productId().value());
     return product?.unitSymbol ?? '';
+  });
+
+  protected readonly unitSymbolOptions = computed(() => {
+    const symbols = this.unitsService.units().map((unit) => unit.symbol);
+    const current = this.selectedUnitSymbol();
+    return current && !symbols.includes(current) ? [...symbols, current] : symbols;
   });
 
   constructor() {

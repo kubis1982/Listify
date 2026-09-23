@@ -488,6 +488,37 @@ describe('ShoppingListDetail', () => {
       root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk quantity"]')!.disabled,
     ).toBe(true);
   });
+
+  it('shows a stale unit symbol as an extra selected option when the product unit no longer exists', async () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+
+    const unitId = unitsService.units()[0].id;
+    unitsService.remove(unitId);
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    await selectProductViaPicker(root, 'Milk');
+    fixture.detectChanges();
+
+    const unitSelect = root.querySelector<HTMLSelectElement>('#add-item-unit')!;
+    expect(Array.from(unitSelect.options).map((option) => option.value)).toEqual(['l']);
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(unitSelect.value).toBe('l');
+  });
 });
 
 describe('ShoppingListDetail sharing', () => {
