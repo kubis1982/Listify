@@ -12,7 +12,6 @@ import { FormField, form, required } from '@angular/forms/signals';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
-import { ProductsService } from '../../products/data/products.service';
 import { Unit, UnitId } from '../data/unit.model';
 import { UnitsService } from '../data/units.service';
 
@@ -73,15 +72,7 @@ const EMPTY_UNIT_FORM: UnitFormValue = { symbol: '' };
                   type="button"
                   class="icon-btn"
                   (click)="startEdit(unit)"
-                  [disabled]="usedUnitIds().has(unit.id)"
-                  [attr.aria-label]="
-                    usedUnitIds().has(unit.id)
-                      ? t('units.cannotEditFor', { name: unit.symbol })
-                      : t('units.editFor', { name: unit.symbol })
-                  "
-                  [attr.title]="
-                    usedUnitIds().has(unit.id) ? t('units.cannotEdit') : null
-                  "
+                  [attr.aria-label]="t('units.editFor', { name: unit.symbol })"
                 >
                   <svg
                     class="icon"
@@ -101,15 +92,7 @@ const EMPTY_UNIT_FORM: UnitFormValue = { symbol: '' };
                   type="button"
                   class="icon-btn"
                   (click)="remove(unit.id)"
-                  [disabled]="usedUnitIds().has(unit.id)"
-                  [attr.aria-label]="
-                    usedUnitIds().has(unit.id)
-                      ? t('units.cannotDeleteFor', { name: unit.symbol })
-                      : t('units.deleteFor', { name: unit.symbol })
-                  "
-                  [attr.title]="
-                    usedUnitIds().has(unit.id) ? t('units.cannotDelete') : null
-                  "
+                  [attr.aria-label]="t('units.deleteFor', { name: unit.symbol })"
                 >
                   <svg
                     class="icon"
@@ -171,7 +154,6 @@ const EMPTY_UNIT_FORM: UnitFormValue = { symbol: '' };
 export class UnitsManager {
   protected readonly unitsService = inject(UnitsService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
-  private readonly productsService = inject(ProductsService);
   protected readonly t = inject(I18n).t;
 
   protected readonly editingId = signal<UnitId | null>(null);
@@ -180,10 +162,6 @@ export class UnitsManager {
 
   protected readonly sortedUnits = computed(() =>
     [...this.unitsService.units()].sort((a, b) => a.symbol.localeCompare(b.symbol)),
-  );
-
-  protected readonly usedUnitIds = computed(
-    () => new Set(this.productsService.products().map((product) => product.defaultUnitId)),
   );
 
   private readonly symbolInput = viewChild<ElementRef<HTMLInputElement>>('symbolInput');
@@ -230,10 +208,6 @@ export class UnitsManager {
   }
 
   protected async remove(id: UnitId): Promise<void> {
-    if (this.usedUnitIds().has(id)) {
-      return;
-    }
-
     const confirmed = await this.confirmDialogService.confirm({
       title: this.t('units.deleteTitle'),
       message: this.t('units.deleteMessage'),

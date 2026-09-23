@@ -1,7 +1,6 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { I18n } from '../../../core/i18n/i18n.service';
-import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../data/units.service';
 import { UnitsManager } from './units-manager';
@@ -80,31 +79,28 @@ describe('UnitsManager', () => {
     expect(unitsService.units().length).toBe(1);
   });
 
-  it('disables delete for a unit used by a product and does not remove it', () => {
+  it('allows deleting a unit even while a product still holds its symbol as stored text', async () => {
     const fixture = TestBed.createComponent(UnitsManager);
     const unitsService = TestBed.inject(UnitsService);
-    const categoriesService = TestBed.inject(CategoriesService);
     const productsService = TestBed.inject(ProductsService);
 
     unitsService.add({ symbol: 'l' });
-    categoriesService.add({ name: 'Beverages' });
-    fixture.detectChanges();
-
-    const unitId = unitsService.units()[0].id;
-    const categoryId = categoriesService.categories()[0].id;
-    productsService.add({ name: 'Milk', categoryId, defaultUnitId: unitId });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     fixture.detectChanges();
 
     const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-      'button[aria-label="Cannot delete l — used by a product"]',
-    );
-    expect(button).not.toBeNull();
-    expect(button!.disabled).toBe(true);
+      'button[aria-label="Delete l"]',
+    )!;
+    expect(button.disabled).toBe(false);
 
-    button!.click();
-    fixture.detectChanges();
+    button.click();
+    await TestBed.inject(ApplicationRef).whenStable();
 
-    expect(unitsService.units().length).toBe(1);
+    clickConfirmDialogButton('confirm');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(unitsService.units()).toEqual([]);
+    expect(productsService.products()[0].unitSymbol).toBe('l');
   });
 
   it('resets to add mode when editing is cancelled', () => {
