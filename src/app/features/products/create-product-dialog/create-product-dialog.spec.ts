@@ -36,14 +36,13 @@ describe('CreateProductDialog', () => {
   it('pre-fills the default unit when one is marked default, leaves category empty', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l', isDefault: true });
-    const defaultUnitId = unitsService.units()[0].id;
 
     openDialog('Oat milk');
     await TestBed.inject(ApplicationRef).whenStable();
 
     const unitSelect = document.querySelector<HTMLSelectElement>('#create-product-unit')!;
     const categorySelect = document.querySelector<HTMLSelectElement>('#create-product-category')!;
-    expect(unitSelect.value).toBe(defaultUnitId);
+    expect(unitSelect.value).toBe('l');
     expect(categorySelect.value).toBe('');
   });
 
@@ -53,22 +52,16 @@ describe('CreateProductDialog', () => {
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({
-      name: 'Milk',
-      defaultUnitId: unitsService.units()[0].id,
-      categoryId: categoriesService.categories()[0].id,
-    });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
 
     const dialogRef = openDialog('Milk');
     await TestBed.inject(ApplicationRef).whenStable();
 
-    document.querySelector<HTMLSelectElement>('#create-product-unit')!.value =
-      unitsService.units()[0].id;
+    document.querySelector<HTMLSelectElement>('#create-product-unit')!.value = 'l';
     document
       .querySelector<HTMLSelectElement>('#create-product-unit')!
       .dispatchEvent(new Event('input'));
-    document.querySelector<HTMLSelectElement>('#create-product-category')!.value =
-      categoriesService.categories()[0].id;
+    document.querySelector<HTMLSelectElement>('#create-product-category')!.value = 'Dairy';
     document
       .querySelector<HTMLSelectElement>('#create-product-category')!
       .dispatchEvent(new Event('input'));
@@ -84,20 +77,18 @@ describe('CreateProductDialog', () => {
   it('creates the product and closes with it on valid submit', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });
-    const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
-    const categoryId = categoriesService.categories()[0].id;
 
     const dialogRef = openDialog('Oat milk');
     const resultPromise = firstValueFrom(dialogRef.closed);
     await TestBed.inject(ApplicationRef).whenStable();
 
-    document.querySelector<HTMLSelectElement>('#create-product-unit')!.value = unitId;
+    document.querySelector<HTMLSelectElement>('#create-product-unit')!.value = 'l';
     document
       .querySelector<HTMLSelectElement>('#create-product-unit')!
       .dispatchEvent(new Event('input'));
-    document.querySelector<HTMLSelectElement>('#create-product-category')!.value = categoryId;
+    document.querySelector<HTMLSelectElement>('#create-product-category')!.value = 'Dairy';
     document
       .querySelector<HTMLSelectElement>('#create-product-category')!
       .dispatchEvent(new Event('input'));
@@ -106,7 +97,7 @@ describe('CreateProductDialog', () => {
 
     const result = await resultPromise;
     expect(result).toEqual(
-      expect.objectContaining({ name: 'Oat milk', defaultUnitId: unitId, categoryId }),
+      expect.objectContaining({ name: 'Oat milk', unitSymbol: 'l', categoryName: 'Dairy' }),
     );
     const productsService = TestBed.inject(ProductsService);
     expect(productsService.products()).toEqual([result]);

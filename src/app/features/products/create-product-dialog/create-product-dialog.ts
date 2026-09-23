@@ -21,8 +21,8 @@ export interface CreateProductDialogData {
 
 interface CreateProductFormValue {
   name: string;
-  defaultUnitId: string;
-  categoryId: string;
+  unitSymbol: string;
+  categoryName: string;
 }
 
 @Component({
@@ -53,25 +53,25 @@ interface CreateProductFormValue {
         <select
           id="create-product-unit"
           class="field-input"
-          [formField]="productForm.defaultUnitId"
+          [formField]="productForm.unitSymbol"
         >
           <option value="" disabled>{{ t('products.selectUnit') }}</option>
           @for (unit of unitsService.units(); track unit.id) {
-            <option [value]="unit.id">{{ unit.symbol }}</option>
+            <option [value]="unit.symbol">{{ unit.symbol }}</option>
           }
         </select>
-        @if (productForm.defaultUnitId().invalid() && productForm.defaultUnitId().touched()) {
+        @if (productForm.unitSymbol().invalid() && productForm.unitSymbol().touched()) {
           <span class="field-error">{{ t('products.unitRequired') }}</span>
         }
 
         <label class="field-label" for="create-product-category">{{ t('products.category') }}</label>
-        <select id="create-product-category" class="field-input" [formField]="productForm.categoryId">
+        <select id="create-product-category" class="field-input" [formField]="productForm.categoryName">
           <option value="" disabled>{{ t('products.selectCategory') }}</option>
           @for (category of categoriesService.categories(); track category.id) {
-            <option [value]="category.id">{{ category.name }}</option>
+            <option [value]="category.name">{{ category.name }}</option>
           }
         </select>
-        @if (productForm.categoryId().invalid() && productForm.categoryId().touched()) {
+        @if (productForm.categoryName().invalid() && productForm.categoryName().touched()) {
           <span class="field-error">{{ t('products.categoryRequired') }}</span>
         }
 
@@ -98,13 +98,13 @@ export class CreateProductDialog {
 
   private readonly model = signal<CreateProductFormValue>({
     name: this.data.initialName,
-    defaultUnitId: this.unitsService.defaultUnit()?.id ?? '',
-    categoryId: '',
+    unitSymbol: this.unitsService.defaultUnit()?.symbol ?? '',
+    categoryName: '',
   });
   protected readonly productForm = form(this.model, (path) => {
     required(path.name);
-    required(path.defaultUnitId);
-    required(path.categoryId);
+    required(path.unitSymbol);
+    required(path.categoryName);
   });
 
   constructor() {

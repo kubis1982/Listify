@@ -40,16 +40,8 @@ describe('ProductPicker', () => {
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
-    milk = productsService.add({
-      name: 'Milk',
-      defaultUnitId: unitsService.units()[0].id,
-      categoryId: categoriesService.categories()[0].id,
-    });
-    bread = productsService.add({
-      name: 'Bread',
-      defaultUnitId: unitsService.units()[0].id,
-      categoryId: categoriesService.categories()[0].id,
-    });
+    milk = productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
+    bread = productsService.add({ name: 'Bread', unitSymbol: 'l', categoryName: 'Dairy' });
   });
 
   afterEach(() => {
@@ -106,15 +98,11 @@ describe('ProductPicker', () => {
     const nameInput = document.querySelector<HTMLInputElement>('#create-product-name')!;
     expect(nameInput.value).toBe('Eggs');
 
-    const unitsService = TestBed.inject(UnitsService);
-    const categoriesService = TestBed.inject(CategoriesService);
-    document.querySelector<HTMLSelectElement>('#create-product-unit')!.value =
-      unitsService.units()[0].id;
+    document.querySelector<HTMLSelectElement>('#create-product-unit')!.value = 'l';
     document
       .querySelector<HTMLSelectElement>('#create-product-unit')!
       .dispatchEvent(new Event('input'));
-    document.querySelector<HTMLSelectElement>('#create-product-category')!.value =
-      categoriesService.categories()[0].id;
+    document.querySelector<HTMLSelectElement>('#create-product-category')!.value = 'Dairy';
     document
       .querySelector<HTMLSelectElement>('#create-product-category')!
       .dispatchEvent(new Event('input'));
