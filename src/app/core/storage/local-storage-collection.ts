@@ -7,13 +7,22 @@ export interface LocalStorageCollection<T> {
   remove(id: string): void;
 }
 
-function readFromStorage<T>(storageKey: string): T[] {
+export interface LocalStorageCollectionOptions<T> {
+  /**
+   * Runs once against the raw parsed JSON read from storage, before it
+   * becomes the collection's initial value. Lets a caller upgrade records
+   * stored in an older shape. Omit to use the stored data as-is.
+   */
+  migrate?: (raw: unknown[]) => T[];
+}
+
+function readRawFromStorage(storageKey: string): unknown[] {
   try {
     const raw = localStorage.getItem(storageKey);
     if (!raw) {
       return [];
     }
-    const parsed = JSON.parse(raw) as T[];
+    const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
@@ -35,8 +44,10 @@ function writeToStorage<T>(storageKey: string, items: readonly T[]): void {
  */
 export function createLocalStorageCollection<T extends { id: string }>(
   storageKey: string,
+  options?: LocalStorageCollectionOptions<T>,
 ): LocalStorageCollection<T> {
-  const items = signal<T[]>(readFromStorage<T>(storageKey));
+  const raw = readRawFromStorage(storageKey);
+  const items = signal<T[]>(options?.migrate ? options.migrate(raw) : (raw as T[]));
 
   effect(() => writeToStorage(storageKey, items()));
 

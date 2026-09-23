@@ -12,6 +12,23 @@ class TestCollectionHarness {
   readonly collection = createLocalStorageCollection<TestItem>('test:items');
 }
 
+interface LegacyTestItem {
+  id: string;
+  oldLabel: string;
+}
+
+let lastMigrateRawInput: unknown[] | undefined;
+
+@Injectable()
+class TestCollectionWithMigrationHarness {
+  readonly collection = createLocalStorageCollection<TestItem>('test:migrated-items', {
+    migrate: (raw) => {
+      lastMigrateRawInput = raw;
+      return (raw as LegacyTestItem[]).map((item) => ({ id: item.id, label: item.oldLabel }));
+    },
+  });
+}
+
 describe('createLocalStorageCollection', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -64,5 +81,33 @@ describe('createLocalStorageCollection', () => {
     harness.collection.add({ id: '1', label: 'First' });
     harness.collection.remove('1');
     expect(harness.collection.items()).toEqual([]);
+  });
+});
+
+describe('createLocalStorageCollection migration', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    lastMigrateRawInput = undefined;
+    TestBed.configureTestingModule({ providers: [TestCollectionWithMigrationHarness] });
+  });
+
+  it('applies the migrate function to raw items read from storage', () => {
+    localStorage.setItem('test:migrated-items', JSON.stringify([{ id: '1', oldLabel: 'Legacy' }]));
+    const harness = TestBed.inject(TestCollectionWithMigrationHarness);
+    expect(harness.collection.items()).toEqual([{ id: '1', label: 'Legacy' }]);
+  });
+
+  it('persists the migrated shape back to storage', () => {
+    localStorage.setItem('test:migrated-items', JSON.stringify([{ id: '1', oldLabel: 'Legacy' }]));
+    TestBed.inject(TestCollectionWithMigrationHarness);
+    TestBed.tick();
+    expect(JSON.parse(localStorage.getItem('test:migrated-items')!)).toEqual([
+      { id: '1', label: 'Legacy' },
+    ]);
+  });
+
+  it('calls migrate with an empty array when storage has no entry for the key', () => {
+    TestBed.inject(TestCollectionWithMigrationHarness);
+    expect(lastMigrateRawInput).toEqual([]);
   });
 });
