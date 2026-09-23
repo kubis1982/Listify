@@ -15,7 +15,6 @@ import { I18n } from '../../../core/i18n/i18n.service';
 import { TranslationKey } from '../../../core/i18n/translations/en';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { ProductPicker } from '../../../shared/product-picker/product-picker';
-import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../../units/data/units.service';
 import { toExportFilename, toShoppingListExport } from '../data/shopping-list-export';
@@ -365,11 +364,11 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                     <select
                       id="add-item-unit"
                       class="field-input"
-                      [value]="selectedUnitId()"
+                      [value]="selectedUnitSymbol()"
                       (change)="onUnitChange($event)"
                     >
                       @for (unit of unitsService.units(); track unit.id) {
-                        <option [value]="unit.id">{{ unit.symbol }}</option>
+                        <option [value]="unit.symbol">{{ unit.symbol }}</option>
                       }
                     </select>
                   </div>
@@ -649,7 +648,6 @@ export class ShoppingListDetail {
   protected readonly shoppingListsService = inject(ShoppingListsService);
   protected readonly productsService = inject(ProductsService);
   protected readonly unitsService = inject(UnitsService);
-  protected readonly categoriesService = inject(CategoriesService);
 
   protected readonly list = computed(() =>
     this.shoppingListsService.lists().find((l) => l.id === this.id()),
@@ -709,11 +707,11 @@ export class ShoppingListDetail {
   );
   private readonly productPicker = viewChild(ProductPicker);
 
-  protected readonly selectedUnitId = linkedSignal(() => {
+  protected readonly selectedUnitSymbol = linkedSignal(() => {
     const product = this.productsService
       .products()
       .find((p) => p.id === this.itemForm.productId().value());
-    return product?.defaultUnitId ?? '';
+    return product?.unitSymbol ?? '';
   });
 
   constructor() {
@@ -734,7 +732,7 @@ export class ShoppingListDetail {
   }
 
   protected onUnitChange(event: Event): void {
-    this.selectedUnitId.set((event.target as HTMLSelectElement).value);
+    this.selectedUnitSymbol.set((event.target as HTMLSelectElement).value);
   }
 
   protected adjustItemQuantity(delta: number): void {
@@ -844,17 +842,15 @@ export class ShoppingListDetail {
 
     const { productId, quantity, note } = this.itemModel();
     const product = this.productsService.products().find((p) => p.id === productId);
-    const unit = this.unitsService.units().find((u) => u.id === this.selectedUnitId());
-    const category = this.categoriesService.categories().find((c) => c.id === product?.categoryId);
-    if (!product || !unit || !category) {
+    const unitSymbol = this.selectedUnitSymbol().trim();
+    if (!product || !unitSymbol) {
       return;
     }
 
     const merged = this.shoppingListsService.addItemFromProduct(
       this.id(),
       product,
-      unit,
-      category,
+      unitSymbol,
       quantity,
       note.trim() ? note.trim() : undefined,
     );

@@ -1,8 +1,6 @@
 import { Service } from '@angular/core';
 import { createLocalStorageCollection } from '../../../core/storage/local-storage-collection';
-import { Category } from '../../categories/data/category.model';
 import { Product } from '../../products/data/product.model';
-import { Unit } from '../../units/data/unit.model';
 import { type ShoppingListExport } from './shopping-list-export';
 import {
   ShoppingList,
@@ -64,8 +62,7 @@ export class ShoppingListsService {
   addItemFromProduct(
     listId: ShoppingListId,
     product: Product,
-    unit: Unit,
-    category: Category,
+    unitSymbol: string,
     quantity: number,
     note?: string,
   ): boolean {
@@ -73,7 +70,9 @@ export class ShoppingListsService {
     if (!list || list.status !== 'active') {
       return false;
     }
-    const existing = list.items.find((item) => this.isSameUnpurchasedItem(item, product, unit, note));
+    const existing = list.items.find((item) =>
+      this.isSameUnpurchasedItem(item, product, unitSymbol, note),
+    );
     if (existing) {
       this.store.update(listId, {
         items: list.items.map((item) =>
@@ -85,8 +84,8 @@ export class ShoppingListsService {
     const item: ShoppingListItem = {
       id: crypto.randomUUID(),
       productName: product.name,
-      unitLabel: unit.symbol,
-      categoryName: category.name,
+      unitLabel: unitSymbol,
+      categoryName: product.categoryName,
       quantity,
       purchased: false,
       note,
@@ -98,13 +97,13 @@ export class ShoppingListsService {
   private isSameUnpurchasedItem(
     item: ShoppingListItem,
     product: Product,
-    unit: Unit,
+    unitSymbol: string,
     note?: string,
   ): boolean {
     return (
       !item.purchased &&
       item.productName.toLowerCase() === product.name.toLowerCase() &&
-      item.unitLabel.toLowerCase() === unit.symbol.toLowerCase() &&
+      item.unitLabel.toLowerCase() === unitSymbol.toLowerCase() &&
       (item.note ?? '').toLowerCase() === (note ?? '').toLowerCase()
     );
   }

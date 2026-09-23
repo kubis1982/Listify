@@ -63,12 +63,10 @@ describe('ShoppingListDetail', () => {
   it('adds an item built from the selected product, unit, and category', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });
-    const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
-    const categoryId = categoriesService.categories()[0].id;
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({ name: 'Milk', defaultUnitId: unitId, categoryId });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
@@ -102,22 +100,14 @@ describe('ShoppingListDetail', () => {
   it('shows a feedback message when the submitted item merges into an existing unpurchased item', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });
-    const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
-    const categoryId = categoriesService.categories()[0].id;
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({ name: 'Milk', defaultUnitId: unitId, categoryId });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(
-      listId,
-      productsService.products()[0],
-      unitsService.units()[0],
-      categoriesService.categories()[0],
-      1,
-    );
+    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 1);
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -146,22 +136,14 @@ describe('ShoppingListDetail', () => {
     try {
       const unitsService = TestBed.inject(UnitsService);
       unitsService.add({ symbol: 'l' });
-      const unitId = unitsService.units()[0].id;
       const categoriesService = TestBed.inject(CategoriesService);
       categoriesService.add({ name: 'Dairy' });
-      const categoryId = categoriesService.categories()[0].id;
       const productsService = TestBed.inject(ProductsService);
-      productsService.add({ name: 'Milk', defaultUnitId: unitId, categoryId });
+      productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
       const shoppingListsService = TestBed.inject(ShoppingListsService);
       shoppingListsService.addList('Weekly groceries');
       const listId = shoppingListsService.lists()[0].id;
-      shoppingListsService.addItemFromProduct(
-        listId,
-        productsService.products()[0],
-        unitsService.units()[0],
-        categoriesService.categories()[0],
-        1,
-      );
+      shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 1);
 
       const fixture = TestBed.createComponent(ShoppingListDetail);
       fixture.componentRef.setInput('id', listId);
@@ -208,11 +190,7 @@ describe('ShoppingListDetail', () => {
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({
-      name: 'Milk',
-      defaultUnitId: unitsService.units()[0].id,
-      categoryId: categoriesService.categories()[0].id,
-    });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
@@ -233,10 +211,8 @@ describe('ShoppingListDetail', () => {
   it('creates a new product from the search field and adds it to the list', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });
-    const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
-    const categoryId = categoriesService.categories()[0].id;
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
@@ -261,12 +237,12 @@ describe('ShoppingListDetail', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     const createProductUnitSelect = document.querySelector<HTMLSelectElement>('#create-product-unit')!;
-    createProductUnitSelect.value = unitId;
+    createProductUnitSelect.value = 'l';
     createProductUnitSelect.dispatchEvent(new Event('input'));
     const createProductCategorySelect = document.querySelector<HTMLSelectElement>(
       '#create-product-category',
     )!;
-    createProductCategorySelect.value = categoryId;
+    createProductCategorySelect.value = 'Dairy';
     createProductCategorySelect.dispatchEvent(new Event('input'));
     createProductUnitSelect.closest('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await TestBed.inject(ApplicationRef).whenStable();
@@ -277,7 +253,7 @@ describe('ShoppingListDetail', () => {
 
     const productsService = TestBed.inject(ProductsService);
     expect(productsService.products()).toEqual([
-      expect.objectContaining({ name: 'Oat milk', defaultUnitId: unitId, categoryId }),
+      expect.objectContaining({ name: 'Oat milk', unitSymbol: 'l', categoryName: 'Dairy' }),
     ]);
     const items = shoppingListsService.lists()[0].items;
     expect(items.length).toBe(1);
@@ -289,10 +265,8 @@ describe('ShoppingListDetail', () => {
   it('focuses the quantity field after creating a product from the add-item form', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });
-    const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
-    const categoryId = categoriesService.categories()[0].id;
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
@@ -317,12 +291,12 @@ describe('ShoppingListDetail', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     const createProductUnitSelect = document.querySelector<HTMLSelectElement>('#create-product-unit')!;
-    createProductUnitSelect.value = unitId;
+    createProductUnitSelect.value = 'l';
     createProductUnitSelect.dispatchEvent(new Event('input'));
     const createProductCategorySelect = document.querySelector<HTMLSelectElement>(
       '#create-product-category',
     )!;
-    createProductCategorySelect.value = categoryId;
+    createProductCategorySelect.value = 'Dairy';
     createProductCategorySelect.dispatchEvent(new Event('input'));
     createProductUnitSelect.closest('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await TestBed.inject(ApplicationRef).whenStable();
@@ -335,32 +309,18 @@ describe('ShoppingListDetail', () => {
   it('groups items into sections by category, sorted alphabetically', () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });
-    const unitId = unitsService.units()[0].id;
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Produce' });
     categoriesService.add({ name: 'Dairy' });
-    const [produceCategory, dairyCategory] = categoriesService.categories();
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({ name: 'Apples', defaultUnitId: unitId, categoryId: produceCategory.id });
-    productsService.add({ name: 'Milk', defaultUnitId: unitId, categoryId: dairyCategory.id });
+    productsService.add({ name: 'Apples', unitSymbol: 'l', categoryName: 'Produce' });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const [applesProduct, milkProduct] = productsService.products();
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(
-      listId,
-      applesProduct,
-      unitsService.units()[0],
-      produceCategory,
-      3,
-    );
-    shoppingListsService.addItemFromProduct(
-      listId,
-      milkProduct,
-      unitsService.units()[0],
-      dairyCategory,
-      1,
-    );
+    shoppingListsService.addItemFromProduct(listId, applesProduct, 'l', 3);
+    shoppingListsService.addItemFromProduct(listId, milkProduct, 'l', 1);
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -384,21 +344,11 @@ describe('ShoppingListDetail', () => {
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({
-      name: 'Milk',
-      defaultUnitId: unitsService.units()[0].id,
-      categoryId: categoriesService.categories()[0].id,
-    });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(
-      listId,
-      productsService.products()[0],
-      unitsService.units()[0],
-      categoriesService.categories()[0],
-      2,
-    );
+    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 2);
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -419,21 +369,11 @@ describe('ShoppingListDetail', () => {
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({
-      name: 'Milk',
-      defaultUnitId: unitsService.units()[0].id,
-      categoryId: categoriesService.categories()[0].id,
-    });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(
-      listId,
-      productsService.products()[0],
-      unitsService.units()[0],
-      categoriesService.categories()[0],
-      2,
-    );
+    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 2);
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -465,11 +405,7 @@ describe('ShoppingListDetail', () => {
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({
-      name: 'Milk',
-      defaultUnitId: unitsService.units()[0].id,
-      categoryId: categoriesService.categories()[0].id,
-    });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
@@ -492,11 +428,7 @@ describe('ShoppingListDetail', () => {
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({
-      name: 'Milk',
-      defaultUnitId: unitsService.units()[0].id,
-      categoryId: categoriesService.categories()[0].id,
-    });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
@@ -534,21 +466,11 @@ describe('ShoppingListDetail', () => {
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({
-      name: 'Milk',
-      defaultUnitId: unitsService.units()[0].id,
-      categoryId: categoriesService.categories()[0].id,
-    });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(
-      listId,
-      productsService.products()[0],
-      unitsService.units()[0],
-      categoriesService.categories()[0],
-      1,
-    );
+    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 1);
     shoppingListsService.setStatus(listId, 'completed');
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
@@ -589,22 +511,11 @@ describe('ShoppingListDetail sharing', () => {
     const categoriesService = TestBed.inject(CategoriesService);
     categoriesService.add({ name: 'Dairy' });
     const productsService = TestBed.inject(ProductsService);
-    productsService.add({
-      name: 'Milk',
-      defaultUnitId: unitsService.units()[0].id,
-      categoryId: categoriesService.categories()[0].id,
-    });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(
-      listId,
-      productsService.products()[0],
-      unitsService.units()[0],
-      categoriesService.categories()[0],
-      2,
-      'organic',
-    );
+    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 2, 'organic');
     return listId;
   }
 

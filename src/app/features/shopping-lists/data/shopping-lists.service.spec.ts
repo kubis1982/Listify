@@ -1,13 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { Category } from '../../categories/data/category.model';
 import { Product } from '../../products/data/product.model';
-import { Unit } from '../../units/data/unit.model';
 import { ShoppingListsService } from './shopping-lists.service';
 
 describe('ShoppingListsService', () => {
-  const product: Product = { id: 'p1', name: 'Milk 3.2%', defaultUnitId: 'u1', categoryId: 'c1' };
-  const unit: Unit = { id: 'u1', symbol: 'l' };
-  const category: Category = { id: 'c1', name: 'Dairy' };
+  const product: Product = { id: 'p1', name: 'Milk 3.2%', unitSymbol: 'l', categoryName: 'Dairy' };
 
   beforeEach(() => {
     localStorage.clear();
@@ -51,12 +47,12 @@ describe('ShoppingListsService', () => {
     expect(service.lists()).toEqual([]);
   });
 
-  it('adds an item to a list as a snapshot of the given product, unit, and category', () => {
+  it('adds an item to a list as a snapshot of the given product and unit', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');
     const listId = service.lists()[0].id;
 
-    service.addItemFromProduct(listId, product, unit, category, 2, 'organic');
+    service.addItemFromProduct(listId, product, 'l', 2, 'organic');
 
     const [item] = service.lists()[0].items;
     expect(item).toEqual(
@@ -76,7 +72,7 @@ describe('ShoppingListsService', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');
     const listId = service.lists()[0].id;
-    service.addItemFromProduct(listId, product, unit, category, 1);
+    service.addItemFromProduct(listId, product, 'l', 1);
     const itemId = service.lists()[0].items[0].id;
 
     service.setItemPurchased(listId, itemId, true);
@@ -88,7 +84,7 @@ describe('ShoppingListsService', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');
     const listId = service.lists()[0].id;
-    service.addItemFromProduct(listId, product, unit, category, 1);
+    service.addItemFromProduct(listId, product, 'l', 1);
     const itemId = service.lists()[0].items[0].id;
 
     service.updateItemQuantity(listId, itemId, 3.5);
@@ -100,7 +96,7 @@ describe('ShoppingListsService', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');
     const listId = service.lists()[0].id;
-    service.addItemFromProduct(listId, product, unit, category, 1);
+    service.addItemFromProduct(listId, product, 'l', 1);
     const itemId = service.lists()[0].items[0].id;
 
     service.removeItem(listId, itemId);
@@ -112,9 +108,9 @@ describe('ShoppingListsService', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');
     const listId = service.lists()[0].id;
-    service.addItemFromProduct(listId, product, unit, category, 2, 'organic');
+    service.addItemFromProduct(listId, product, 'l', 2, 'organic');
 
-    const merged = service.addItemFromProduct(listId, product, unit, category, 3, 'organic');
+    const merged = service.addItemFromProduct(listId, product, 'l', 3, 'organic');
 
     expect(merged).toBe(true);
     const list = service.lists()[0];
@@ -126,11 +122,10 @@ describe('ShoppingListsService', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');
     const listId = service.lists()[0].id;
-    service.addItemFromProduct(listId, product, unit, category, 2, 'Organic');
+    service.addItemFromProduct(listId, product, 'l', 2, 'Organic');
 
     const upperProduct: Product = { ...product, name: 'MILK 3.2%' };
-    const upperUnit: Unit = { ...unit, symbol: 'L' };
-    const merged = service.addItemFromProduct(listId, upperProduct, upperUnit, category, 1, 'organic');
+    const merged = service.addItemFromProduct(listId, upperProduct, 'L', 1, 'organic');
 
     expect(merged).toBe(true);
     const list = service.lists()[0];
@@ -142,9 +137,9 @@ describe('ShoppingListsService', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');
     const listId = service.lists()[0].id;
-    service.addItemFromProduct(listId, product, unit, category, 2, 'organic');
+    service.addItemFromProduct(listId, product, 'l', 2, 'organic');
 
-    const merged = service.addItemFromProduct(listId, product, unit, category, 1, 'skimmed');
+    const merged = service.addItemFromProduct(listId, product, 'l', 1, 'skimmed');
 
     expect(merged).toBe(false);
     expect(service.lists()[0].items.length).toBe(2);
@@ -154,11 +149,11 @@ describe('ShoppingListsService', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');
     const listId = service.lists()[0].id;
-    service.addItemFromProduct(listId, product, unit, category, 2, 'organic');
+    service.addItemFromProduct(listId, product, 'l', 2, 'organic');
     const itemId = service.lists()[0].items[0].id;
     service.setItemPurchased(listId, itemId, true);
 
-    const merged = service.addItemFromProduct(listId, product, unit, category, 1, 'organic');
+    const merged = service.addItemFromProduct(listId, product, 'l', 1, 'organic');
 
     expect(merged).toBe(false);
     const list = service.lists()[0];
@@ -170,11 +165,11 @@ describe('ShoppingListsService', () => {
     const service = TestBed.inject(ShoppingListsService);
     service.addList('Weekly groceries');
     const listId = service.lists()[0].id;
-    service.addItemFromProduct(listId, product, unit, category, 1);
+    service.addItemFromProduct(listId, product, 'l', 1);
     const itemId = service.lists()[0].items[0].id;
     service.setStatus(listId, 'completed');
 
-    service.addItemFromProduct(listId, product, unit, category, 2);
+    service.addItemFromProduct(listId, product, 'l', 2);
     service.setItemPurchased(listId, itemId, true);
     service.updateItemQuantity(listId, itemId, 9);
     service.removeItem(listId, itemId);
