@@ -37,9 +37,19 @@ describe('CreatableTextPicker', () => {
     fixture.componentRef.setInput('resultsLabel', 'Unit search results');
     fixture.componentRef.setInput('createOptionLabel', (name: string) => `Create unit "${name}"`);
     fixture.componentRef.setInput('onCreate', onCreate);
+    fixture.componentRef.setInput('clearLabel', 'Clear unit');
+    fixture.componentRef.setInput('toggleLabel', 'Show units');
     fixture.componentRef.setInput('value', '');
     fixture.detectChanges();
     return fixture;
+  }
+
+  function clearButton(fixture: { nativeElement: HTMLElement }): HTMLButtonElement | null {
+    return fixture.nativeElement.querySelector('.creatable-text-picker__clear');
+  }
+
+  function toggleButton(fixture: { nativeElement: HTMLElement }): HTMLButtonElement {
+    return fixture.nativeElement.querySelector('.creatable-text-picker__toggle')!;
   }
 
   it('shows no options and the supplied hint when the query is blank', () => {
@@ -139,5 +149,57 @@ describe('CreatableTextPicker', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('input').value).toBe('kg');
+  });
+
+  it('shows every option when the toggle button is clicked, without typing anything', async () => {
+    const fixture = createPicker(['l', 'kg', 'ml']);
+    toggleButton(fixture).click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(optionTexts().sort()).toEqual(['kg', 'l', 'ml']);
+  });
+
+  it('closes the panel when the toggle button is clicked again while open', async () => {
+    const fixture = createPicker(['l', 'kg']);
+    toggleButton(fixture).click();
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(document.querySelectorAll('mat-option').length).toBeGreaterThan(0);
+
+    toggleButton(fixture).click();
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(document.querySelectorAll('mat-option').length).toBe(0);
+  });
+
+  it('gives the toggle button the supplied accessible label', () => {
+    const fixture = createPicker();
+    expect(toggleButton(fixture).getAttribute('aria-label')).toBe('Show units');
+  });
+
+  it('does not show a clear button when the field is empty', () => {
+    const fixture = createPicker();
+    expect(clearButton(fixture)).toBeNull();
+  });
+
+  it('shows a clear button once there is a value, with the supplied accessible label', async () => {
+    const fixture = createPicker(['l', 'kg']);
+    await typeQuery(fixture.nativeElement, 'kg');
+    clickOption('kg');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(clearButton(fixture)?.getAttribute('aria-label')).toBe('Clear unit');
+  });
+
+  it('clears the value and the input text when the clear button is clicked', async () => {
+    const fixture = createPicker(['l', 'kg']);
+    await typeQuery(fixture.nativeElement, 'kg');
+    clickOption('kg');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    clearButton(fixture)!.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.value()).toBe('');
+    expect(fixture.nativeElement.querySelector('input').value).toBe('');
+    expect(clearButton(fixture)).toBeNull();
   });
 });

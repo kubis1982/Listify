@@ -123,6 +123,8 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', unitSymbol: '', categor
           [hintText]="t('unitPicker.hint')"
           [resultsLabel]="t('unitPicker.results')"
           [createOptionLabel]="unitCreateOptionLabel"
+          [clearLabel]="t('unitPicker.clear')"
+          [toggleLabel]="t('unitPicker.toggle')"
           [onCreate]="createUnit"
           [formField]="productForm.unitSymbol"
         />
@@ -138,6 +140,8 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', unitSymbol: '', categor
           [hintText]="t('categoryPicker.hint')"
           [resultsLabel]="t('categoryPicker.results')"
           [createOptionLabel]="categoryCreateOptionLabel"
+          [clearLabel]="t('categoryPicker.clear')"
+          [toggleLabel]="t('categoryPicker.toggle')"
           [onCreate]="createCategory"
           [formField]="productForm.categoryName"
         />

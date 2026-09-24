@@ -52,10 +52,14 @@ export const en = {
   'unitPicker.hint': 'Start typing to search units.',
   'unitPicker.results': 'Unit search results',
   'unitPicker.createOption': 'Create unit "{name}"',
+  'unitPicker.clear': 'Clear unit',
+  'unitPicker.toggle': 'Show units',
 
   'categoryPicker.hint': 'Start typing to search categories.',
   'categoryPicker.results': 'Category search results',
   'categoryPicker.createOption': 'Create category "{name}"',
+  'categoryPicker.clear': 'Clear category',
+  'categoryPicker.toggle': 'Show categories',
 
   'productDialog.title': 'Create product',
 

@@ -1,4 +1,14 @@
-import { Component, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  input,
+  model,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormValueControl } from '@angular/forms/signals';
 import {
   MatAutocomplete,
@@ -13,19 +23,62 @@ const CREATE_OPTION = Symbol('create-text-option');
   selector: 'app-creatable-text-picker',
   imports: [MatAutocomplete, MatAutocompleteTrigger, MatOption],
   template: `
-    <input
-      #inputEl
-      type="text"
-      class="field-input"
-      [id]="inputId()"
-      [placeholder]="placeholder()"
-      autocomplete="off"
-      [value]="queryText()"
-      [matAutocomplete]="auto"
-      [attr.aria-describedby]="queryText().trim() === '' ? hintId() : null"
-      (input)="onQueryInput($event)"
-      (blur)="touch.emit()"
-    />
+    <div class="creatable-text-picker__control">
+      <input
+        #inputEl
+        type="text"
+        class="field-input"
+        [id]="inputId()"
+        [placeholder]="placeholder()"
+        autocomplete="off"
+        [value]="queryText()"
+        [matAutocomplete]="auto"
+        [attr.aria-describedby]="queryText().trim() === '' ? hintId() : null"
+        (input)="onQueryInput($event)"
+        (blur)="touch.emit()"
+      />
+      @if (queryText().trim() !== '') {
+        <button
+          type="button"
+          class="icon-btn creatable-text-picker__clear"
+          (click)="clear()"
+          [attr.aria-label]="clearLabel()"
+        >
+          <svg
+            class="icon icon--sm"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      }
+      <button
+        type="button"
+        class="icon-btn creatable-text-picker__toggle"
+        (click)="toggleOptions()"
+        [attr.aria-label]="toggleLabel()"
+      >
+        <svg
+          class="icon icon--sm"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+    </div>
     @if (queryText().trim() === '') {
       <span [id]="hintId()" class="creatable-text-picker__hint">{{ hintText() }}</span>
     }
@@ -63,6 +116,30 @@ const CREATE_OPTION = Symbol('create-text-option');
     </mat-autocomplete>
   `,
   styles: `
+    .creatable-text-picker__control {
+      position: relative;
+    }
+
+    .creatable-text-picker__control .field-input {
+      padding-right: 4.5rem;
+    }
+
+    .creatable-text-picker__clear,
+    .creatable-text-picker__toggle {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 0.375rem;
+    }
+
+    .creatable-text-picker__clear {
+      right: 2.25rem;
+    }
+
+    .creatable-text-picker__toggle {
+      right: 0.375rem;
+    }
+
     .creatable-text-picker__hint {
       display: block;
       font-size: 0.7rem;
@@ -86,21 +163,26 @@ export class CreatableTextPicker implements FormValueControl<string> {
   readonly hintText = input.required<string>();
   readonly resultsLabel = input.required<string>();
   readonly createOptionLabel = input.required<(name: string) => string>();
+  readonly clearLabel = input.required<string>();
+  readonly toggleLabel = input.required<string>();
   readonly onCreate = input.required<(text: string) => string>();
   readonly value = model.required<string>();
   readonly touch = output<void>();
   readonly created = output<void>();
 
   private readonly autoTrigger = viewChild.required(MatAutocompleteTrigger);
+  private readonly inputRef = viewChild.required<ElementRef<HTMLInputElement>>('inputEl');
 
   protected readonly queryText = signal('');
   protected readonly createOptionValue = CREATE_OPTION;
   protected readonly hintId = computed(() => `${this.inputId()}-hint`);
 
+  // Blank query shows every option — the field doubles as a browsable list
+  // (via the toggle button) and a filterable search box.
   protected readonly filteredOptions = computed(() => {
     const query = this.queryText().trim().toLowerCase();
     if (!query) {
-      return [];
+      return this.options();
     }
     return this.options().filter((option) => option.toLowerCase().includes(query));
   });
@@ -143,11 +225,7 @@ export class CreatableTextPicker implements FormValueControl<string> {
       this.value.set('');
     }
 
-    if (this.queryText().trim() === '') {
-      this.autoTrigger().closePanel();
-    } else {
-      this.autoTrigger().openPanel();
-    }
+    this.autoTrigger().openPanel();
   }
 
   protected onOptionSelected(event: MatAutocompleteSelectedEvent): void {
@@ -160,5 +238,21 @@ export class CreatableTextPicker implements FormValueControl<string> {
       return;
     }
     this.value.set(selected);
+  }
+
+  protected clear(): void {
+    this.value.set('');
+    this.queryText.set('');
+    this.autoTrigger().closePanel();
+    this.inputRef().nativeElement.focus();
+  }
+
+  protected toggleOptions(): void {
+    if (this.autoTrigger().panelOpen) {
+      this.autoTrigger().closePanel();
+    } else {
+      this.autoTrigger().openPanel();
+    }
+    this.inputRef().nativeElement.focus();
   }
 }

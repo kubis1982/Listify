@@ -54,10 +54,14 @@ export const pl: Record<TranslationKey, string> = {
   'unitPicker.hint': 'Zacznij pisać, aby wyszukać jednostki.',
   'unitPicker.results': 'Wyniki wyszukiwania jednostek',
   'unitPicker.createOption': 'Utwórz jednostkę „{name}”',
+  'unitPicker.clear': 'Wyczyść jednostkę',
+  'unitPicker.toggle': 'Pokaż jednostki',
 
   'categoryPicker.hint': 'Zacznij pisać, aby wyszukać kategorie.',
   'categoryPicker.results': 'Wyniki wyszukiwania kategorii',
   'categoryPicker.createOption': 'Utwórz kategorię „{name}”',
+  'categoryPicker.clear': 'Wyczyść kategorię',
+  'categoryPicker.toggle': 'Pokaż kategorie',
 
   'productDialog.title': 'Nowy produkt',
 

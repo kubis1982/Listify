@@ -59,6 +59,8 @@ interface CreateProductFormValue {
           [hintText]="t('unitPicker.hint')"
           [resultsLabel]="t('unitPicker.results')"
           [createOptionLabel]="unitCreateOptionLabel"
+          [clearLabel]="t('unitPicker.clear')"
+          [toggleLabel]="t('unitPicker.toggle')"
           [onCreate]="createUnit"
           [formField]="productForm.unitSymbol"
         />
@@ -74,6 +76,8 @@ interface CreateProductFormValue {
           [hintText]="t('categoryPicker.hint')"
           [resultsLabel]="t('categoryPicker.results')"
           [createOptionLabel]="categoryCreateOptionLabel"
+          [clearLabel]="t('categoryPicker.clear')"
+          [toggleLabel]="t('categoryPicker.toggle')"
           [onCreate]="createCategory"
           [formField]="productForm.categoryName"
         />
