@@ -345,6 +345,34 @@ describe('ShoppingListDetail', () => {
     expect(itemLists[1].textContent).toContain('Apples');
   });
 
+  it('sorts products within a category alphabetically regardless of the order they were added', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Yogurt', unitSymbol: 'l', categoryName: 'Dairy' });
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
+    productsService.add({ name: 'Cheese', unitSymbol: 'l', categoryName: 'Dairy' });
+    const [yogurtProduct, milkProduct, cheeseProduct] = productsService.products();
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+    shoppingListsService.addItemFromProduct(listId, yogurtProduct, 'l', 1);
+    shoppingListsService.addItemFromProduct(listId, milkProduct, 'l', 1);
+    shoppingListsService.addItemFromProduct(listId, cheeseProduct, 'l', 1);
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const itemNames = Array.from(root.querySelectorAll('.item-card__name')).map(
+      (name) => name.textContent?.trim(),
+    );
+    expect(itemNames).toEqual(['Cheese', 'Milk', 'Yogurt']);
+  });
+
   it('marks an item as purchased when its checkbox is toggled', () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });

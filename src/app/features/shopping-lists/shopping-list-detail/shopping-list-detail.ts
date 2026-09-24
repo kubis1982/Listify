@@ -683,7 +683,10 @@ export class ShoppingListDetail {
       }
     }
     return [...groups.entries()]
-      .map(([categoryName, items]) => ({ categoryName, items }))
+      .map(([categoryName, items]) => ({
+        categoryName,
+        items: [...items].sort((a, b) => a.productName.localeCompare(b.productName)),
+      }))
       .sort((a, b) => a.categoryName.localeCompare(b.categoryName));
   });
 
