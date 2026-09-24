@@ -14,6 +14,13 @@ async function typeQuery(root: HTMLElement, query: string): Promise<void> {
   await TestBed.inject(ApplicationRef).whenStable();
 }
 
+async function typeInPicker(inputId: string, query: string): Promise<void> {
+  const input = document.querySelector<HTMLInputElement>(`#${inputId}`)!;
+  input.value = query;
+  input.dispatchEvent(new Event('input'));
+  await TestBed.inject(ApplicationRef).whenStable();
+}
+
 function optionTexts(): string[] {
   return Array.from(document.querySelectorAll('mat-option')).map((el) => el.textContent?.trim() ?? '');
 }
@@ -98,14 +105,12 @@ describe('ProductPicker', () => {
     const nameInput = document.querySelector<HTMLInputElement>('#create-product-name')!;
     expect(nameInput.value).toBe('Eggs');
 
-    document.querySelector<HTMLSelectElement>('#create-product-unit')!.value = 'l';
-    document
-      .querySelector<HTMLSelectElement>('#create-product-unit')!
-      .dispatchEvent(new Event('input'));
-    document.querySelector<HTMLSelectElement>('#create-product-category')!.value = 'Dairy';
-    document
-      .querySelector<HTMLSelectElement>('#create-product-category')!
-      .dispatchEvent(new Event('input'));
+    await typeInPicker('create-product-unit', 'l');
+    clickOption('l');
+    await TestBed.inject(ApplicationRef).whenStable();
+    await typeInPicker('create-product-category', 'Dairy');
+    clickOption('Dairy');
+    await TestBed.inject(ApplicationRef).whenStable();
     document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await TestBed.inject(ApplicationRef).whenStable();
 

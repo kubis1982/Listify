@@ -11,10 +11,38 @@ function clickConfirmDialogButton(which: 'cancel' | 'confirm'): void {
   (which === 'cancel' ? buttons[0] : buttons[1]).click();
 }
 
+async function typeInPicker(inputId: string, query: string): Promise<void> {
+  const input = document.querySelector<HTMLInputElement>(`#${inputId}`)!;
+  input.value = query;
+  input.dispatchEvent(new Event('input'));
+  await TestBed.inject(ApplicationRef).whenStable();
+}
+
+function optionTexts(): string[] {
+  return Array.from(document.querySelectorAll('mat-option')).map((el) => el.textContent?.trim() ?? '');
+}
+
+function clickOption(text: string): void {
+  const option = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
+    (el) => el.textContent?.trim() === text,
+  )!;
+  option.click();
+}
+
+async function selectExisting(inputId: string, text: string): Promise<void> {
+  await typeInPicker(inputId, text);
+  clickOption(text);
+  await TestBed.inject(ApplicationRef).whenStable();
+}
+
 describe('ProductsManager', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({ imports: [ProductsManager] });
+  });
+
+  afterEach(() => {
+    document.querySelectorAll('.cdk-overlay-container').forEach((container) => container.remove());
   });
 
   it('shows an empty-state message when there are no products', () => {
@@ -36,7 +64,7 @@ describe('ProductsManager', () => {
     expect(root.textContent).toContain('Nie masz jeszcze produktów');
   });
 
-  it('adds a product using the selected default unit and category', () => {
+  it('adds a product using the selected default unit and category', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
@@ -53,11 +81,8 @@ describe('ProductsManager', () => {
     nameInput.value = 'Milk 3.2%';
     nameInput.dispatchEvent(new Event('input'));
 
-    const selects = root.querySelectorAll<HTMLSelectElement>('select');
-    selects[0].value = 'l';
-    selects[0].dispatchEvent(new Event('input'));
-    selects[1].value = 'Dairy';
-    selects[1].dispatchEvent(new Event('input'));
+    await selectExisting('product-unit', 'l');
+    await selectExisting('product-category', 'Dairy');
     fixture.detectChanges();
 
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -162,11 +187,11 @@ describe('ProductsManager', () => {
     root.querySelector<HTMLButtonElement>('.fab')!.click();
     fixture.detectChanges();
 
-    const unitSelect = root.querySelectorAll<HTMLSelectElement>('select')[0];
-    expect(unitSelect.value).toBe('l');
+    const unitInput = root.querySelector<HTMLInputElement>('#product-unit')!;
+    expect(unitInput.value).toBe('l');
   });
 
-  it('keeps the default unit selected after the form resets following a successful add', () => {
+  it('keeps the default unit selected after the form resets following a successful add', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l', isDefault: true });
     const categoriesService = TestBed.inject(CategoriesService);
@@ -182,19 +207,17 @@ describe('ProductsManager', () => {
     const nameInput = root.querySelector<HTMLInputElement>('input[type="text"]')!;
     nameInput.value = 'Milk';
     nameInput.dispatchEvent(new Event('input'));
-    const selects = root.querySelectorAll<HTMLSelectElement>('select');
-    selects[1].value = 'Dairy';
-    selects[1].dispatchEvent(new Event('input'));
+    await selectExisting('product-category', 'Dairy');
     fixture.detectChanges();
 
     root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     fixture.detectChanges();
 
-    const unitSelectAfterReset = root.querySelectorAll<HTMLSelectElement>('select')[0];
-    expect(unitSelectAfterReset.value).toBe('l');
+    const unitInputAfterReset = root.querySelector<HTMLInputElement>('#product-unit')!;
+    expect(unitInputAfterReset.value).toBe('l');
   });
 
-  it('shows a stale unit and category as an extra selected option when editing a product whose values no longer exist', async () => {
+  it('shows a stale unit and category as the selected value when editing a product whose values no longer exist', async () => {
     const productsService = TestBed.inject(ProductsService);
     productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const unitsService = TestBed.inject(UnitsService);
@@ -208,16 +231,46 @@ describe('ProductsManager', () => {
 
     root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk"]')!.click();
     fixture.detectChanges();
-
-    const [unitSelect, categorySelect] = Array.from(root.querySelectorAll<HTMLSelectElement>('select'));
-    expect(Array.from(unitSelect.options).map((option) => option.value)).toEqual(['', 'kg', 'l']);
-    expect(Array.from(categorySelect.options).map((option) => option.value)).toEqual([
-      '',
-      'Produce',
-      'Dairy',
-    ]);
     await TestBed.inject(ApplicationRef).whenStable();
-    expect(unitSelect.value).toBe('l');
-    expect(categorySelect.value).toBe('Dairy');
+
+    expect(root.querySelector<HTMLInputElement>('#product-unit')!.value).toBe('l');
+    expect(root.querySelector<HTMLInputElement>('#product-category')!.value).toBe('Dairy');
+
+    await typeInPicker('product-unit', 'l');
+    expect(optionTexts()).toEqual(['l']);
+  });
+
+  it('creating a new unit through the picker saves it immediately', async () => {
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    await typeInPicker('product-unit', 'ml');
+    clickOption('Create unit "ml"');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const unitsService = TestBed.inject(UnitsService);
+    expect(unitsService.units().map((unit) => unit.symbol)).toEqual(['ml']);
+    expect(root.querySelector<HTMLInputElement>('#product-unit')!.value).toBe('ml');
+  });
+
+  it('creating a new category through the picker saves it immediately', async () => {
+    const fixture = TestBed.createComponent(ProductsManager);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    await typeInPicker('product-category', 'Beverages');
+    clickOption('Create category "Beverages"');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const categoriesService = TestBed.inject(CategoriesService);
+    expect(categoriesService.categories().map((category) => category.name)).toEqual(['Beverages']);
+    expect(root.querySelector<HTMLInputElement>('#product-category')!.value).toBe('Beverages');
   });
 });

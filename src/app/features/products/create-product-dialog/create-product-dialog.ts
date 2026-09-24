@@ -2,6 +2,7 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import {
   afterRenderEffect,
   Component,
+  computed,
   effect,
   ElementRef,
   inject,
@@ -10,6 +11,7 @@ import {
 } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { I18n } from '../../../core/i18n/i18n.service';
+import { CreatableTextPicker } from '../../../shared/creatable-text-picker/creatable-text-picker';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { UnitsService } from '../../units/data/units.service';
 import { Product } from '../data/product.model';
@@ -27,7 +29,7 @@ interface CreateProductFormValue {
 
 @Component({
   selector: 'app-create-product-dialog',
-  imports: [FormField],
+  imports: [FormField, CreatableTextPicker],
   template: `
     <div class="add-panel">
       <div class="add-panel__header">
@@ -50,27 +52,31 @@ interface CreateProductFormValue {
         }
 
         <label class="field-label" for="create-product-unit">{{ t('products.defaultUnit') }}</label>
-        <select
-          id="create-product-unit"
-          class="field-input"
+        <app-creatable-text-picker
+          inputId="create-product-unit"
+          [options]="unitSymbols()"
+          [placeholder]="t('products.selectUnit')"
+          [hintText]="t('unitPicker.hint')"
+          [resultsLabel]="t('unitPicker.results')"
+          [createOptionLabel]="unitCreateOptionLabel"
+          [onCreate]="createUnit"
           [formField]="productForm.unitSymbol"
-        >
-          <option value="" disabled>{{ t('products.selectUnit') }}</option>
-          @for (unit of unitsService.units(); track unit.id) {
-            <option [value]="unit.symbol">{{ unit.symbol }}</option>
-          }
-        </select>
+        />
         @if (productForm.unitSymbol().invalid() && productForm.unitSymbol().touched()) {
           <span class="field-error">{{ t('products.unitRequired') }}</span>
         }
 
         <label class="field-label" for="create-product-category">{{ t('products.category') }}</label>
-        <select id="create-product-category" class="field-input" [formField]="productForm.categoryName">
-          <option value="" disabled>{{ t('products.selectCategory') }}</option>
-          @for (category of categoriesService.categories(); track category.id) {
-            <option [value]="category.name">{{ category.name }}</option>
-          }
-        </select>
+        <app-creatable-text-picker
+          inputId="create-product-category"
+          [options]="categoryNames()"
+          [placeholder]="t('products.selectCategory')"
+          [hintText]="t('categoryPicker.hint')"
+          [resultsLabel]="t('categoryPicker.results')"
+          [createOptionLabel]="categoryCreateOptionLabel"
+          [onCreate]="createCategory"
+          [formField]="productForm.categoryName"
+        />
         @if (productForm.categoryName().invalid() && productForm.categoryName().touched()) {
           <span class="field-error">{{ t('products.categoryRequired') }}</span>
         }
@@ -95,6 +101,27 @@ export class CreateProductDialog {
 
   protected readonly duplicateNameError = signal(false);
   private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
+
+  protected readonly unitSymbols = computed(() => this.unitsService.units().map((unit) => unit.symbol));
+  protected readonly categoryNames = computed(() =>
+    this.categoriesService.categories().map((category) => category.name),
+  );
+
+  protected readonly unitCreateOptionLabel = (name: string): string =>
+    this.t('unitPicker.createOption', { name });
+  protected readonly categoryCreateOptionLabel = (name: string): string =>
+    this.t('categoryPicker.createOption', { name });
+
+  protected readonly createUnit = (text: string): string => {
+    const symbol = text.trim().toLowerCase();
+    this.unitsService.add({ symbol });
+    return symbol;
+  };
+  protected readonly createCategory = (text: string): string => {
+    const name = text.trim();
+    this.categoriesService.add({ name });
+    return name;
+  };
 
   private readonly model = signal<CreateProductFormValue>({
     name: this.data.initialName,

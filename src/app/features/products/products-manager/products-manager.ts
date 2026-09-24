@@ -11,6 +11,7 @@ import {
 import { FormField, form, required } from '@angular/forms/signals';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { CreatableTextPicker } from '../../../shared/creatable-text-picker/creatable-text-picker';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { CategoriesService } from '../../categories/data/categories.service';
 import { UnitsService } from '../../units/data/units.service';
@@ -27,7 +28,7 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', unitSymbol: '', categor
 
 @Component({
   selector: 'app-products-manager',
-  imports: [FormField, FabPanel],
+  imports: [FormField, FabPanel, CreatableTextPicker],
   template: `
     <div class="page">
       <div class="page-header">
@@ -115,23 +116,31 @@ const EMPTY_PRODUCT_FORM: ProductFormValue = { name: '', unitSymbol: '', categor
         }
 
         <label class="field-label" for="product-unit">{{ t('products.defaultUnit') }}</label>
-        <select id="product-unit" class="field-input" [formField]="productForm.unitSymbol">
-          <option value="" disabled>{{ t('products.selectUnit') }}</option>
-          @for (symbol of unitSymbolOptions(); track symbol) {
-            <option [value]="symbol">{{ symbol }}</option>
-          }
-        </select>
+        <app-creatable-text-picker
+          inputId="product-unit"
+          [options]="unitSymbolOptions()"
+          [placeholder]="t('products.selectUnit')"
+          [hintText]="t('unitPicker.hint')"
+          [resultsLabel]="t('unitPicker.results')"
+          [createOptionLabel]="unitCreateOptionLabel"
+          [onCreate]="createUnit"
+          [formField]="productForm.unitSymbol"
+        />
         @if (productForm.unitSymbol().invalid() && productForm.unitSymbol().touched()) {
           <span class="field-error">{{ t('products.unitRequired') }}</span>
         }
 
         <label class="field-label" for="product-category">{{ t('products.category') }}</label>
-        <select id="product-category" class="field-input" [formField]="productForm.categoryName">
-          <option value="" disabled>{{ t('products.selectCategory') }}</option>
-          @for (name of categoryNameOptions(); track name) {
-            <option [value]="name">{{ name }}</option>
-          }
-        </select>
+        <app-creatable-text-picker
+          inputId="product-category"
+          [options]="categoryNameOptions()"
+          [placeholder]="t('products.selectCategory')"
+          [hintText]="t('categoryPicker.hint')"
+          [resultsLabel]="t('categoryPicker.results')"
+          [createOptionLabel]="categoryCreateOptionLabel"
+          [onCreate]="createCategory"
+          [formField]="productForm.categoryName"
+        />
         @if (productForm.categoryName().invalid() && productForm.categoryName().touched()) {
           <span class="field-error">{{ t('products.categoryRequired') }}</span>
         }
@@ -178,6 +187,22 @@ export class ProductsManager {
     const current = this.model().categoryName;
     return current && !names.includes(current) ? [...names, current] : names;
   });
+
+  protected readonly unitCreateOptionLabel = (name: string): string =>
+    this.t('unitPicker.createOption', { name });
+  protected readonly categoryCreateOptionLabel = (name: string): string =>
+    this.t('categoryPicker.createOption', { name });
+
+  protected readonly createUnit = (text: string): string => {
+    const symbol = text.trim().toLowerCase();
+    this.unitsService.add({ symbol });
+    return symbol;
+  };
+  protected readonly createCategory = (text: string): string => {
+    const name = text.trim();
+    this.categoriesService.add({ name });
+    return name;
+  };
 
   private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
 

@@ -49,6 +49,14 @@ export const en = {
   'picker.results': 'Product search results',
   'picker.createOption': 'Create product "{name}"',
 
+  'unitPicker.hint': 'Start typing to search units.',
+  'unitPicker.results': 'Unit search results',
+  'unitPicker.createOption': 'Create unit "{name}"',
+
+  'categoryPicker.hint': 'Start typing to search categories.',
+  'categoryPicker.results': 'Category search results',
+  'categoryPicker.createOption': 'Create category "{name}"',
+
   'productDialog.title': 'Create product',
 
   'products.title': 'Products',

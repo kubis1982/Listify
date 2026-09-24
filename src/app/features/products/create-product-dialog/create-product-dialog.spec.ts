@@ -8,6 +8,26 @@ import { Product } from '../data/product.model';
 import { ProductsService } from '../data/products.service';
 import { CreateProductDialog, CreateProductDialogData } from './create-product-dialog';
 
+async function typeInPicker(inputId: string, query: string): Promise<void> {
+  const input = document.querySelector<HTMLInputElement>(`#${inputId}`)!;
+  input.value = query;
+  input.dispatchEvent(new Event('input'));
+  await TestBed.inject(ApplicationRef).whenStable();
+}
+
+function clickOption(text: string): void {
+  const option = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
+    (el) => el.textContent?.trim() === text,
+  )!;
+  option.click();
+}
+
+async function selectExisting(inputId: string, text: string): Promise<void> {
+  await typeInPicker(inputId, text);
+  clickOption(text);
+  await TestBed.inject(ApplicationRef).whenStable();
+}
+
 describe('CreateProductDialog', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -40,10 +60,10 @@ describe('CreateProductDialog', () => {
     openDialog('Oat milk');
     await TestBed.inject(ApplicationRef).whenStable();
 
-    const unitSelect = document.querySelector<HTMLSelectElement>('#create-product-unit')!;
-    const categorySelect = document.querySelector<HTMLSelectElement>('#create-product-category')!;
-    expect(unitSelect.value).toBe('l');
-    expect(categorySelect.value).toBe('');
+    const unitInput = document.querySelector<HTMLInputElement>('#create-product-unit')!;
+    const categoryInput = document.querySelector<HTMLInputElement>('#create-product-category')!;
+    expect(unitInput.value).toBe('l');
+    expect(categoryInput.value).toBe('');
   });
 
   it('blocks submit and shows an error when the name duplicates an existing product', async () => {
@@ -54,24 +74,17 @@ describe('CreateProductDialog', () => {
     const productsService = TestBed.inject(ProductsService);
     productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
 
-    const dialogRef = openDialog('Milk');
+    openDialog('Milk');
     await TestBed.inject(ApplicationRef).whenStable();
 
-    document.querySelector<HTMLSelectElement>('#create-product-unit')!.value = 'l';
-    document
-      .querySelector<HTMLSelectElement>('#create-product-unit')!
-      .dispatchEvent(new Event('input'));
-    document.querySelector<HTMLSelectElement>('#create-product-category')!.value = 'Dairy';
-    document
-      .querySelector<HTMLSelectElement>('#create-product-category')!
-      .dispatchEvent(new Event('input'));
+    await selectExisting('create-product-unit', 'l');
+    await selectExisting('create-product-category', 'Dairy');
 
     document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await TestBed.inject(ApplicationRef).whenStable();
 
     expect(document.body.textContent).toContain('A product with this name already exists.');
     expect(productsService.products().length).toBe(1);
-    expect(dialogRef.closed).toBeDefined();
   });
 
   it('creates the product and closes with it on valid submit', async () => {
@@ -84,14 +97,8 @@ describe('CreateProductDialog', () => {
     const resultPromise = firstValueFrom(dialogRef.closed);
     await TestBed.inject(ApplicationRef).whenStable();
 
-    document.querySelector<HTMLSelectElement>('#create-product-unit')!.value = 'l';
-    document
-      .querySelector<HTMLSelectElement>('#create-product-unit')!
-      .dispatchEvent(new Event('input'));
-    document.querySelector<HTMLSelectElement>('#create-product-category')!.value = 'Dairy';
-    document
-      .querySelector<HTMLSelectElement>('#create-product-category')!
-      .dispatchEvent(new Event('input'));
+    await selectExisting('create-product-unit', 'l');
+    await selectExisting('create-product-category', 'Dairy');
 
     document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
 
@@ -124,5 +131,54 @@ describe('CreateProductDialog', () => {
     document.querySelector<HTMLButtonElement>('.btn-outline-pill')!.click();
 
     expect(await resultPromise).toBeUndefined();
+  });
+
+  it('creating a new unit through the picker saves it immediately, even before the product is submitted', async () => {
+    openDialog('Oat milk');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await typeInPicker('create-product-unit', 'ml');
+    clickOption('Create unit "ml"');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const unitsService = TestBed.inject(UnitsService);
+    expect(unitsService.units().map((unit) => unit.symbol)).toEqual(['ml']);
+    expect(document.querySelector<HTMLInputElement>('#create-product-unit')!.value).toBe('ml');
+  });
+
+  it('creating a new category through the picker saves it immediately, even before the product is submitted', async () => {
+    openDialog('Oat milk');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await typeInPicker('create-product-category', 'Beverages');
+    clickOption('Create category "Beverages"');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const categoriesService = TestBed.inject(CategoriesService);
+    expect(categoriesService.categories().map((category) => category.name)).toEqual(['Beverages']);
+    expect(document.querySelector<HTMLInputElement>('#create-product-category')!.value).toBe(
+      'Beverages',
+    );
+  });
+
+  it('creates the product using a freshly created unit and category', async () => {
+    const dialogRef = openDialog('Oat milk');
+    const resultPromise = firstValueFrom(dialogRef.closed);
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await typeInPicker('create-product-unit', 'ml');
+    clickOption('Create unit "ml"');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await typeInPicker('create-product-category', 'Beverages');
+    clickOption('Create category "Beverages"');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+
+    const result = await resultPromise;
+    expect(result).toEqual(
+      expect.objectContaining({ name: 'Oat milk', unitSymbol: 'ml', categoryName: 'Beverages' }),
+    );
   });
 });

@@ -22,6 +22,19 @@ async function selectProductViaPicker(root: HTMLElement, productName: string): P
   await TestBed.inject(ApplicationRef).whenStable();
 }
 
+async function selectInTextPicker(inputId: string, optionText: string): Promise<void> {
+  const input = document.querySelector<HTMLInputElement>(`#${inputId}`)!;
+  input.value = optionText;
+  input.dispatchEvent(new Event('input'));
+  await TestBed.inject(ApplicationRef).whenStable();
+
+  const option = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
+    (el) => el.textContent?.trim() === optionText,
+  )!;
+  option.click();
+  await TestBed.inject(ApplicationRef).whenStable();
+}
+
 describe('ShoppingListDetail', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -236,15 +249,12 @@ describe('ShoppingListDetail', () => {
     createOption.click();
     await TestBed.inject(ApplicationRef).whenStable();
 
-    const createProductUnitSelect = document.querySelector<HTMLSelectElement>('#create-product-unit')!;
-    createProductUnitSelect.value = 'l';
-    createProductUnitSelect.dispatchEvent(new Event('input'));
-    const createProductCategorySelect = document.querySelector<HTMLSelectElement>(
-      '#create-product-category',
-    )!;
-    createProductCategorySelect.value = 'Dairy';
-    createProductCategorySelect.dispatchEvent(new Event('input'));
-    createProductUnitSelect.closest('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await selectInTextPicker('create-product-unit', 'l');
+    await selectInTextPicker('create-product-category', 'Dairy');
+    document
+      .querySelector('#create-product-unit')!
+      .closest('form')!
+      .dispatchEvent(new Event('submit', { cancelable: true }));
     await TestBed.inject(ApplicationRef).whenStable();
     fixture.detectChanges();
 
@@ -290,15 +300,12 @@ describe('ShoppingListDetail', () => {
     createOption.click();
     await TestBed.inject(ApplicationRef).whenStable();
 
-    const createProductUnitSelect = document.querySelector<HTMLSelectElement>('#create-product-unit')!;
-    createProductUnitSelect.value = 'l';
-    createProductUnitSelect.dispatchEvent(new Event('input'));
-    const createProductCategorySelect = document.querySelector<HTMLSelectElement>(
-      '#create-product-category',
-    )!;
-    createProductCategorySelect.value = 'Dairy';
-    createProductCategorySelect.dispatchEvent(new Event('input'));
-    createProductUnitSelect.closest('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await selectInTextPicker('create-product-unit', 'l');
+    await selectInTextPicker('create-product-category', 'Dairy');
+    document
+      .querySelector('#create-product-unit')!
+      .closest('form')!
+      .dispatchEvent(new Event('submit', { cancelable: true }));
     await TestBed.inject(ApplicationRef).whenStable();
     fixture.detectChanges();
 

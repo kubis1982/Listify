@@ -51,6 +51,14 @@ export const pl: Record<TranslationKey, string> = {
   'picker.results': 'Wyniki wyszukiwania produktów',
   'picker.createOption': 'Utwórz produkt „{name}”',
 
+  'unitPicker.hint': 'Zacznij pisać, aby wyszukać jednostki.',
+  'unitPicker.results': 'Wyniki wyszukiwania jednostek',
+  'unitPicker.createOption': 'Utwórz jednostkę „{name}”',
+
+  'categoryPicker.hint': 'Zacznij pisać, aby wyszukać kategorie.',
+  'categoryPicker.results': 'Wyniki wyszukiwania kategorii',
+  'categoryPicker.createOption': 'Utwórz kategorię „{name}”',
+
   'productDialog.title': 'Nowy produkt',
 
   'products.title': 'Produkty',
