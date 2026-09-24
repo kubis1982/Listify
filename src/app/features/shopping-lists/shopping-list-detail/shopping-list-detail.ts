@@ -28,12 +28,13 @@ interface ItemFormValue {
   note: string;
 }
 
-interface QuantityFormValue {
+interface EditItemFormValue {
   quantity: number;
+  note: string;
 }
 
 const EMPTY_ITEM_FORM: ItemFormValue = { productId: '', quantity: 1, note: '' };
-const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
+const EMPTY_EDIT_ITEM_FORM: EditItemFormValue = { quantity: 1, note: '' };
 
 @Component({
   selector: 'app-shopping-list-detail',
@@ -174,7 +175,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                       class="icon-btn"
                       [disabled]="currentList.status === 'completed'"
                       (click)="startEditItem(item)"
-                      [attr.aria-label]="t('listDetail.editQuantityFor', { name: item.productName })"
+                      [attr.aria-label]="t('listDetail.editItemFor', { name: item.productName })"
                     >
                       <svg
                         class="icon"
@@ -225,13 +226,13 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
           <p class="empty-state">{{ t('listDetail.completedNotice') }}</p>
         } @else {
           <app-fab-panel
-            [title]="editingItemId() ? t('listDetail.panelEditQuantity') : t('listDetail.panelAddItem')"
+            [title]="editingItemId() ? t('listDetail.panelEditItem') : t('listDetail.panelAddItem')"
             [fabLabel]="t('listDetail.panelAddItem')"
             [(open)]="isItemPanelOpen"
             (cancelled)="cancel()"
           >
             @if (editingItemId()) {
-              <form novalidate (submit)="saveItemQuantity($event)">
+              <form novalidate (submit)="saveItemEdit($event)">
                 <label class="field-label" for="edit-item-quantity">{{ t('common.quantity') }}</label>
                 <div class="quantity-stepper">
                   <button
@@ -259,7 +260,7 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                     type="number"
                     class="field-input data-font quantity-stepper__input"
                     step="0.01"
-                    [formField]="quantityForm.quantity"
+                    [formField]="editItemForm.quantity"
                   />
                   <button
                     type="button"
@@ -282,9 +283,17 @@ const EMPTY_QUANTITY_FORM: QuantityFormValue = { quantity: 1 };
                     </svg>
                   </button>
                 </div>
-                @if (quantityForm.quantity().invalid() && quantityForm.quantity().touched()) {
+                @if (editItemForm.quantity().invalid() && editItemForm.quantity().touched()) {
                   <span class="field-error">{{ t('common.quantityInvalid') }}</span>
                 }
+
+                <label class="field-label" for="edit-item-note">{{ t('listDetail.note') }}</label>
+                <input
+                  id="edit-item-note"
+                  type="text"
+                  class="field-input"
+                  [formField]="editItemForm.note"
+                />
 
                 <div class="form-actions">
                   <button type="button" class="btn-outline-pill" (click)="cancel()">{{ t('common.cancel') }}</button>
@@ -703,8 +712,8 @@ export class ShoppingListDetail {
     min(path.quantity, 0.01);
   });
 
-  private readonly quantityModel = signal<QuantityFormValue>({ ...EMPTY_QUANTITY_FORM });
-  protected readonly quantityForm = form(this.quantityModel, (path) => {
+  private readonly editItemModel = signal<EditItemFormValue>({ ...EMPTY_EDIT_ITEM_FORM });
+  protected readonly editItemForm = form(this.editItemModel, (path) => {
     required(path.quantity);
     min(path.quantity, 0.01);
   });
@@ -762,7 +771,7 @@ export class ShoppingListDetail {
   }
 
   protected adjustQuantity(delta: number): void {
-    this.quantityModel.update((value) => ({
+    this.editItemModel.update((value) => ({
       ...value,
       quantity: Math.max(0.01, Math.round((value.quantity + delta) * 100) / 100),
     }));
@@ -824,23 +833,23 @@ export class ShoppingListDetail {
 
   protected startEditItem(item: ShoppingListItem): void {
     this.editingItemId.set(item.id);
-    this.quantityModel.set({ quantity: item.quantity });
+    this.editItemModel.set({ quantity: item.quantity, note: item.note ?? '' });
     this.isItemPanelOpen.set(true);
   }
 
   protected cancel(): void {
     this.editingItemId.set(null);
     this.itemForm().reset({ ...EMPTY_ITEM_FORM });
-    this.quantityForm().reset({ ...EMPTY_QUANTITY_FORM });
+    this.editItemForm().reset({ ...EMPTY_EDIT_ITEM_FORM });
     this.unitMissingError.set(false);
     this.productPicker()?.resetQuery();
     this.isItemPanelOpen.set(false);
   }
 
-  protected saveItemQuantity(event: Event): void {
+  protected saveItemEdit(event: Event): void {
     event.preventDefault();
-    this.quantityForm().markAsTouched();
-    if (this.quantityForm().invalid()) {
+    this.editItemForm().markAsTouched();
+    if (this.editItemForm().invalid()) {
       return;
     }
 
@@ -849,7 +858,8 @@ export class ShoppingListDetail {
       return;
     }
 
-    this.shoppingListsService.updateItemQuantity(this.id(), itemId, this.quantityModel().quantity);
+    const { quantity, note } = this.editItemModel();
+    this.shoppingListsService.updateItem(this.id(), itemId, quantity, note.trim() ? note.trim() : undefined);
     this.cancel();
   }
 

@@ -415,7 +415,7 @@ describe('ShoppingListDetail', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk quantity"]')!.click();
+    root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk"]')!.click();
     fixture.detectChanges();
 
     expect(root.querySelectorAll('select').length).toBe(0);
@@ -432,6 +432,39 @@ describe('ShoppingListDetail', () => {
 
     expect(shoppingListsService.lists()[0].items[0].quantity).toBe(5);
     expect(root.querySelector('.add-panel')).toBeNull();
+  });
+
+  it('edits the note of an item via the edit panel, prefilled with the current note', () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    const listId = shoppingListsService.lists()[0].id;
+    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 2, 'organic');
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', listId);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk"]')!.click();
+    fixture.detectChanges();
+
+    const noteInput = root.querySelector<HTMLInputElement>('#edit-item-note')!;
+    expect(noteInput.value).toBe('organic');
+
+    noteInput.value = 'skimmed';
+    noteInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    expect(shoppingListsService.lists()[0].items[0].note).toBe('skimmed');
   });
 
   it('focuses the product field when opening the add-item panel', () => {
@@ -520,7 +553,7 @@ describe('ShoppingListDetail', () => {
       true,
     );
     expect(
-      root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk quantity"]')!.disabled,
+      root.querySelector<HTMLButtonElement>('button[aria-label="Edit Milk"]')!.disabled,
     ).toBe(true);
   });
 

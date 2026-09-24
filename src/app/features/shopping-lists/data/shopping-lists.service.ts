@@ -118,13 +118,18 @@ export class ShoppingListsService {
     });
   }
 
-  updateItemQuantity(listId: ShoppingListId, itemId: ShoppingListItemId, quantity: number): void {
+  updateItem(
+    listId: ShoppingListId,
+    itemId: ShoppingListItemId,
+    quantity: number,
+    note?: string,
+  ): void {
     const list = this.lists().find((l) => l.id === listId);
     if (!list || list.status !== 'active') {
       return;
     }
     this.store.update(listId, {
-      items: list.items.map((item) => (item.id === itemId ? { ...item, quantity } : item)),
+      items: list.items.map((item) => (item.id === itemId ? { ...item, quantity, note } : item)),
     });
   }
 

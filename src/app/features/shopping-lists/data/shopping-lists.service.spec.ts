@@ -87,9 +87,35 @@ describe('ShoppingListsService', () => {
     service.addItemFromProduct(listId, product, 'l', 1);
     const itemId = service.lists()[0].items[0].id;
 
-    service.updateItemQuantity(listId, itemId, 3.5);
+    service.updateItem(listId, itemId, 3.5);
 
     expect(service.lists()[0].items[0].quantity).toBe(3.5);
+  });
+
+  it('updates the note of an item', () => {
+    const service = TestBed.inject(ShoppingListsService);
+    service.addList('Weekly groceries');
+    const listId = service.lists()[0].id;
+    service.addItemFromProduct(listId, product, 'l', 1, 'organic');
+    const itemId = service.lists()[0].items[0].id;
+
+    service.updateItem(listId, itemId, 3.5, 'skimmed');
+
+    expect(service.lists()[0].items[0]).toEqual(
+      expect.objectContaining({ quantity: 3.5, note: 'skimmed' }),
+    );
+  });
+
+  it('clears the note of an item when updated without one', () => {
+    const service = TestBed.inject(ShoppingListsService);
+    service.addList('Weekly groceries');
+    const listId = service.lists()[0].id;
+    service.addItemFromProduct(listId, product, 'l', 1, 'organic');
+    const itemId = service.lists()[0].items[0].id;
+
+    service.updateItem(listId, itemId, 1);
+
+    expect(service.lists()[0].items[0].note).toBeUndefined();
   });
 
   it('removes an item from a list', () => {
@@ -171,7 +197,7 @@ describe('ShoppingListsService', () => {
 
     service.addItemFromProduct(listId, product, 'l', 2);
     service.setItemPurchased(listId, itemId, true);
-    service.updateItemQuantity(listId, itemId, 9);
+    service.updateItem(listId, itemId, 9);
     service.removeItem(listId, itemId);
 
     const list = service.lists()[0];
