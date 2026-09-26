@@ -13,6 +13,8 @@ describe('toShoppingListExport', () => {
       name: 'Weekly groceries',
       createdAt: '2026-01-01T00:00:00.000Z',
       status: 'completed',
+      ownerId: 'owner-1',
+      memberIds: ['owner-1'],
       items: [
         {
           id: 'item-1',
@@ -44,6 +46,8 @@ describe('toShoppingListExport', () => {
       name: 'Weekly groceries',
       createdAt: '2026-01-01T00:00:00.000Z',
       status: 'active',
+      ownerId: 'owner-1',
+      memberIds: ['owner-1'],
       items: [
         { id: 'item-1', productName: 'Milk', unitLabel: 'l', categoryName: 'Dairy', quantity: 2, purchased: false },
       ],

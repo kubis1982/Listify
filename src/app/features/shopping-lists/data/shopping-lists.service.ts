@@ -1,5 +1,7 @@
-import { Service } from '@angular/core';
-import { createLocalStorageCollection } from '../../../core/storage/local-storage-collection';
+import { inject, InjectionToken, Service } from '@angular/core';
+import { collection, query, where } from 'firebase/firestore';
+import { createFirestoreCollection, FirestoreCollection } from '../../../core/storage/firestore-collection';
+import { AuthService } from '../../../core/auth/auth.service';
 import { Product } from '../../products/data/product.model';
 import { type ShoppingListExport } from './shopping-list-export';
 import {
@@ -9,18 +11,35 @@ import {
   ShoppingListItemId,
 } from './shopping-list.model';
 
+export const SHOPPING_LISTS_COLLECTION = new InjectionToken<FirestoreCollection<ShoppingList>>(
+  'SHOPPING_LISTS_COLLECTION',
+  {
+    providedIn: 'root',
+    factory: () =>
+      createFirestoreCollection<ShoppingList>({
+        query: (firestore, uid) =>
+          query(collection(firestore, 'shoppingLists'), where('memberIds', 'array-contains', uid)),
+        docPath: (_uid, id) => `shoppingLists/${id}`,
+      }),
+  },
+);
+
 @Service()
 export class ShoppingListsService {
-  private readonly store = createLocalStorageCollection<ShoppingList>('listify:shopping-lists');
+  private readonly store = inject(SHOPPING_LISTS_COLLECTION);
+  private readonly authService = inject(AuthService);
 
   readonly lists = this.store.items;
 
   addList(name: string): ShoppingList {
+    const uid = this.authService.uid()!;
     const list: ShoppingList = {
       id: crypto.randomUUID(),
       name,
       createdAt: new Date().toISOString(),
       status: 'active',
+      ownerId: uid,
+      memberIds: [uid],
       items: [],
     };
     this.store.add(list);
@@ -28,11 +47,14 @@ export class ShoppingListsService {
   }
 
   importList(data: ShoppingListExport['list']): ShoppingList {
+    const uid = this.authService.uid()!;
     const list: ShoppingList = {
       id: crypto.randomUUID(),
       name: data.name,
       createdAt: new Date().toISOString(),
       status: 'active',
+      ownerId: uid,
+      memberIds: [uid],
       items: data.items.map(({ productName, unitLabel, categoryName, quantity, note }) => ({
         id: crypto.randomUUID(),
         productName,

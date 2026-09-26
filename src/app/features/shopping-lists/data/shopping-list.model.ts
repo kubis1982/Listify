@@ -16,5 +16,7 @@ export interface ShoppingList {
   name: string;
   createdAt: string;
   status: 'active' | 'completed';
+  ownerId: string;
+  memberIds: string[];
   items: ShoppingListItem[];
 }
