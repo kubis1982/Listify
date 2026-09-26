@@ -53,6 +53,7 @@ describe('createFirestoreCollection (read-error handling, mocked SDK)', () => {
   it('reports an error and leaves items at their last-known value when the snapshot listener errors', async () => {
     const confirmDialogService = TestBed.inject(ConfirmDialogService);
     const alertSpy = vi.spyOn(confirmDialogService, 'alert').mockResolvedValue();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const widgets = TestBed.runInInjectionContext(() =>
       createFirestoreCollection<Widget>({
@@ -69,9 +70,11 @@ describe('createFirestoreCollection (read-error handling, mocked SDK)', () => {
     expect(widgets.items()).toEqual([{ id: 'w1', name: 'Widget' }]);
 
     expect(alertSpy).not.toHaveBeenCalled();
-    capturedOnError!(new Error('permission-denied'));
+    const listenError = new Error('permission-denied');
+    capturedOnError!(listenError);
 
     expect(alertSpy).toHaveBeenCalledTimes(1);
     expect(widgets.items()).toEqual([{ id: 'w1', name: 'Widget' }]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[Firestore]', listenError);
   });
 });

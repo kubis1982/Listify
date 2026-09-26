@@ -47,7 +47,10 @@ export function createFirestoreCollection<T extends { id: string }>(
 
   const items = signal<readonly T[]>([]);
 
-  function reportError(): void {
+  function reportError(error?: unknown): void {
+    if (error !== undefined) {
+      console.error('[Firestore]', error);
+    }
     void confirmDialogService.alert({
       title: t('errors.saveFailedTitle'),
       message: t('errors.saveFailedMessage'),
@@ -76,7 +79,7 @@ export function createFirestoreCollection<T extends { id: string }>(
       (snapshot) => {
         items.set(snapshot.docs.map((d) => ({ ...(d.data() as T), id: d.id })));
       },
-      () => reportError(),
+      (error) => reportError(error),
     );
     onCleanup(unsubscribe);
   });
@@ -91,8 +94,8 @@ export function createFirestoreCollection<T extends { id: string }>(
       }
       try {
         setDoc(docRef(uid, item.id), item).catch(reportError);
-      } catch {
-        reportError();
+      } catch (error) {
+        reportError(error);
       }
     },
     update: (id: string, changes: Partial<T>) => {
@@ -103,8 +106,8 @@ export function createFirestoreCollection<T extends { id: string }>(
       }
       try {
         updateDoc(docRef(uid, id), changes as UpdateData<T>).catch(reportError);
-      } catch {
-        reportError();
+      } catch (error) {
+        reportError(error);
       }
     },
     remove: (id: string) => {
@@ -115,8 +118,8 @@ export function createFirestoreCollection<T extends { id: string }>(
       }
       try {
         deleteDoc(docRef(uid, id)).catch(reportError);
-      } catch {
-        reportError();
+      } catch (error) {
+        reportError(error);
       }
     },
   };

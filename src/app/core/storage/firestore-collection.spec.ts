@@ -116,6 +116,7 @@ describe.skipIf(!emulatorAvailable)('createFirestoreCollection (Firestore emulat
   it('never reflects a write rejected by firestore.rules (wrong user path)', async () => {
     const confirmDialogService = TestBed.inject(ConfirmDialogService);
     const alertSpy = vi.spyOn(confirmDialogService, 'alert').mockResolvedValue();
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const otherUsersCategories = TestBed.runInInjectionContext(() =>
       createFirestoreCollection<Category>({
