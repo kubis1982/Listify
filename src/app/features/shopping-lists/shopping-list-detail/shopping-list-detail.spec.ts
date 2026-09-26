@@ -3,10 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { I18n } from '../../../core/i18n/i18n.service';
-import { CategoriesService } from '../../categories/data/categories.service';
-import { ProductsService } from '../../products/data/products.service';
-import { UnitsService } from '../../units/data/units.service';
-import { ShoppingListsService } from '../data/shopping-lists.service';
+import { provideFakeCollection } from '../../../core/testing/in-memory-collection';
+import { createFakeAuthService } from '../../../testing/fake-auth-service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { CategoriesService, CATEGORIES_COLLECTION } from '../../categories/data/categories.service';
+import { ProductsService, PRODUCTS_COLLECTION } from '../../products/data/products.service';
+import { UnitsService, UNITS_COLLECTION } from '../../units/data/units.service';
+import { ShoppingListsService, SHOPPING_LISTS_COLLECTION } from '../data/shopping-lists.service';
 import { ShoppingListDetail } from './shopping-list-detail';
 
 async function selectProductViaPicker(root: HTMLElement, productName: string): Promise<void> {
@@ -40,7 +43,14 @@ describe('ShoppingListDetail', () => {
     localStorage.clear();
     TestBed.configureTestingModule({
       imports: [ShoppingListDetail],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        provideFakeCollection(SHOPPING_LISTS_COLLECTION),
+        provideFakeCollection(CATEGORIES_COLLECTION),
+        provideFakeCollection(UNITS_COLLECTION),
+        provideFakeCollection(PRODUCTS_COLLECTION),
+        { provide: AuthService, useValue: createFakeAuthService('test-uid') },
+      ],
     });
   });
 
@@ -621,7 +631,14 @@ describe('ShoppingListDetail sharing', () => {
     localStorage.clear();
     TestBed.configureTestingModule({
       imports: [ShoppingListDetail],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        provideFakeCollection(SHOPPING_LISTS_COLLECTION),
+        provideFakeCollection(CATEGORIES_COLLECTION),
+        provideFakeCollection(UNITS_COLLECTION),
+        provideFakeCollection(PRODUCTS_COLLECTION),
+        { provide: AuthService, useValue: createFakeAuthService('test-uid') },
+      ],
     });
   });
 
