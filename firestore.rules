@@ -34,7 +34,10 @@ rules_version = '2';
 // Fields:
 //   - id: string (required, immutable, must equal listId)
 //   - name: string (required, 1-200 chars)
-//   - createdAt: timestamp (required, immutable)
+//   - createdAt: string (required, immutable, ISO 8601 format — format
+//     checked only, not logical date validity, e.g. "2026-13-40" would
+//     pass; acceptable since this field is informational display data,
+//     not used for access control)
 //   - status: string (required, one of 'active' | 'completed')
 //   - ownerId: string (required, immutable, must equal creator's uid)
 //   - memberIds: list<string> (required, 1-20 entries, must always contain
@@ -83,6 +86,11 @@ service cloud.firestore {
 
     function isPositive(value) {
       return value is number && value > 0;
+    }
+
+    function isValidDateString(value) {
+      return value is string &&
+        value.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
     }
 
     function areImmutableFieldsUnchanged(fields) {
@@ -146,7 +154,7 @@ service cloud.firestore {
         hasRequiredFields(data, ['id', 'name', 'createdAt', 'status', 'ownerId', 'memberIds', 'items']) &&
         data.id is string && data.id == listId &&
         validStringLength(data.name, 1, 200) &&
-        data.createdAt is timestamp &&
+        isValidDateString(data.createdAt) &&
         data.status in ['active', 'completed'] &&
         validStringLength(data.ownerId, 1, 128) &&
         isValidMemberIds(data.memberIds, data.ownerId) &&
