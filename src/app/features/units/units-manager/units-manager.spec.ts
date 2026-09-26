@@ -2,7 +2,7 @@ import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideFakeCollection } from '../../../core/testing/in-memory-collection';
 import { I18n } from '../../../core/i18n/i18n.service';
-import { ProductsService } from '../../products/data/products.service';
+import { ProductsService, PRODUCTS_COLLECTION } from '../../products/data/products.service';
 import { UnitsService, UNITS_COLLECTION } from '../data/units.service';
 import { UnitsManager } from './units-manager';
 
@@ -15,7 +15,10 @@ describe('UnitsManager', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [UnitsManager],
-      providers: [provideFakeCollection(UNITS_COLLECTION)],
+      providers: [
+        provideFakeCollection(UNITS_COLLECTION),
+        provideFakeCollection(PRODUCTS_COLLECTION),
+      ],
     });
   });
 
