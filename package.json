@@ -7,6 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:integration": "firebase emulators:exec --only firestore,auth \"ng test\"",
     "lint": "ng lint"
   },
   "private": true,

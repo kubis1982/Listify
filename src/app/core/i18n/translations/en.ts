@@ -12,6 +12,9 @@ export const en = {
   'common.quantityInvalid': 'Quantity must be greater than 0.',
   'common.save': 'Save',
 
+  'errors.saveFailedTitle': 'Save failed',
+  'errors.saveFailedMessage': "We couldn't save your changes. Check your connection and try again.",
+
   'language.label': 'Language',
   'language.en': 'English',
   'language.pl': 'Polish',

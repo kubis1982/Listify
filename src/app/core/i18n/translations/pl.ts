@@ -14,6 +14,9 @@ export const pl: Record<TranslationKey, string> = {
   'common.quantityInvalid': 'Ilość musi być większa niż 0.',
   'common.save': 'Zapisz',
 
+  'errors.saveFailedTitle': 'Zapis nieudany',
+  'errors.saveFailedMessage': 'Nie udało się zapisać zmian. Sprawdź połączenie i spróbuj ponownie.',
+
   'language.label': 'Język',
   'language.en': 'Angielski',
   'language.pl': 'Polski',
