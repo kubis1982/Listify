@@ -12,6 +12,10 @@ export const en = {
   'common.quantityInvalid': 'Quantity must be greater than 0.',
   'common.save': 'Save',
 
+  'auth.signInTitle': 'Sign in to Listify',
+  'auth.signInWithGoogle': 'Sign in with Google',
+  'auth.signOut': 'Sign out',
+
   'errors.saveFailedTitle': 'Save failed',
   'errors.saveFailedMessage': "We couldn't save your changes. Check your connection and try again.",
 

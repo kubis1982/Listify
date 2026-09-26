@@ -14,6 +14,10 @@ export const pl: Record<TranslationKey, string> = {
   'common.quantityInvalid': 'Ilość musi być większa niż 0.',
   'common.save': 'Zapisz',
 
+  'auth.signInTitle': 'Zaloguj się do Listify',
+  'auth.signInWithGoogle': 'Zaloguj się przez Google',
+  'auth.signOut': 'Wyloguj się',
+
   'errors.saveFailedTitle': 'Zapis nieudany',
   'errors.saveFailedMessage': 'Nie udało się zapisać zmian. Sprawdź połączenie i spróbuj ponownie.',
 
