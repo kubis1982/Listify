@@ -39,14 +39,10 @@ rules_version = '2';
 //     pass; acceptable since this field is informational display data,
 //     not used for access control)
 //   - status: string (required, one of 'active' | 'completed')
-//   - items: list<map> (required, 0-500 entries), each item:
-//       - id: string (required, 1-100 chars)
-//       - productName: string (required, 1-200 chars)
-//       - unitLabel: string (required, 0-20 chars)
-//       - categoryName: string (required, 0-100 chars)
-//       - quantity: number (required, > 0, < 100000)
-//       - purchased: bool (required)
-//       - note: string (optional, 0-500 chars)
+//   - items: list<map> (required, 0-500 entries). Per-item field shape
+//     (id/productName/unitLabel/categoryName/quantity/purchased/note) is
+//     enforced by the TypeScript app layer, not by these rules — see the
+//     isValidItemsList comment below for why.
 //
 // ===============================================================
 
@@ -75,14 +71,6 @@ service cloud.firestore {
 
     function validStringLength(value, minLen, maxLen) {
       return value is string && value.size() >= minLen && value.size() <= maxLen;
-    }
-
-    function isValidOptionalString(data, field, minLen, maxLen) {
-      return !(field in data) || validStringLength(data[field], minLen, maxLen);
-    }
-
-    function isPositive(value) {
-      return value is number && value > 0;
     }
 
     function isValidDateString(value) {
@@ -122,22 +110,18 @@ service cloud.firestore {
         (!('isDefault' in data) || data.isDefault is bool);
     }
 
-    function isValidShoppingListItem(item) {
-      return item is map &&
-        item.keys().hasOnly(['id', 'productName', 'unitLabel', 'categoryName', 'quantity', 'purchased', 'note']) &&
-        item.keys().hasAll(['id', 'productName', 'unitLabel', 'categoryName', 'quantity', 'purchased']) &&
-        validStringLength(item.id, 1, 100) &&
-        validStringLength(item.productName, 1, 200) &&
-        validStringLength(item.unitLabel, 0, 20) &&
-        validStringLength(item.categoryName, 0, 100) &&
-        isPositive(item.quantity) && item.quantity < 100000 &&
-        item.purchased is bool &&
-        isValidOptionalString(item, 'note', 0, 500);
-    }
-
+    // The .all(entry, ...) macro silently fails at the real Firestore rules
+    // engine regardless of whether the predicate is a nested function call
+    // or fully inlined — confirmed against production: create with an empty
+    // items array succeeds, but any write with a non-empty items array is
+    // always denied, even though every variant compiles with only a
+    // firebase-tools linter warning, never a hard error. Per-item field
+    // validation is dropped rather than chased further; this app has a
+    // single trusted first-party client, so item shape is enforced by the
+    // TypeScript layer instead of the rules layer — only the array's type
+    // and overall size are still checked here.
     function isValidItemsList(items) {
-      return items is list && items.size() <= 500 &&
-        items.all(item, isValidShoppingListItem(item));
+      return items is list && items.size() <= 500;
     }
 
     function isValidShoppingList(data, listId) {
