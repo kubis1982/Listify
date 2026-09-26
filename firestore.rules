@@ -6,11 +6,11 @@ rules_version = '2';
 //
 // NOTE: The Angular app does not use Firestore yet (it currently persists
 // everything to localStorage). This schema is a forward design based on the
-// existing local models (Category, Product, Unit, ShoppingList) plus a
-// sharing-ready shape for shopping lists, agreed with the project owner:
-//   - categories / products / units: private per authenticated user.
-//   - shoppingLists: owned by one user today, but modeled from the start so a
-//     list can later be shared with other members (memberIds).
+// existing local models (Category, Product, Unit, ShoppingList), agreed
+// with the project owner:
+//   - categories / products / units / shoppingLists: private per
+//     authenticated user. Sharing a shopping list between users is out of
+//     scope for now.
 //
 // Collection: users/{userId}/categories/{categoryId}
 // Fields:
@@ -30,7 +30,7 @@ rules_version = '2';
 //   - symbol: string (required, 1-20 chars)
 //   - isDefault: bool (optional)
 //
-// Collection: shoppingLists/{listId}  (top-level, sharing-ready)
+// Collection: users/{userId}/shoppingLists/{listId}
 // Fields:
 //   - id: string (required, immutable, must equal listId)
 //   - name: string (required, 1-200 chars)
@@ -39,9 +39,6 @@ rules_version = '2';
 //     pass; acceptable since this field is informational display data,
 //     not used for access control)
 //   - status: string (required, one of 'active' | 'completed')
-//   - ownerId: string (required, immutable, must equal creator's uid)
-//   - memberIds: list<string> (required, 1-20 entries, must always contain
-//     ownerId; only the owner may change this field once the list exists)
 //   - items: list<map> (required, 0-500 entries), each item:
 //       - id: string (required, 1-100 chars)
 //       - productName: string (required, 1-200 chars)
@@ -143,33 +140,14 @@ service cloud.firestore {
         items.all(item, isValidShoppingListItem(item));
     }
 
-    function isValidMemberIds(memberIds, ownerId) {
-      return memberIds is list && memberIds.size() >= 1 && memberIds.size() <= 20 &&
-        ownerId in memberIds &&
-        memberIds.all(uid, validStringLength(uid, 1, 128));
-    }
-
     function isValidShoppingList(data, listId) {
-      return hasOnlyAllowedFields(data, ['id', 'name', 'createdAt', 'status', 'ownerId', 'memberIds', 'items']) &&
-        hasRequiredFields(data, ['id', 'name', 'createdAt', 'status', 'ownerId', 'memberIds', 'items']) &&
+      return hasOnlyAllowedFields(data, ['id', 'name', 'createdAt', 'status', 'items']) &&
+        hasRequiredFields(data, ['id', 'name', 'createdAt', 'status', 'items']) &&
         data.id is string && data.id == listId &&
         validStringLength(data.name, 1, 200) &&
         isValidDateString(data.createdAt) &&
         data.status in ['active', 'completed'] &&
-        validStringLength(data.ownerId, 1, 128) &&
-        isValidMemberIds(data.memberIds, data.ownerId) &&
         isValidItemsList(data.items);
-    }
-
-    function isMember(memberIds) {
-      return isAuthenticated() && request.auth.uid in memberIds;
-    }
-
-    // Only the list owner may change who has access to the list; other
-    // members may still edit name/status/items.
-    function membershipUnchangedUnlessOwner() {
-      return resource.data.ownerId == request.auth.uid ||
-        areImmutableFieldsUnchanged(['ownerId', 'memberIds']);
     }
 
     // ===============================================================
@@ -198,21 +176,15 @@ service cloud.firestore {
         allow update: if isOwner(userId) && isValidUnit(request.resource.data, unitId);
         allow delete: if isOwner(userId);
       }
-    }
 
-    match /shoppingLists/{listId} {
-      allow read: if isMember(resource.data.memberIds);
-
-      allow create: if isAuthenticated() &&
-        request.resource.data.ownerId == request.auth.uid &&
-        isValidShoppingList(request.resource.data, listId);
-
-      allow update: if isMember(resource.data.memberIds) &&
-        isValidShoppingList(request.resource.data, listId) &&
-        areImmutableFieldsUnchanged(['id', 'createdAt', 'ownerId']) &&
-        membershipUnchangedUnlessOwner();
-
-      allow delete: if isAuthenticated() && request.auth.uid == resource.data.ownerId;
+      match /shoppingLists/{listId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidShoppingList(request.resource.data, listId);
+        allow update: if isOwner(userId) &&
+          isValidShoppingList(request.resource.data, listId) &&
+          areImmutableFieldsUnchanged(['id', 'createdAt']);
+        allow delete: if isOwner(userId);
+      }
     }
   }
 }

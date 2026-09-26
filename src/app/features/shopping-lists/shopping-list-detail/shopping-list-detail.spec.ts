@@ -4,8 +4,6 @@ import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { provideFakeCollection } from '../../../core/testing/in-memory-collection';
-import { createFakeAuthService } from '../../../testing/fake-auth-service';
-import { AuthService } from '../../../core/auth/auth.service';
 import { CategoriesService, CATEGORIES_COLLECTION } from '../../categories/data/categories.service';
 import { ProductsService, PRODUCTS_COLLECTION } from '../../products/data/products.service';
 import { UnitsService, UNITS_COLLECTION } from '../../units/data/units.service';
@@ -49,7 +47,6 @@ describe('ShoppingListDetail', () => {
         provideFakeCollection(CATEGORIES_COLLECTION),
         provideFakeCollection(UNITS_COLLECTION),
         provideFakeCollection(PRODUCTS_COLLECTION),
-        { provide: AuthService, useValue: createFakeAuthService('test-uid') },
       ],
     });
   });
@@ -637,7 +634,6 @@ describe('ShoppingListDetail sharing', () => {
         provideFakeCollection(CATEGORIES_COLLECTION),
         provideFakeCollection(UNITS_COLLECTION),
         provideFakeCollection(PRODUCTS_COLLECTION),
-        { provide: AuthService, useValue: createFakeAuthService('test-uid') },
       ],
     });
   });

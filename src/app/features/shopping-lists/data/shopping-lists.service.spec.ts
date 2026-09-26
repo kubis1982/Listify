@@ -1,7 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { createInMemoryCollection } from '../../../core/testing/in-memory-collection';
-import { AuthService } from '../../../core/auth/auth.service';
-import { createFakeAuthService } from '../../../testing/fake-auth-service';
 import { Product } from '../../products/data/product.model';
 import { ShoppingListsService, SHOPPING_LISTS_COLLECTION } from './shopping-lists.service';
 
@@ -10,10 +8,7 @@ describe('ShoppingListsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        { provide: SHOPPING_LISTS_COLLECTION, useFactory: () => createInMemoryCollection() },
-        { provide: AuthService, useValue: createFakeAuthService('owner-1') },
-      ],
+      providers: [{ provide: SHOPPING_LISTS_COLLECTION, useFactory: () => createInMemoryCollection() }],
     });
   });
 
@@ -21,14 +16,12 @@ describe('ShoppingListsService', () => {
     expect(TestBed.inject(ShoppingListsService).lists()).toEqual([]);
   });
 
-  it('addList creates an active list owned by the signed-in user', () => {
+  it('addList creates an active list', () => {
     const service = TestBed.inject(ShoppingListsService);
     const list = service.addList('Weekend shopping');
 
     expect(list.name).toBe('Weekend shopping');
     expect(list.status).toBe('active');
-    expect(list.ownerId).toBe('owner-1');
-    expect(list.memberIds).toEqual(['owner-1']);
     expect(list.items).toEqual([]);
   });
 
@@ -39,8 +32,6 @@ describe('ShoppingListsService', () => {
       items: [{ productName: 'Milk', unitLabel: 'l', categoryName: 'Dairy', quantity: 2 }],
     });
 
-    expect(list.ownerId).toBe('owner-1');
-    expect(list.memberIds).toEqual(['owner-1']);
     expect(list.items).toEqual([
       expect.objectContaining({ productName: 'Milk', quantity: 2, purchased: false }),
     ]);

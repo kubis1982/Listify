@@ -5,8 +5,6 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { provideFakeCollection, createInMemoryCollection } from '../../../core/testing/in-memory-collection';
-import { createFakeAuthService } from '../../../testing/fake-auth-service';
-import { AuthService } from '../../../core/auth/auth.service';
 import { ShoppingListsService, SHOPPING_LISTS_COLLECTION } from '../data/shopping-lists.service';
 import { ShoppingListsOverview } from './shopping-lists-overview';
 
@@ -41,7 +39,6 @@ describe('ShoppingListsOverview', () => {
       providers: [
         provideRouter([{ path: 'lists/:id', component: DummyDetailComponent }]),
         provideFakeCollection(SHOPPING_LISTS_COLLECTION),
-        { provide: AuthService, useValue: createFakeAuthService('test-uid') },
       ],
     });
   });
@@ -211,8 +208,6 @@ describe('ShoppingListsOverview', () => {
                 name: 'Weekly groceries',
                 createdAt: '2026-03-05T12:00:00.000Z',
                 status: 'active',
-                ownerId: 'test-uid',
-                memberIds: ['test-uid'],
                 items: [],
               },
             ]),
