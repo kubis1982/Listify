@@ -1,4 +1,3 @@
-import { InjectionToken } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FIREBASE_AUTH } from '../firebase/firebase.providers';
 import { AuthService } from './auth.service';
