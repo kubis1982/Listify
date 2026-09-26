@@ -1,10 +1,11 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { I18n } from '../../core/i18n/i18n.service';
-import { CategoriesService } from '../../features/categories/data/categories.service';
-import { UnitsService } from '../../features/units/data/units.service';
+import { provideFakeCollection } from '../../core/testing/in-memory-collection';
+import { CategoriesService, CATEGORIES_COLLECTION } from '../../features/categories/data/categories.service';
+import { UnitsService, UNITS_COLLECTION } from '../../features/units/data/units.service';
 import { Product } from '../../features/products/data/product.model';
-import { ProductsService } from '../../features/products/data/products.service';
+import { ProductsService, PRODUCTS_COLLECTION } from '../../features/products/data/products.service';
 import { ProductPicker } from './product-picker';
 
 async function typeQuery(root: HTMLElement, query: string): Promise<void> {
@@ -40,6 +41,11 @@ describe('ProductPicker', () => {
     localStorage.clear();
     TestBed.configureTestingModule({
       imports: [ProductPicker],
+      providers: [
+        provideFakeCollection(CATEGORIES_COLLECTION),
+        provideFakeCollection(UNITS_COLLECTION),
+        provideFakeCollection(PRODUCTS_COLLECTION),
+      ],
     });
 
     const unitsService = TestBed.inject(UnitsService);

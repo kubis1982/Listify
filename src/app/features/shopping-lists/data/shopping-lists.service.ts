@@ -1,5 +1,6 @@
-import { Service } from '@angular/core';
-import { createLocalStorageCollection } from '../../../core/storage/local-storage-collection';
+import { inject, InjectionToken, Service } from '@angular/core';
+import { collection } from 'firebase/firestore';
+import { createFirestoreCollection, FirestoreCollection } from '../../../core/storage/firestore-collection';
 import { Product } from '../../products/data/product.model';
 import { type ShoppingListExport } from './shopping-list-export';
 import {
@@ -9,9 +10,21 @@ import {
   ShoppingListItemId,
 } from './shopping-list.model';
 
+export const SHOPPING_LISTS_COLLECTION = new InjectionToken<FirestoreCollection<ShoppingList>>(
+  'SHOPPING_LISTS_COLLECTION',
+  {
+    providedIn: 'root',
+    factory: () =>
+      createFirestoreCollection<ShoppingList>({
+        query: (firestore, uid) => collection(firestore, `users/${uid}/shoppingLists`),
+        docPath: (uid, id) => `users/${uid}/shoppingLists/${id}`,
+      }),
+  },
+);
+
 @Service()
 export class ShoppingListsService {
-  private readonly store = createLocalStorageCollection<ShoppingList>('listify:shopping-lists');
+  private readonly store = inject(SHOPPING_LISTS_COLLECTION);
 
   readonly lists = this.store.items;
 

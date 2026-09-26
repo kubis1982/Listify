@@ -4,7 +4,8 @@ import { ApplicationRef, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { I18n } from '../../../core/i18n/i18n.service';
-import { ShoppingListsService } from '../data/shopping-lists.service';
+import { provideFakeCollection, createInMemoryCollection } from '../../../core/testing/in-memory-collection';
+import { ShoppingListsService, SHOPPING_LISTS_COLLECTION } from '../data/shopping-lists.service';
 import { ShoppingListsOverview } from './shopping-lists-overview';
 
 // DatePipe throws NG0701 for locale 'pl' unless its locale data is registered.
@@ -35,7 +36,10 @@ describe('ShoppingListsOverview', () => {
     localStorage.clear();
     TestBed.configureTestingModule({
       imports: [ShoppingListsOverview],
-      providers: [provideRouter([{ path: 'lists/:id', component: DummyDetailComponent }])],
+      providers: [
+        provideRouter([{ path: 'lists/:id', component: DummyDetailComponent }]),
+        provideFakeCollection(SHOPPING_LISTS_COLLECTION),
+      ],
     });
   });
 
@@ -193,18 +197,23 @@ describe('ShoppingListsOverview', () => {
   });
 
   it('formats the created-at date in the selected language', () => {
-    localStorage.setItem(
-      'listify:shopping-lists',
-      JSON.stringify([
+    TestBed.configureTestingModule({
+      providers: [
         {
-          id: '1',
-          name: 'Weekly groceries',
-          createdAt: '2026-03-05T12:00:00.000Z',
-          status: 'active',
-          items: [],
+          provide: SHOPPING_LISTS_COLLECTION,
+          useFactory: () =>
+            createInMemoryCollection([
+              {
+                id: '1',
+                name: 'Weekly groceries',
+                createdAt: '2026-03-05T12:00:00.000Z',
+                status: 'active',
+                items: [],
+              },
+            ]),
         },
-      ]),
-    );
+      ],
+    });
     const fixture = TestBed.createComponent(ShoppingListsOverview);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;

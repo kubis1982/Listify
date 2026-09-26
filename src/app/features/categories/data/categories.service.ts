@@ -1,10 +1,23 @@
-import { Service } from '@angular/core';
-import { createLocalStorageCollection } from '../../../core/storage/local-storage-collection';
+import { inject, InjectionToken, Service } from '@angular/core';
+import { collection } from 'firebase/firestore';
+import { createFirestoreCollection, FirestoreCollection } from '../../../core/storage/firestore-collection';
 import { Category, CategoryId } from './category.model';
+
+export const CATEGORIES_COLLECTION = new InjectionToken<FirestoreCollection<Category>>(
+  'CATEGORIES_COLLECTION',
+  {
+    providedIn: 'root',
+    factory: () =>
+      createFirestoreCollection<Category>({
+        query: (firestore, uid) => collection(firestore, `users/${uid}/categories`),
+        docPath: (uid, id) => `users/${uid}/categories/${id}`,
+      }),
+  },
+);
 
 @Service()
 export class CategoriesService {
-  private readonly store = createLocalStorageCollection<Category>('listify:categories');
+  private readonly store = inject(CATEGORIES_COLLECTION);
 
   readonly categories = this.store.items;
 
