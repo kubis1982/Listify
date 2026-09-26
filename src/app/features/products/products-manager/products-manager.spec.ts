@@ -1,9 +1,10 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { I18n } from '../../../core/i18n/i18n.service';
-import { CategoriesService } from '../../categories/data/categories.service';
-import { UnitsService } from '../../units/data/units.service';
-import { ProductsService } from '../data/products.service';
+import { provideFakeCollection } from '../../../core/testing/in-memory-collection';
+import { CategoriesService, CATEGORIES_COLLECTION } from '../../categories/data/categories.service';
+import { UnitsService, UNITS_COLLECTION } from '../../units/data/units.service';
+import { ProductsService, PRODUCTS_COLLECTION } from '../data/products.service';
 import { ProductsManager } from './products-manager';
 
 function clickConfirmDialogButton(which: 'cancel' | 'confirm'): void {
@@ -38,7 +39,14 @@ async function selectExisting(inputId: string, text: string): Promise<void> {
 describe('ProductsManager', () => {
   beforeEach(() => {
     localStorage.clear();
-    TestBed.configureTestingModule({ imports: [ProductsManager] });
+    TestBed.configureTestingModule({
+      imports: [ProductsManager],
+      providers: [
+        provideFakeCollection(CATEGORIES_COLLECTION),
+        provideFakeCollection(UNITS_COLLECTION),
+        provideFakeCollection(PRODUCTS_COLLECTION),
+      ],
+    });
   });
 
   afterEach(() => {
