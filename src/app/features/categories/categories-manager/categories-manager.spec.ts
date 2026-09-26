@@ -1,8 +1,9 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideFakeCollection } from '../../../core/testing/in-memory-collection';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { ProductsService } from '../../products/data/products.service';
-import { CategoriesService } from '../data/categories.service';
+import { CategoriesService, CATEGORIES_COLLECTION } from '../data/categories.service';
 import { CategoriesManager } from './categories-manager';
 
 function clickConfirmDialogButton(which: 'cancel' | 'confirm'): void {
@@ -12,8 +13,10 @@ function clickConfirmDialogButton(which: 'cancel' | 'confirm'): void {
 
 describe('CategoriesManager', () => {
   beforeEach(() => {
-    localStorage.clear();
-    TestBed.configureTestingModule({ imports: [CategoriesManager] });
+    TestBed.configureTestingModule({
+      imports: [CategoriesManager],
+      providers: [provideFakeCollection(CATEGORIES_COLLECTION)],
+    });
   });
 
   function setInputValue(input: HTMLInputElement, value: string): void {
