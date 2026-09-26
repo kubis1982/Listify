@@ -19,6 +19,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('FIRESTORE', {
   factory: () => {
     const firestore = initializeFirestore(inject(FIREBASE_APP), {
       localCache: persistentLocalCache(),
+      ignoreUndefinedProperties: true,
     });
     if (isDevMode()) {
       connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
