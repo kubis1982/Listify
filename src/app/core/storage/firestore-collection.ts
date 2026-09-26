@@ -85,7 +85,11 @@ export function createFirestoreCollection<T extends { id: string }>(
         reportError();
         return;
       }
-      setDoc(docRef(uid, item.id), item).catch(reportError);
+      try {
+        setDoc(docRef(uid, item.id), item).catch(reportError);
+      } catch {
+        reportError();
+      }
     },
     update: (id: string, changes: Partial<T>) => {
       const uid = authService.uid();
@@ -93,7 +97,11 @@ export function createFirestoreCollection<T extends { id: string }>(
         reportError();
         return;
       }
-      updateDoc(docRef(uid, id), changes as UpdateData<T>).catch(reportError);
+      try {
+        updateDoc(docRef(uid, id), changes as UpdateData<T>).catch(reportError);
+      } catch {
+        reportError();
+      }
     },
     remove: (id: string) => {
       const uid = authService.uid();
@@ -101,7 +109,11 @@ export function createFirestoreCollection<T extends { id: string }>(
         reportError();
         return;
       }
-      deleteDoc(docRef(uid, id)).catch(reportError);
+      try {
+        deleteDoc(docRef(uid, id)).catch(reportError);
+      } catch {
+        reportError();
+      }
     },
   };
 }
