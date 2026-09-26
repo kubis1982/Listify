@@ -25,6 +25,12 @@ interface Category {
   name: string;
 }
 
+interface UnitLike {
+  id: string;
+  symbol: string;
+  isDefault?: boolean;
+}
+
 async function isEmulatorReachable(url: string): Promise<boolean> {
   try {
     await fetch(url);
@@ -125,5 +131,28 @@ describe.skipIf(!emulatorAvailable)('createFirestoreCollection (Firestore emulat
 
     await vi.waitFor(() => expect(alertSpy).toHaveBeenCalled());
     expect(otherUsersCategories.items()).toEqual([]);
+  });
+
+  // Regression coverage for a real production bug: Firestore's default
+  // (ignoreUndefinedProperties: false) synchronously rejects any write
+  // containing a field set to `undefined`, which every optional field
+  // (e.g. Unit.isDefault, ShoppingListItem.note) produces whenever the
+  // caller omits it. firebase.providers.ts sets ignoreUndefinedProperties:
+  // true precisely so this round-trips; this test exercises that setting
+  // against the real Firestore emulator (and firestore.rules, which treats
+  // isDefault as optional) so a future removal of the flag is caught here.
+  it('round-trips a document whose optional field is omitted (undefined)', async () => {
+    const units = TestBed.runInInjectionContext(() =>
+      createFirestoreCollection<UnitLike>({
+        query: (fs, u) => collection(fs, `users/${u}/units`),
+        docPath: (u, id) => `users/${u}/units/${id}`,
+      }),
+    );
+
+    units.add({ id: 'unit-1', symbol: 'kg', isDefault: undefined });
+
+    await vi.waitFor(() => {
+      expect(units.items()).toEqual([{ id: 'unit-1', symbol: 'kg' }]);
+    });
   });
 });

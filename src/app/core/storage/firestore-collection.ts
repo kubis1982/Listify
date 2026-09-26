@@ -71,9 +71,13 @@ export function createFirestoreCollection<T extends { id: string }>(
       items.set([]);
       return;
     }
-    const unsubscribe = onSnapshot(config.query(firestore, uid), (snapshot) => {
-      items.set(snapshot.docs.map((d) => ({ ...(d.data() as T), id: d.id })));
-    });
+    const unsubscribe = onSnapshot(
+      config.query(firestore, uid),
+      (snapshot) => {
+        items.set(snapshot.docs.map((d) => ({ ...(d.data() as T), id: d.id })));
+      },
+      () => reportError(),
+    );
     onCleanup(unsubscribe);
   });
 
