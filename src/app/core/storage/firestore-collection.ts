@@ -1,4 +1,4 @@
-import { effect, inject, signal, Signal } from '@angular/core';
+import { effect, inject, InjectionToken, signal, Signal } from '@angular/core';
 import {
   doc,
   deleteDoc,
@@ -14,6 +14,14 @@ import {
 import { FIRESTORE } from '../firebase/firebase.providers';
 import { AuthService } from '../auth/auth.service';
 import { FirestoreErrorReporter } from './firestore-error-reporter';
+
+/** Snapshot subscription function; defaults to the SDK's `onSnapshot`. Overridable in tests. */
+export const FIRESTORE_ON_SNAPSHOT = new InjectionToken<typeof onSnapshot>(
+  'FIRESTORE_ON_SNAPSHOT',
+  {
+    factory: () => onSnapshot,
+  },
+);
 
 export interface FirestoreCollection<T> {
   readonly items: Signal<readonly T[]>;
@@ -56,6 +64,7 @@ export function createFirestoreCollection<T extends { id: string }>(
   const firestore = inject(FIRESTORE);
   const authService = inject(AuthService);
   const errorReporter = inject(FirestoreErrorReporter);
+  const subscribe = inject(FIRESTORE_ON_SNAPSHOT);
   const reportError = (error?: unknown) => errorReporter.report(error);
   const fromFirestore =
     config.fromFirestore ?? ((data: DocumentData, id: string): T => ({ ...(data as T), id }));
@@ -87,7 +96,7 @@ export function createFirestoreCollection<T extends { id: string }>(
       items.set([]);
       return;
     }
-    const unsubscribe = onSnapshot(
+    const unsubscribe = subscribe(
       config.query(firestore, uid),
       (snapshot) => {
         items.set(snapshot.docs.map((d) => fromFirestore(d.data(), d.id)));

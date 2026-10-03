@@ -1,10 +1,12 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { onSnapshot } from 'firebase/firestore';
 import { vi } from 'vitest';
 import { AuthService } from '../auth/auth.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { createFakeAuthService } from '../../testing/fake-auth-service';
 import { FIRESTORE } from '../firebase/firebase.providers';
+import { createFirestoreCollection, FIRESTORE_ON_SNAPSHOT } from './firestore-collection';
 
 interface SnapshotLike {
   docs: { id: string; data: () => unknown }[];
@@ -15,23 +17,15 @@ type OnError = (error: unknown) => void;
 let capturedOnNext: OnNext | undefined;
 let capturedOnError: OnError | undefined;
 
-// This spec never talks to a real or emulated Firestore — it mocks the SDK
-// so the onSnapshot error-callback path (untestable via the synchronous
-// in-memory fake, and normally only exercised by the Java-gated emulator
-// suite) is verified by the fast, always-run test suite too.
-vi.mock('firebase/firestore', () => ({
-  doc: vi.fn(() => ({})),
-  onSnapshot: vi.fn((_query: unknown, onNext: OnNext, onError: OnError) => {
-    capturedOnNext = onNext;
-    capturedOnError = onError;
-    return () => undefined;
-  }),
-  setDoc: vi.fn(() => Promise.resolve()),
-  updateDoc: vi.fn(() => Promise.resolve()),
-  deleteDoc: vi.fn(() => Promise.resolve()),
-}));
-
-import { createFirestoreCollection } from './firestore-collection';
+// This spec never talks to a real or emulated Firestore — it injects a fake
+// snapshot subscription (FIRESTORE_ON_SNAPSHOT) so the onSnapshot error-callback
+// path (untestable via the synchronous in-memory fake, and normally only exercised
+// by the Java-gated emulator suite) is verified by the fast, always-run suite too.
+const fakeOnSnapshot = ((_query: unknown, onNext: OnNext, onError: OnError) => {
+  capturedOnNext = onNext;
+  capturedOnError = onError;
+  return () => undefined;
+}) as unknown as typeof onSnapshot;
 
 interface Widget {
   id: string;
@@ -39,19 +33,13 @@ interface Widget {
 }
 
 describe('createFirestoreCollection (read-error handling, mocked SDK)', () => {
-  // The runner shares its module registry across spec files; without this the
-  // partial mock leaks into specs that need the real SDK (e.g. firebase.providers.spec).
-  afterAll(() => {
-    vi.doUnmock('firebase/firestore');
-    vi.resetModules();
-  });
-
   beforeEach(() => {
     capturedOnNext = undefined;
     capturedOnError = undefined;
     TestBed.configureTestingModule({
       providers: [
         { provide: FIRESTORE, useValue: {} },
+        { provide: FIRESTORE_ON_SNAPSHOT, useValue: fakeOnSnapshot },
         { provide: AuthService, useValue: createFakeAuthService('uid-1') },
       ],
     });
