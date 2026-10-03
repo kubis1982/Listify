@@ -149,6 +149,18 @@ export const en = {
   'share.regenerateMessage': 'The current link will stop working. People who already joined keep access.',
   'share.regenerateConfirm': 'Generate',
   'share.regenerated': 'New link generated.',
+  'share.membersHeading': 'People with access',
+  'share.ownerBadge': 'Owner',
+  'share.removeMemberFor': 'Remove {name}',
+  'share.removeConfirmFor': 'Remove {name} from the list?',
+  'share.alsoRevokeLink': 'Also invalidate the current link',
+  'share.removeConfirm': 'Remove',
+  'share.leave': 'Leave list',
+  'share.leaveTitle': 'Leave this list?',
+  'share.leaveMessage': "You'll lose access until someone shares it with you again.",
+  'share.leaveConfirm': 'Leave',
+  'listDetail.export': 'Export',
+  'listDetail.exportFor': 'Export {name}',
 } as const;
 
 export type TranslationKey = keyof typeof en;

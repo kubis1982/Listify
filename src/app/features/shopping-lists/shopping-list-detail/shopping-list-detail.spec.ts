@@ -1,15 +1,19 @@
+import { Dialog } from '@angular/cdk/dialog';
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AuthService } from '../../../core/auth/auth.service';
 import { createFakeAuthService } from '../../../testing/fake-auth-service';
+import { createFakeSharingService } from '../../../testing/fake-shopping-list-sharing-service';
 import { provideFakeShoppingListsStore } from '../../../testing/in-memory-shopping-lists-store';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { provideFakeCollection } from '../../../core/testing/in-memory-collection';
 import { CategoriesService, CATEGORIES_COLLECTION } from '../../categories/data/categories.service';
 import { ProductsService, PRODUCTS_COLLECTION } from '../../products/data/products.service';
 import { UnitsService, UNITS_COLLECTION } from '../../units/data/units.service';
+import { ShoppingListSharingService } from '../data/shopping-list-sharing.service';
+import { SHOPPING_LISTS_STORE } from '../data/shopping-lists.store';
 import { ShoppingListsService } from '../data/shopping-lists.service';
 import { ShoppingListDetail } from './shopping-list-detail';
 
@@ -48,6 +52,7 @@ describe('ShoppingListDetail', () => {
         provideRouter([]),
         provideFakeShoppingListsStore(),
         { provide: AuthService, useValue: createFakeAuthService() },
+        { provide: ShoppingListSharingService, useValue: createFakeSharingService() },
         provideFakeCollection(CATEGORIES_COLLECTION),
         provideFakeCollection(UNITS_COLLECTION),
         provideFakeCollection(PRODUCTS_COLLECTION),
@@ -57,6 +62,35 @@ describe('ShoppingListDetail', () => {
 
   afterEach(() => {
     document.querySelectorAll('.cdk-overlay-container').forEach((container) => container.remove());
+  });
+
+  it('opens the share dialog from the Share button', async () => {
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    const list = shoppingListsService.addList('Weekly groceries');
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', list.id);
+    fixture.detectChanges();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('button[aria-label="Share Weekly groceries"]')!
+      .click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(document.querySelector('app-share-list-dialog')).not.toBeNull();
+    TestBed.inject(Dialog).closeAll();
+  });
+
+  it('switches to "List not found" when the list disappears while open (removed member)', () => {
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    const list = shoppingListsService.addList('Weekly groceries');
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', list.id);
+    fixture.detectChanges();
+
+    TestBed.inject(SHOPPING_LISTS_STORE).removeList(list.id);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('List not found');
   });
 
   it('shows "List not found" for an unknown id', () => {
@@ -636,6 +670,7 @@ describe('ShoppingListDetail sharing', () => {
         provideRouter([]),
         provideFakeShoppingListsStore(),
         { provide: AuthService, useValue: createFakeAuthService() },
+        { provide: ShoppingListSharingService, useValue: createFakeSharingService() },
         provideFakeCollection(CATEGORIES_COLLECTION),
         provideFakeCollection(UNITS_COLLECTION),
         provideFakeCollection(PRODUCTS_COLLECTION),
@@ -674,7 +709,7 @@ describe('ShoppingListDetail sharing', () => {
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 
     const root = fixture.nativeElement as HTMLElement;
-    root.querySelector<HTMLButtonElement>('button[aria-label="Share Weekly groceries"]')!.click();
+    root.querySelector<HTMLButtonElement>('button[aria-label="Export Weekly groceries"]')!.click();
     await TestBed.inject(ApplicationRef).whenStable();
 
     expect(createObjectURLSpy).toHaveBeenCalled();
@@ -693,7 +728,7 @@ describe('ShoppingListDetail sharing', () => {
     Object.defineProperty(navigator, 'share', { value: shareSpy, configurable: true });
 
     const root = fixture.nativeElement as HTMLElement;
-    root.querySelector<HTMLButtonElement>('button[aria-label="Share Weekly groceries"]')!.click();
+    root.querySelector<HTMLButtonElement>('button[aria-label="Export Weekly groceries"]')!.click();
     await TestBed.inject(ApplicationRef).whenStable();
 
     expect(shareSpy).toHaveBeenCalledTimes(1);
@@ -718,7 +753,7 @@ describe('ShoppingListDetail sharing', () => {
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 
     const root = fixture.nativeElement as HTMLElement;
-    root.querySelector<HTMLButtonElement>('button[aria-label="Share Weekly groceries"]')!.click();
+    root.querySelector<HTMLButtonElement>('button[aria-label="Export Weekly groceries"]')!.click();
     await TestBed.inject(ApplicationRef).whenStable();
 
     expect(createObjectURLSpy).not.toHaveBeenCalled();

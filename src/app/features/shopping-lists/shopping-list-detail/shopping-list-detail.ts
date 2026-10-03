@@ -1,3 +1,4 @@
+import { Dialog } from '@angular/cdk/dialog';
 import {
   afterRenderEffect,
   Component,
@@ -21,6 +22,7 @@ import { UnitsService } from '../../units/data/units.service';
 import { toExportFilename, toShoppingListExport } from '../data/shopping-list-export';
 import { ShoppingListItem, ShoppingListItemId } from '../data/shopping-list.model';
 import { ShoppingListsService } from '../data/shopping-lists.service';
+import { ShareListDialog, ShareListDialogData } from '../share-list-dialog/share-list-dialog';
 
 interface ItemFormValue {
   productId: string;
@@ -80,7 +82,7 @@ const EMPTY_EDIT_ITEM_FORM: EditItemFormValue = { quantity: 1, note: '' };
             <button
               type="button"
               class="btn-outline-pill"
-              (click)="shareList()"
+              (click)="openShareDialog()"
               [attr.aria-label]="t('listDetail.shareFor', { name: currentList.name })"
             >
               <svg
@@ -100,6 +102,28 @@ const EMPTY_EDIT_ITEM_FORM: EditItemFormValue = { quantity: 1, note: '' };
                 <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
               </svg>
               {{ t('listDetail.share') }}
+            </button>
+            <button
+              type="button"
+              class="btn-outline-pill"
+              (click)="exportList()"
+              [attr.aria-label]="t('listDetail.exportFor', { name: currentList.name })"
+            >
+              <svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              {{ t('listDetail.export') }}
             </button>
           </div>
         </div>
@@ -658,6 +682,7 @@ export class ShoppingListDetail {
 
   protected readonly t = inject(I18n).t;
 
+  private readonly dialog = inject(Dialog);
   protected readonly shoppingListsService = inject(ShoppingListsService);
   protected readonly productsService = inject(ProductsService);
   protected readonly unitsService = inject(UnitsService);
@@ -777,11 +802,18 @@ export class ShoppingListDetail {
     }));
   }
 
+  protected openShareDialog(): void {
+    this.dialog.open<void, ShareListDialogData>(ShareListDialog, {
+      data: { listId: this.id() },
+      ariaLabelledBy: 'share-dialog-title',
+    });
+  }
+
   protected toggleStatus(status: 'active' | 'completed'): void {
     this.shoppingListsService.setStatus(this.id(), status === 'active' ? 'completed' : 'active');
   }
 
-  protected async shareList(): Promise<void> {
+  protected async exportList(): Promise<void> {
     const currentList = this.list();
     if (!currentList) {
       return;
