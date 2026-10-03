@@ -11,7 +11,7 @@ import {
 import {
   collection,
   connectFirestoreEmulator,
-  getFirestore,
+  initializeFirestore,
   type Firestore,
 } from 'firebase/firestore';
 import { signal } from '@angular/core';
@@ -49,10 +49,13 @@ describe.skipIf(!emulatorAvailable)('createFirestoreCollection (Firestore emulat
   let uid: string;
 
   beforeEach(async () => {
-    app = initializeApp({ projectId: 'listify-9658c', apiKey: 'test-key' }, `test-${crypto.randomUUID()}`);
+    app = initializeApp(
+      { projectId: 'listify-9658c', apiKey: 'test-key' },
+      `test-${crypto.randomUUID()}`,
+    );
     auth = getAuth(app);
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-    firestore = getFirestore(app);
+    firestore = initializeFirestore(app, { ignoreUndefinedProperties: true });
     connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
 
     const email = `${crypto.randomUUID()}@example.com`;
@@ -154,6 +157,35 @@ describe.skipIf(!emulatorAvailable)('createFirestoreCollection (Firestore emulat
 
     await vi.waitFor(() => {
       expect(units.items()).toEqual([{ id: 'unit-1', symbol: 'kg' }]);
+    });
+  });
+
+  it('applies toFirestore on add and fromFirestore on read', async () => {
+    const categories = TestBed.runInInjectionContext(() =>
+      createFirestoreCollection<Category>({
+        query: (fs, u) => collection(fs, `users/${u}/categories`),
+        docPath: (u, id) => `users/${u}/categories/${id}`,
+        toFirestore: (category) => ({ ...category, name: category.name.trim() }),
+        fromFirestore: (data, id) => ({ id, name: `${data['name']}!` }),
+      }),
+    );
+
+    categories.add({ id: 'cat-1', name: '  Dairy  ' });
+
+    await vi.waitFor(() => {
+      expect(categories.items()).toEqual([{ id: 'cat-1', name: 'Dairy!' }]);
+    });
+  });
+
+  it('writes raw field paths through updateFields()', async () => {
+    const categories = createCategories();
+    categories.add({ id: 'cat-1', name: 'Dairy' });
+    await vi.waitFor(() => expect(categories.items()).toHaveLength(1));
+
+    categories.updateFields('cat-1', { name: 'Bakery' });
+
+    await vi.waitFor(() => {
+      expect(categories.items()).toEqual([{ id: 'cat-1', name: 'Bakery' }]);
     });
   });
 });

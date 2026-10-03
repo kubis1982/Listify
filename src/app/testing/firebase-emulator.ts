@@ -8,7 +8,7 @@ import {
   type Auth,
   type User,
 } from 'firebase/auth';
-import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
+import { connectFirestoreEmulator, initializeFirestore, type Firestore } from 'firebase/firestore';
 
 // Must match the project id the emulator runs under (see firebase.json
 // singleProjectMode), otherwise reads and writes land in a different
@@ -44,7 +44,7 @@ export async function createEmulatorUser(displayName = 'Test User'): Promise<Emu
   );
   const auth = getAuth(app);
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-  const firestore = getFirestore(app);
+  const firestore = initializeFirestore(app, { ignoreUndefinedProperties: true });
   connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
 
   const credential = await createUserWithEmailAndPassword(

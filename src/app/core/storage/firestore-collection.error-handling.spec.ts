@@ -39,6 +39,13 @@ interface Widget {
 }
 
 describe('createFirestoreCollection (read-error handling, mocked SDK)', () => {
+  // The runner shares its module registry across spec files; without this the
+  // partial mock leaks into specs that need the real SDK (e.g. firebase.providers.spec).
+  afterAll(() => {
+    vi.doUnmock('firebase/firestore');
+    vi.resetModules();
+  });
+
   beforeEach(() => {
     capturedOnNext = undefined;
     capturedOnError = undefined;
