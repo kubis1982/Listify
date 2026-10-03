@@ -161,6 +161,11 @@ export const en = {
   'share.leaveConfirm': 'Leave',
   'listDetail.export': 'Export',
   'listDetail.exportFor': 'Export {name}',
+  'join.joining': 'Joining the list…',
+  'join.invalidTitle': 'This link is no longer active',
+  'join.invalidMessage': 'Ask the list owner for a new link.',
+  'join.failedTitle': "Couldn't join the list",
+  'join.goToLists': 'Go to lists',
 } as const;
 
 export type TranslationKey = keyof typeof en;

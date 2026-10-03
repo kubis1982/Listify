@@ -163,4 +163,9 @@ export const pl: Record<TranslationKey, string> = {
   'share.leaveConfirm': 'Opuść',
   'listDetail.export': 'Eksportuj',
   'listDetail.exportFor': 'Eksportuj listę {name}',
+  'join.joining': 'Dołączanie do listy…',
+  'join.invalidTitle': 'Ten link jest nieaktywny',
+  'join.invalidMessage': 'Poproś właściciela listy o nowy link.',
+  'join.failedTitle': 'Nie udało się dołączyć do listy',
+  'join.goToLists': 'Przejdź do list',
 };

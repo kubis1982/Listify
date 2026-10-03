@@ -1,6 +1,7 @@
 import { ApplicationRef, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { User } from 'firebase/auth';
 import { vi } from 'vitest';
 import { App } from './app';
 import { AuthService } from './core/auth/auth.service';
@@ -168,5 +169,28 @@ describe('App', () => {
     (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.sign-out-button')!.click();
 
     expect(signOutSpy).toHaveBeenCalled();
+  });
+
+  it('keeps an invite URL across sign-in so the join still runs', async () => {
+    TestBed.resetTestingModule();
+    const auth = createFakeAuthService(null);
+    TestBed.configureTestingModule({
+      imports: [App],
+      providers: [
+        provideRouter([{ path: '**', component: DummyRouteComponent }]),
+        { provide: AuthService, useValue: auth },
+      ],
+    });
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/lists/join/list-1/token-1');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-sign-in-screen')).not.toBeNull();
+
+    auth.setUser({ uid: 'u1' } as User);
+    fixture.detectChanges();
+
+    expect(router.url).toBe('/lists/join/list-1/token-1');
+    expect((fixture.nativeElement as HTMLElement).querySelector('router-outlet')).not.toBeNull();
   });
 });
