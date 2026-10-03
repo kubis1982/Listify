@@ -9,8 +9,8 @@ rules_version = '2';
 // existing local models (Category, Product, Unit, ShoppingList), agreed
 // with the project owner:
 //   - categories / products / units / shoppingLists: private per
-//     authenticated user. Sharing a shopping list between users is out of
-//     scope for now.
+//     authenticated user. Shopping lists live in a top-level collection and
+//     can be shared with other accounts through an invite link.
 //
 // Collection: users/{userId}/categories/{categoryId}
 // Fields:
@@ -30,19 +30,24 @@ rules_version = '2';
 //   - symbol: string (required, 1-20 chars)
 //   - isDefault: bool (optional)
 //
-// Collection: users/{userId}/shoppingLists/{listId}
+// Collection: shoppingLists/{listId}   (top-level, shared between accounts)
 // Fields:
 //   - id: string (required, immutable, must equal listId)
 //   - name: string (required, 1-200 chars)
-//   - createdAt: string (required, immutable, ISO 8601 format — format
-//     checked only, not logical date validity, e.g. "2026-13-40" would
-//     pass; acceptable since this field is informational display data,
-//     not used for access control)
+//   - createdAt: string (required, immutable, ISO 8601 format)
 //   - status: string (required, one of 'active' | 'completed')
-//   - items: list<map> (required, 0-500 entries). Per-item field shape
-//     (id/productName/unitLabel/categoryName/quantity/purchased/note) is
-//     enforced by the TypeScript app layer, not by these rules — see the
-//     isValidItemsList comment below for why.
+//   - items: map<itemId, item> (required, 0-500 entries). Per-item shape is
+//     enforced by the TypeScript layer — see isValidItemsMap.
+//   - ownerId: string (required, immutable)
+//   - memberIds: list<string> (required, 1-20 entries, contains ownerId)
+//   - memberNames: map<uid, string> (required, keys == memberIds)
+//
+// Subcollections (added in a later step):
+//   - shoppingLists/{listId}/invite/current  { token } — owner only
+//   - shoppingLists/{listId}/joins/{uid}     { token } — proof of invite
+//
+// users/{userId}/shoppingLists is the pre-sharing location; it is no longer
+// used and is explicitly denied.
 //
 // ===============================================================
 
@@ -111,27 +116,37 @@ service cloud.firestore {
     }
 
     // The .all(entry, ...) macro silently fails at the real Firestore rules
-    // engine regardless of whether the predicate is a nested function call
-    // or fully inlined — confirmed against production: create with an empty
-    // items array succeeds, but any write with a non-empty items array is
-    // always denied, even though every variant compiles with only a
-    // firebase-tools linter warning, never a hard error. Per-item field
-    // validation is dropped rather than chased further; this app has a
-    // single trusted first-party client, so item shape is enforced by the
-    // TypeScript layer instead of the rules layer — only the array's type
-    // and overall size are still checked here.
-    function isValidItemsList(items) {
-      return items is list && items.size() <= 500;
+    // engine (confirmed against production for the former items array), so
+    // per-item field validation stays in the TypeScript layer; only the
+    // map's type and overall size are checked here.
+    function isValidItemsMap(items) {
+      return items is map && items.size() <= 500;
+    }
+
+    function isValidMemberIds(memberIds, ownerId) {
+      return memberIds is list &&
+        memberIds.size() >= 1 && memberIds.size() <= 20 &&
+        memberIds.toSet().size() == memberIds.size() &&
+        ownerId in memberIds;
+    }
+
+    function isValidMemberNames(memberNames, memberIds) {
+      return memberNames is map &&
+        memberNames.keys().hasOnly(memberIds) &&
+        memberNames.size() == memberIds.size();
     }
 
     function isValidShoppingList(data, listId) {
-      return hasOnlyAllowedFields(data, ['id', 'name', 'createdAt', 'status', 'items']) &&
-        hasRequiredFields(data, ['id', 'name', 'createdAt', 'status', 'items']) &&
+      return hasOnlyAllowedFields(data, ['id', 'name', 'createdAt', 'status', 'items', 'ownerId', 'memberIds', 'memberNames']) &&
+        hasRequiredFields(data, ['id', 'name', 'createdAt', 'status', 'items', 'ownerId', 'memberIds', 'memberNames']) &&
         data.id is string && data.id == listId &&
         validStringLength(data.name, 1, 200) &&
         isValidDateString(data.createdAt) &&
         data.status in ['active', 'completed'] &&
-        isValidItemsList(data.items);
+        isValidItemsMap(data.items) &&
+        data.ownerId is string &&
+        isValidMemberIds(data.memberIds, data.ownerId) &&
+        isValidMemberNames(data.memberNames, data.memberIds);
     }
 
     // ===============================================================
@@ -161,14 +176,45 @@ service cloud.firestore {
         allow delete: if isOwner(userId);
       }
 
-      match /shoppingLists/{listId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && isValidShoppingList(request.resource.data, listId);
-        allow update: if isOwner(userId) &&
-          isValidShoppingList(request.resource.data, listId) &&
-          areImmutableFieldsUnchanged(['id', 'createdAt']);
-        allow delete: if isOwner(userId);
+      match /shoppingLists/{document=**} {
+        allow read, write: if false;
       }
+    }
+
+    match /shoppingLists/{listId} {
+
+      function isListMember() {
+        return isAuthenticated() && request.auth.uid in resource.data.memberIds;
+      }
+
+      function isListOwner() {
+        return isAuthenticated() && resource.data.ownerId == request.auth.uid;
+      }
+
+      function changedKeys() {
+        return request.resource.data.diff(resource.data).affectedKeys();
+      }
+
+      // Owner may edit anything except the immutable fields, and may only
+      // shrink the member list (remove people), never add arbitrary uids.
+      function isOwnerUpdate() {
+        return isListOwner() &&
+          areImmutableFieldsUnchanged(['id', 'createdAt', 'ownerId']) &&
+          request.resource.data.memberIds.toSet().difference(resource.data.memberIds.toSet()).size() == 0;
+      }
+
+      function isMemberUpdate() {
+        return isListMember() && changedKeys().hasOnly(['items', 'status']);
+      }
+
+      allow read: if isListMember();
+      allow create: if isAuthenticated() &&
+        isValidShoppingList(request.resource.data, listId) &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.memberIds == [request.auth.uid];
+      allow update: if isValidShoppingList(request.resource.data, listId) &&
+        (isOwnerUpdate() || isMemberUpdate());
+      allow delete: if isListOwner();
     }
   }
 }
