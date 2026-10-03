@@ -1,7 +1,11 @@
 import { ApplicationRef, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { User } from 'firebase/auth';
+import { vi } from 'vitest';
 import { App } from './app';
+import { AuthService } from './core/auth/auth.service';
+import { createFakeAuthService } from './testing/fake-auth-service';
 
 @Component({ template: '' })
 class DummyRouteComponent {}
@@ -10,7 +14,10 @@ describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([{ path: '**', component: DummyRouteComponent }])],
+      providers: [
+        provideRouter([{ path: '**', component: DummyRouteComponent }]),
+        { provide: AuthService, useValue: createFakeAuthService() },
+      ],
     }).compileComponents();
   });
 
@@ -104,5 +111,86 @@ describe('App', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/units');
+  });
+
+  it('shows the sign-in screen when signed out', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [App],
+      providers: [
+        provideRouter([{ path: '**', component: DummyRouteComponent }]),
+        { provide: AuthService, useValue: createFakeAuthService(null) },
+      ],
+    });
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('app-sign-in-screen')).toBeTruthy();
+    expect(element.querySelector('header')).toBeFalsy();
+  });
+
+  it('shows the app layout once signed in', async () => {
+    TestBed.resetTestingModule();
+    const fakeAuth = createFakeAuthService(null);
+    TestBed.configureTestingModule({
+      imports: [App],
+      providers: [
+        provideRouter([{ path: '**', component: DummyRouteComponent }]),
+        { provide: AuthService, useValue: fakeAuth },
+      ],
+    });
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('header')).toBeFalsy();
+
+    fakeAuth.setUser({ uid: 'user-1' } as never);
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('header')).toBeTruthy();
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-sign-in-screen')).toBeFalsy();
+  });
+
+  it('signs out from the user menu', () => {
+    TestBed.resetTestingModule();
+    const fakeAuth = createFakeAuthService('user-1');
+    const signOutSpy = vi.spyOn(fakeAuth, 'signOut');
+    TestBed.configureTestingModule({
+      imports: [App],
+      providers: [
+        provideRouter([{ path: '**', component: DummyRouteComponent }]),
+        { provide: AuthService, useValue: fakeAuth },
+      ],
+    });
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.sign-out-button')!.click();
+
+    expect(signOutSpy).toHaveBeenCalled();
+  });
+
+  it('keeps an invite URL across sign-in so the join still runs', async () => {
+    TestBed.resetTestingModule();
+    const auth = createFakeAuthService(null);
+    TestBed.configureTestingModule({
+      imports: [App],
+      providers: [
+        provideRouter([{ path: '**', component: DummyRouteComponent }]),
+        { provide: AuthService, useValue: auth },
+      ],
+    });
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/lists/join/list-1/token-1');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-sign-in-screen')).not.toBeNull();
+
+    auth.setUser({ uid: 'u1' } as User);
+    fixture.detectChanges();
+
+    expect(router.url).toBe('/lists/join/list-1/token-1');
+    expect((fixture.nativeElement as HTMLElement).querySelector('router-outlet')).not.toBeNull();
   });
 });

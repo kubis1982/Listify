@@ -3,6 +3,9 @@ import localePl from '@angular/common/locales/pl';
 import { ApplicationRef, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { AuthService } from '../../../core/auth/auth.service';
+import { createFakeAuthService } from '../../../testing/fake-auth-service';
+import { buildShoppingList, provideFakeShoppingListsStore } from '../../../testing/in-memory-shopping-lists-store';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { ShoppingListsService } from '../data/shopping-lists.service';
 import { ShoppingListsOverview } from './shopping-lists-overview';
@@ -35,7 +38,11 @@ describe('ShoppingListsOverview', () => {
     localStorage.clear();
     TestBed.configureTestingModule({
       imports: [ShoppingListsOverview],
-      providers: [provideRouter([{ path: 'lists/:id', component: DummyDetailComponent }])],
+      providers: [
+        provideRouter([{ path: 'lists/:id', component: DummyDetailComponent }]),
+        provideFakeShoppingListsStore(),
+        { provide: AuthService, useValue: createFakeAuthService() },
+      ],
     });
   });
 
@@ -193,18 +200,14 @@ describe('ShoppingListsOverview', () => {
   });
 
   it('formats the created-at date in the selected language', () => {
-    localStorage.setItem(
-      'listify:shopping-lists',
-      JSON.stringify([
-        {
-          id: '1',
-          name: 'Weekly groceries',
-          createdAt: '2026-03-05T12:00:00.000Z',
-          status: 'active',
-          items: [],
-        },
-      ]),
-    );
+    TestBed.configureTestingModule({
+      providers: [
+        provideFakeShoppingListsStore([
+          buildShoppingList({ id: '1', createdAt: '2026-03-05T12:00:00.000Z' }),
+        ]),
+        { provide: AuthService, useValue: createFakeAuthService() },
+      ],
+    });
     const fixture = TestBed.createComponent(ShoppingListsOverview);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -214,5 +217,56 @@ describe('ShoppingListsOverview', () => {
     fixture.detectChanges();
 
     expect(root.textContent).toContain('Dodano 5 mar 2026');
+  });
+
+  describe('shared lists', () => {
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        providers: [
+          provideFakeShoppingListsStore([
+            buildShoppingList({
+              id: 'theirs',
+              name: 'Ania groceries',
+              ownerId: 'ania-uid',
+              memberIds: ['ania-uid', 'test-uid'],
+              memberNames: { 'ania-uid': 'Ania', 'test-uid': 'Test User' },
+            }),
+            buildShoppingList({
+              id: 'mine-shared',
+              name: 'Family groceries',
+              memberIds: ['test-uid', 'a', 'b'],
+              memberNames: { 'test-uid': 'Test User', a: 'A', b: 'B' },
+            }),
+            buildShoppingList({ id: 'mine', name: 'Private groceries' }),
+          ]),
+        ],
+      });
+    });
+
+    function card(root: HTMLElement, name: string): HTMLElement {
+      return Array.from(root.querySelectorAll<HTMLElement>('.list-card')).find((c) =>
+        c.textContent?.includes(name),
+      )!;
+    }
+
+    it('captions shared lists by owner or member count', () => {
+      const fixture = TestBed.createComponent(ShoppingListsOverview);
+      fixture.detectChanges();
+      const root = fixture.nativeElement as HTMLElement;
+
+      expect(card(root, 'Ania groceries').textContent).toContain('Shared by Ania');
+      expect(card(root, 'Family groceries').textContent).toContain('Shared · 3 people');
+      expect(card(root, 'Private groceries').textContent).not.toContain('Shared');
+    });
+
+    it("hides rename and delete on someone else's list but keeps Mark complete", () => {
+      const fixture = TestBed.createComponent(ShoppingListsOverview);
+      fixture.detectChanges();
+      const theirs = card(fixture.nativeElement as HTMLElement, 'Ania groceries');
+
+      expect(theirs.querySelector('button[aria-label="Edit Ania groceries"]')).toBeNull();
+      expect(theirs.querySelector('button[aria-label="Delete Ania groceries"]')).toBeNull();
+      expect(theirs.querySelector('button[aria-label="Mark Ania groceries complete"]')).not.toBeNull();
+    });
   });
 });

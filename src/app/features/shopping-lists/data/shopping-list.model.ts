@@ -17,4 +17,9 @@ export interface ShoppingList {
   createdAt: string;
   status: 'active' | 'completed';
   items: ShoppingListItem[];
+  ownerId: string;
+  /** Everyone with access, including the owner. */
+  memberIds: string[];
+  /** Display name per member uid, shown in the share dialog and overview. */
+  memberNames: Record<string, string>;
 }

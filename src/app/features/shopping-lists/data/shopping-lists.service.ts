@@ -1,38 +1,30 @@
-import { Service } from '@angular/core';
-import { createLocalStorageCollection } from '../../../core/storage/local-storage-collection';
+import { inject, Service } from '@angular/core';
+import { AuthService } from '../../../core/auth/auth.service';
 import { Product } from '../../products/data/product.model';
 import { type ShoppingListExport } from './shopping-list-export';
-import {
-  ShoppingList,
-  ShoppingListId,
-  ShoppingListItem,
-  ShoppingListItemId,
-} from './shopping-list.model';
+import { ShoppingList, ShoppingListId, ShoppingListItem, ShoppingListItemId } from './shopping-list.model';
+import { SHOPPING_LISTS_STORE } from './shopping-lists.store';
 
 @Service()
 export class ShoppingListsService {
-  private readonly store = createLocalStorageCollection<ShoppingList>('listify:shopping-lists');
+  private readonly store = inject(SHOPPING_LISTS_STORE);
+  private readonly authService = inject(AuthService);
 
-  readonly lists = this.store.items;
+  readonly lists = this.store.lists;
+
+  isOwner(list: ShoppingList): boolean {
+    return list.ownerId === this.authService.uid();
+  }
 
   addList(name: string): ShoppingList {
-    const list: ShoppingList = {
-      id: crypto.randomUUID(),
-      name,
-      createdAt: new Date().toISOString(),
-      status: 'active',
-      items: [],
-    };
-    this.store.add(list);
+    const list: ShoppingList = { ...this.newList(name), items: [] };
+    this.store.addList(list);
     return list;
   }
 
   importList(data: ShoppingListExport['list']): ShoppingList {
     const list: ShoppingList = {
-      id: crypto.randomUUID(),
-      name: data.name,
-      createdAt: new Date().toISOString(),
-      status: 'active',
+      ...this.newList(data.name),
       items: data.items.map(({ productName, unitLabel, categoryName, quantity, note }) => ({
         id: crypto.randomUUID(),
         productName,
@@ -43,20 +35,20 @@ export class ShoppingListsService {
         note,
       })),
     };
-    this.store.add(list);
+    this.store.addList(list);
     return list;
   }
 
   setStatus(id: ShoppingListId, status: ShoppingList['status']): void {
-    this.store.update(id, { status });
+    this.store.updateList(id, { status });
   }
 
   rename(id: ShoppingListId, name: string): void {
-    this.store.update(id, { name });
+    this.store.updateList(id, { name });
   }
 
   removeList(id: ShoppingListId): void {
-    this.store.remove(id);
+    this.store.removeList(id);
   }
 
   addItemFromProduct(
@@ -66,22 +58,18 @@ export class ShoppingListsService {
     quantity: number,
     note?: string,
   ): boolean {
-    const list = this.lists().find((l) => l.id === listId);
-    if (!list || list.status !== 'active') {
+    const list = this.activeList(listId);
+    if (!list) {
       return false;
     }
     const existing = list.items.find((item) =>
       this.isSameUnpurchasedItem(item, product, unitSymbol, note),
     );
     if (existing) {
-      this.store.update(listId, {
-        items: list.items.map((item) =>
-          item.id === existing.id ? { ...item, quantity: item.quantity + quantity } : item,
-        ),
-      });
+      this.store.putItem(listId, { ...existing, quantity: existing.quantity + quantity });
       return true;
     }
-    const item: ShoppingListItem = {
+    this.store.putItem(listId, {
       id: crypto.randomUUID(),
       productName: product.name,
       unitLabel: unitSymbol,
@@ -89,9 +77,55 @@ export class ShoppingListsService {
       quantity,
       purchased: false,
       note,
-    };
-    this.store.update(listId, { items: [...list.items, item] });
+    });
     return false;
+  }
+
+  setItemPurchased(listId: ShoppingListId, itemId: ShoppingListItemId, purchased: boolean): void {
+    const item = this.activeItem(listId, itemId);
+    if (item) {
+      this.store.putItem(listId, { ...item, purchased });
+    }
+  }
+
+  updateItem(
+    listId: ShoppingListId,
+    itemId: ShoppingListItemId,
+    quantity: number,
+    note?: string,
+  ): void {
+    const item = this.activeItem(listId, itemId);
+    if (item) {
+      this.store.putItem(listId, { ...item, quantity, note });
+    }
+  }
+
+  removeItem(listId: ShoppingListId, itemId: ShoppingListItemId): void {
+    if (this.activeList(listId)) {
+      this.store.removeItem(listId, itemId);
+    }
+  }
+
+  private newList(name: string): Omit<ShoppingList, 'items'> {
+    const uid = this.authService.uid() ?? '';
+    return {
+      id: crypto.randomUUID(),
+      name,
+      createdAt: new Date().toISOString(),
+      status: 'active',
+      ownerId: uid,
+      memberIds: [uid],
+      memberNames: { [uid]: this.authService.displayName() },
+    };
+  }
+
+  private activeList(listId: ShoppingListId): ShoppingList | undefined {
+    const list = this.lists().find((l) => l.id === listId);
+    return list?.status === 'active' ? list : undefined;
+  }
+
+  private activeItem(listId: ShoppingListId, itemId: ShoppingListItemId): ShoppingListItem | undefined {
+    return this.activeList(listId)?.items.find((item) => item.id === itemId);
   }
 
   private isSameUnpurchasedItem(
@@ -106,38 +140,5 @@ export class ShoppingListsService {
       item.unitLabel.toLowerCase() === unitSymbol.toLowerCase() &&
       (item.note ?? '').toLowerCase() === (note ?? '').toLowerCase()
     );
-  }
-
-  setItemPurchased(listId: ShoppingListId, itemId: ShoppingListItemId, purchased: boolean): void {
-    const list = this.lists().find((l) => l.id === listId);
-    if (!list || list.status !== 'active') {
-      return;
-    }
-    this.store.update(listId, {
-      items: list.items.map((item) => (item.id === itemId ? { ...item, purchased } : item)),
-    });
-  }
-
-  updateItem(
-    listId: ShoppingListId,
-    itemId: ShoppingListItemId,
-    quantity: number,
-    note?: string,
-  ): void {
-    const list = this.lists().find((l) => l.id === listId);
-    if (!list || list.status !== 'active') {
-      return;
-    }
-    this.store.update(listId, {
-      items: list.items.map((item) => (item.id === itemId ? { ...item, quantity, note } : item)),
-    });
-  }
-
-  removeItem(listId: ShoppingListId, itemId: ShoppingListItemId): void {
-    const list = this.lists().find((l) => l.id === listId);
-    if (!list || list.status !== 'active') {
-      return;
-    }
-    this.store.update(listId, { items: list.items.filter((item) => item.id !== itemId) });
   }
 }

@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { CategoriesService } from './categories.service';
+import { createInMemoryCollection } from '../../../core/testing/in-memory-collection';
+import { CategoriesService, CATEGORIES_COLLECTION } from './categories.service';
 
 describe('CategoriesService', () => {
   beforeEach(() => {
-    localStorage.clear();
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [{ provide: CATEGORIES_COLLECTION, useFactory: () => createInMemoryCollection() }],
+    });
   });
 
   it('starts with no categories', () => {

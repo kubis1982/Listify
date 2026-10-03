@@ -2,10 +2,11 @@ import { Dialog } from '@angular/cdk/dialog';
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
-import { CategoriesService } from '../../categories/data/categories.service';
-import { UnitsService } from '../../units/data/units.service';
+import { provideFakeCollection } from '../../../core/testing/in-memory-collection';
+import { CategoriesService, CATEGORIES_COLLECTION } from '../../categories/data/categories.service';
+import { UnitsService, UNITS_COLLECTION } from '../../units/data/units.service';
 import { Product } from '../data/product.model';
-import { ProductsService } from '../data/products.service';
+import { ProductsService, PRODUCTS_COLLECTION } from '../data/products.service';
 import { CreateProductDialog, CreateProductDialogData } from './create-product-dialog';
 
 async function typeInPicker(inputId: string, query: string): Promise<void> {
@@ -31,7 +32,13 @@ async function selectExisting(inputId: string, text: string): Promise<void> {
 describe('CreateProductDialog', () => {
   beforeEach(() => {
     localStorage.clear();
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [
+        provideFakeCollection(CATEGORIES_COLLECTION),
+        provideFakeCollection(UNITS_COLLECTION),
+        provideFakeCollection(PRODUCTS_COLLECTION),
+      ],
+    });
   });
 
   afterEach(() => {

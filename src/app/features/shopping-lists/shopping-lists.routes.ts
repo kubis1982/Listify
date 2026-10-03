@@ -4,5 +4,9 @@ import { ShoppingListsOverview } from './shopping-lists-overview/shopping-lists-
 
 export const SHOPPING_LISTS_ROUTES: Routes = [
   { path: '', component: ShoppingListsOverview },
+  {
+    path: 'join/:listId/:token',
+    loadComponent: () => import('./join-list/join-list').then((m) => m.JoinList),
+  },
   { path: ':id', component: ShoppingListDetail },
 ];

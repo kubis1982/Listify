@@ -1,10 +1,20 @@
-import { computed, Service } from '@angular/core';
-import { createLocalStorageCollection } from '../../../core/storage/local-storage-collection';
+import { computed, inject, InjectionToken, Service } from '@angular/core';
+import { collection } from 'firebase/firestore';
+import { createFirestoreCollection, FirestoreCollection } from '../../../core/storage/firestore-collection';
 import { Unit, UnitId } from './unit.model';
+
+export const UNITS_COLLECTION = new InjectionToken<FirestoreCollection<Unit>>('UNITS_COLLECTION', {
+  providedIn: 'root',
+  factory: () =>
+    createFirestoreCollection<Unit>({
+      query: (firestore, uid) => collection(firestore, `users/${uid}/units`),
+      docPath: (uid, id) => `users/${uid}/units/${id}`,
+    }),
+});
 
 @Service()
 export class UnitsService {
-  private readonly store = createLocalStorageCollection<Unit>('listify:units');
+  private readonly store = inject(UNITS_COLLECTION);
 
   readonly units = this.store.items;
   readonly defaultUnit = computed(() => this.units().find((unit) => unit.isDefault));
