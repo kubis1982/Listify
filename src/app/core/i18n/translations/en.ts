@@ -134,6 +134,21 @@ export const en = {
   'listDetail.addToList': 'Add to list',
   'listDetail.mergedFeedback': 'Quantity updated for existing item.',
   'listDetail.notFound': 'List not found.',
+  'share.title': 'Share “{name}”',
+  'share.close': 'Close',
+  'share.linkHeading': 'Invite link',
+  'share.linkHint': 'Anyone signed in who opens this link can join the list.',
+  'share.linkLabel': 'Link',
+  'share.copy': 'Copy',
+  'share.copied': 'Link copied.',
+  'share.copyFailed': "Couldn't copy the link — select it and copy it manually.",
+  'share.send': 'Send',
+  'share.sendTitle': 'Shopping list on Listify',
+  'share.regenerate': 'Generate new link',
+  'share.regenerateTitle': 'Generate a new link?',
+  'share.regenerateMessage': 'The current link will stop working. People who already joined keep access.',
+  'share.regenerateConfirm': 'Generate',
+  'share.regenerated': 'New link generated.',
 } as const;
 
 export type TranslationKey = keyof typeof en;
