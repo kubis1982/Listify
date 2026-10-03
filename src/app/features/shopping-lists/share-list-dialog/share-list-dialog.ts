@@ -1,5 +1,5 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { ShoppingListsService } from '../data/shopping-lists.service';
@@ -71,11 +71,34 @@ export class ShareListDialog {
   });
   protected readonly linkVersion = signal(0);
 
+  private listWasPresent = false;
+  private finished = false;
+
+  constructor() {
+    // Close independently of child lifetimes: once the list was visible and then disappears
+    // (left, or removed by the owner), the dialog has nothing left to show.
+    effect(() => {
+      if (this.list()) {
+        this.listWasPresent = true;
+      } else if (this.listWasPresent) {
+        this.finish();
+      }
+    });
+  }
+
   protected close(): void {
     this.dialogRef.close();
   }
 
   protected onLeft(): void {
+    this.finish();
+  }
+
+  private finish(): void {
+    if (this.finished) {
+      return;
+    }
+    this.finished = true;
     this.dialogRef.close();
     void this.router.navigate(['/lists']);
   }
