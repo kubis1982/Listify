@@ -75,6 +75,26 @@ interface NewListFormValue {
                         date: (list.createdAt | date: 'mediumDate' : undefined : language()) ?? '',
                       })
                     }}</span>
+                    @if (sharedCaptions().get(list.id); as caption) {
+                      <span class="list-card__meta list-card__shared">
+                        <svg
+                          class="icon icon--sm"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        {{ caption }}
+                      </span>
+                    }
                   </div>
                   <div class="list-card__actions">
                     <button
@@ -98,49 +118,51 @@ interface NewListFormValue {
                       </svg>
                       <span class="btn-outline-pill__label">{{ t('lists.markComplete') }}</span>
                     </button>
-                    <button
-                      type="button"
-                      class="icon-btn"
-                      (click)="startEdit(list)"
-                      [attr.aria-label]="t('lists.editFor', { name: list.name })"
-                    >
-                      <svg
-                        class="icon"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
+                    @if (ownedListIds().has(list.id)) {
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        (click)="startEdit(list)"
+                        [attr.aria-label]="t('lists.editFor', { name: list.name })"
                       >
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      class="icon-btn"
-                      (click)="remove(list.id)"
-                      [attr.aria-label]="t('lists.deleteFor', { name: list.name })"
-                    >
-                      <svg
-                        class="icon"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
+                        <svg
+                          class="icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        (click)="remove(list.id)"
+                        [attr.aria-label]="t('lists.deleteFor', { name: list.name })"
                       >
-                        <path d="M3 6h18" />
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                        <line x1="10" y1="11" x2="10" y2="17" />
-                        <line x1="14" y1="11" x2="14" y2="17" />
-                      </svg>
-                    </button>
+                        <svg
+                          class="icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                      </button>
+                    }
                   </div>
                 </div>
               }
@@ -167,6 +189,26 @@ interface NewListFormValue {
                         date: (list.createdAt | date: 'mediumDate' : undefined : language()) ?? '',
                       })
                     }}</span>
+                    @if (sharedCaptions().get(list.id); as caption) {
+                      <span class="list-card__meta list-card__shared">
+                        <svg
+                          class="icon icon--sm"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        {{ caption }}
+                      </span>
+                    }
                   </div>
                   <div class="list-card__actions">
                     <button
@@ -190,49 +232,51 @@ interface NewListFormValue {
                       </svg>
                       <span class="btn-outline-pill__label">{{ t('lists.restore') }}</span>
                     </button>
-                    <button
-                      type="button"
-                      class="icon-btn"
-                      (click)="startEdit(list)"
-                      [attr.aria-label]="t('lists.editFor', { name: list.name })"
-                    >
-                      <svg
-                        class="icon"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
+                    @if (ownedListIds().has(list.id)) {
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        (click)="startEdit(list)"
+                        [attr.aria-label]="t('lists.editFor', { name: list.name })"
                       >
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      class="icon-btn"
-                      (click)="remove(list.id)"
-                      [attr.aria-label]="t('lists.deleteFor', { name: list.name })"
-                    >
-                      <svg
-                        class="icon"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
+                        <svg
+                          class="icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        (click)="remove(list.id)"
+                        [attr.aria-label]="t('lists.deleteFor', { name: list.name })"
                       >
-                        <path d="M3 6h18" />
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                        <line x1="10" y1="11" x2="10" y2="17" />
-                        <line x1="14" y1="11" x2="14" y2="17" />
-                      </svg>
-                    </button>
+                        <svg
+                          class="icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                      </button>
+                    }
                   </div>
                 </div>
               }
@@ -280,6 +324,12 @@ interface NewListFormValue {
       }
     }
 
+    .list-card__shared {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
     .list-section--completed .list-group {
       opacity: 0.75;
     }
@@ -305,6 +355,28 @@ export class ShoppingListsOverview {
       .filter((list) => list.status === 'completed')
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
+
+  protected readonly ownedListIds = computed(
+    () =>
+      new Set(
+        this.shoppingListsService
+          .lists()
+          .filter((list) => this.shoppingListsService.isOwner(list))
+          .map((list) => list.id),
+      ),
+  );
+
+  protected readonly sharedCaptions = computed(() => {
+    const captions = new Map<ShoppingListId, string>();
+    for (const list of this.shoppingListsService.lists()) {
+      if (!this.ownedListIds().has(list.id)) {
+        captions.set(list.id, this.t('lists.sharedBy', { name: list.memberNames[list.ownerId] ?? '' }));
+      } else if (list.memberIds.length > 1) {
+        captions.set(list.id, this.t('lists.sharedWith', { count: list.memberIds.length - 1 }));
+      }
+    }
+    return captions;
+  });
 
   protected readonly editingId = signal<ShoppingListId | null>(null);
   protected readonly isPanelOpen = signal(false);

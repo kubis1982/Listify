@@ -39,6 +39,8 @@ export const pl: Record<TranslationKey, string> = {
   'lists.activeSection': 'Listy aktywne',
   'lists.completedSection': 'Zakończone',
   'lists.added': 'Dodano {date}',
+  'lists.sharedBy': 'Udostępniona przez: {name}',
+  'lists.sharedWith': 'Udostępniona · pozostali członkowie: {count}',
   'lists.markComplete': 'Oznacz jako zakończoną',
   'lists.markCompleteFor': 'Oznacz listę {name} jako zakończoną',
   'lists.restore': 'Przywróć',
