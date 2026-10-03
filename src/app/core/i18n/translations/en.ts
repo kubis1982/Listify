@@ -38,7 +38,7 @@ export const en = {
   'lists.completedSection': 'Completed',
   'lists.added': 'Added {date}',
   'lists.sharedBy': 'Shared by {name}',
-  'lists.sharedWith': 'Shared · {count} other members',
+  'lists.sharedWith': 'Shared · {count} people',
   'lists.markComplete': 'Mark complete',
   'lists.markCompleteFor': 'Mark {name} complete',
   'lists.restore': 'Restore',

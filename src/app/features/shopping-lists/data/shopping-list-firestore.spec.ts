@@ -31,4 +31,25 @@ describe('shopping list Firestore mapping', () => {
 
     expect(list.items.map((item) => item.id)).toEqual(['item-z']);
   });
+
+  it('drops malformed items and keeps valid ones', () => {
+    const base = shoppingListToFirestore(buildShoppingList());
+    const list = shoppingListFromFirestore(
+      {
+        ...base,
+        items: {
+          'item-a': milk,
+          'not-object': 'oops',
+          'null-item': null,
+          'no-name': { ...milk, productName: undefined },
+          'bad-quantity': { ...milk, quantity: Number.NaN },
+          'bad-purchased': { ...milk, purchased: 'yes' },
+          'bad-note': { ...milk, note: 5 },
+        },
+      },
+      'list-1',
+    );
+
+    expect(list.items.map((item) => item.id)).toEqual(['item-a']);
+  });
 });

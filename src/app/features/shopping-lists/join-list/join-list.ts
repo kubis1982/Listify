@@ -12,7 +12,9 @@ type JoinState = 'joining' | 'invalid' | 'failed';
     <div class="page">
       @switch (state()) {
         @case ('joining') {
-          <p role="status">{{ t('join.joining') }}</p>
+          <div role="status">
+            <h1>{{ t('join.joining') }}</h1>
+          </div>
         }
         @case ('invalid') {
           <div role="alert">

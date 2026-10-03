@@ -255,7 +255,7 @@ describe('ShoppingListsOverview', () => {
       const root = fixture.nativeElement as HTMLElement;
 
       expect(card(root, 'Ania groceries').textContent).toContain('Shared by Ania');
-      expect(card(root, 'Family groceries').textContent).toContain('Shared · 2 other members');
+      expect(card(root, 'Family groceries').textContent).toContain('Shared · 3 people');
       expect(card(root, 'Private groceries').textContent).not.toContain('Shared');
     });
 

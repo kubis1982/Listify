@@ -372,7 +372,7 @@ export class ShoppingListsOverview {
       if (!this.ownedListIds().has(list.id)) {
         captions.set(list.id, this.t('lists.sharedBy', { name: list.memberNames[list.ownerId] ?? '' }));
       } else if (list.memberIds.length > 1) {
-        captions.set(list.id, this.t('lists.sharedWith', { count: list.memberIds.length - 1 }));
+        captions.set(list.id, this.t('lists.sharedWith', { count: list.memberIds.length }));
       }
     }
     return captions;

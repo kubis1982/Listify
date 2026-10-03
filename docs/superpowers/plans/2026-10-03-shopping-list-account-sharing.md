@@ -32,6 +32,7 @@
 1. **`ShoppingListsStore` instead of field paths in `FirestoreCollection.update`.** `ShoppingListsService` talks to a small domain store (`putItem`, `removeItem`, …). Only its Firestore implementation knows about field paths, so the in-memory fake used by component specs stays trivial. `createFirestoreCollection` still gains `fromFirestore`/`toFirestore` and an `updateFields()` escape hatch, as the spec says.
 2. **Whole-item writes (`items.{id}` = full item).** The spec mentioned per-field writes (`items.{id}.purchased`). If a member deletes an item while another checks it, a per-field write recreates a broken partial item (`{ purchased: true }` with no name). A whole-item write resurrects a complete item instead. Different items never conflict either way.
 3. **Sharing service never throws.** It reports unexpected errors through the existing generic alert and returns `null` / `false` / `'failed'`, so components only branch on results.
+4. **Remove-member confirmation is an inline panel, not a separate dialog.** It is a `role="group"` confirm panel (with an "Also invalidate the current link" checkbox, focus moved into it) inside the share dialog, which avoids a nested dialog for a control that needs a checkbox.
 
 ## Review Focus
 

@@ -14,7 +14,7 @@ export function shoppingListToFirestore(list: ShoppingList): DocumentData {
 }
 
 export function shoppingListFromFirestore(data: DocumentData, id: string): ShoppingList {
-  const items = (data['items'] ?? {}) as Record<string, ShoppingListItem>;
+  const items = (data['items'] ?? {}) as Record<string, unknown>;
   return {
     id,
     name: data['name'],
@@ -23,6 +23,25 @@ export function shoppingListFromFirestore(data: DocumentData, id: string): Shopp
     ownerId: data['ownerId'],
     memberIds: data['memberIds'] ?? [],
     memberNames: data['memberNames'] ?? {},
-    items: Object.entries(items).map(([itemId, item]) => ({ ...item, id: itemId })),
+    items: Object.entries(items)
+      .filter(([, item]) => isValidItem(item))
+      .map(([itemId, item]) => ({ ...(item as ShoppingListItem), id: itemId })),
   };
+}
+
+/** Other accounts write this document too, so stored items are validated defensively. */
+function isValidItem(item: unknown): item is Omit<ShoppingListItem, 'id'> {
+  if (typeof item !== 'object' || item === null) {
+    return false;
+  }
+  const candidate = item as Record<string, unknown>;
+  return (
+    typeof candidate['productName'] === 'string' &&
+    typeof candidate['unitLabel'] === 'string' &&
+    typeof candidate['categoryName'] === 'string' &&
+    typeof candidate['quantity'] === 'number' &&
+    Number.isFinite(candidate['quantity']) &&
+    typeof candidate['purchased'] === 'boolean' &&
+    (candidate['note'] === undefined || typeof candidate['note'] === 'string')
+  );
 }
