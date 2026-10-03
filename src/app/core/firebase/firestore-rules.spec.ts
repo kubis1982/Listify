@@ -204,14 +204,36 @@ describe.skipIf(!emulatorAvailable)('firestore.rules — shoppingLists (sharing)
     return token;
   }
 
-  function join(user: EmulatorUser, listId: string, token: string, uidToAdd = user.uid): Promise<void> {
+  function join(
+    user: EmulatorUser,
+    listId: string,
+    token: string,
+    uidToAdd = user.uid,
+    name = 'Joined',
+  ): Promise<void> {
     const batch = writeBatch(user.firestore);
     batch.set(doc(user.firestore, `shoppingLists/${listId}/joins/${user.uid}`), { token });
     batch.update(listRef(user, listId), {
       memberIds: arrayUnion(uidToAdd),
-      [`memberNames.${uidToAdd}`]: 'Joined',
+      [`memberNames.${uidToAdd}`]: name,
     });
     return batch.commit();
+  }
+
+  // Joins WITHOUT writing joins/{uid}: isJoin's token check then relies on
+  // whatever joins doc already exists.
+  function joinUpdateOnly(user: EmulatorUser, listId: string): Promise<void> {
+    return updateDoc(listRef(user, listId), {
+      memberIds: arrayUnion(user.uid),
+      [`memberNames.${user.uid}`]: 'Rejoined',
+    });
+  }
+
+  function removeMemberUpdateOnly(actor: EmulatorUser, listId: string, uid: string): Promise<void> {
+    return updateDoc(listRef(actor, listId), {
+      memberIds: arrayRemove(uid),
+      [`memberNames.${uid}`]: deleteField(),
+    });
   }
 
   async function sharedList(): Promise<string> {
@@ -228,6 +250,36 @@ describe.skipIf(!emulatorAvailable)('firestore.rules — shoppingLists (sharing)
       const snapshot = await getDoc(doc(owner.firestore, `shoppingLists/${listId}/invite/current`));
 
       expect(snapshot.data()).toEqual({ token });
+    });
+
+    it('denies members and strangers writing the token (pins isStoredListOwner on invite write)', async () => {
+      const listId = await sharedList();
+
+      for (const user of [member, stranger]) {
+        const write = setDoc(doc(user.firestore, `shoppingLists/${listId}/invite/current`), {
+          token: crypto.randomUUID(),
+        });
+        expect(await errorCode(write)).toBe('permission-denied');
+      }
+    });
+
+    it('denies the owner writing a token of 31 or 65 chars (pins validStringLength 32-64)', async () => {
+      const listId = await createList();
+
+      for (const token of ['a'.repeat(31), 'a'.repeat(65)]) {
+        const write = setDoc(doc(owner.firestore, `shoppingLists/${listId}/invite/current`), { token });
+        expect(await errorCode(write)).toBe('permission-denied');
+      }
+    });
+
+    it("denies the owner writing an invite doc other than 'current' (pins inviteId == 'current')", async () => {
+      const listId = await createList();
+
+      const write = setDoc(doc(owner.firestore, `shoppingLists/${listId}/invite/other`), {
+        token: crypto.randomUUID(),
+      });
+
+      expect(await errorCode(write)).toBe('permission-denied');
     });
 
     it('denies members and strangers reading the token', async () => {
@@ -283,6 +335,63 @@ describe.skipIf(!emulatorAvailable)('firestore.rules — shoppingLists (sharing)
     });
   });
 
+  describe('joining — token check and validation', () => {
+    it('denies a join that has no joins/{uid} write (pins isJoin token check via getAfter)', async () => {
+      const listId = await createList();
+      await setInvite(listId);
+
+      expect(await errorCode(joinUpdateOnly(stranger, listId))).toBe('permission-denied');
+    });
+
+    it('denies an update-only re-join once the token was regenerated (stale joins doc)', async () => {
+      const listId = await createList();
+      await join(member, listId, await setInvite(listId));
+      await removeMemberUpdateOnly(owner, listId, member.uid);
+
+      // Control: the stale joins doc still carries the current token, so this is allowed.
+      expect(await errorCode(joinUpdateOnly(member, listId))).toBeNull();
+
+      await removeMemberUpdateOnly(owner, listId, member.uid);
+      await setInvite(listId);
+
+      expect(await errorCode(joinUpdateOnly(member, listId))).toBe('permission-denied');
+    });
+
+    it('denies a join with an empty or over-100-char display name (pins isJoin validStringLength)', async () => {
+      const listId = await createList();
+      const token = await setInvite(listId);
+
+      expect(await errorCode(join(member, listId, token, member.uid, ''))).toBe('permission-denied');
+      expect(await errorCode(join(member, listId, token, member.uid, 'x'.repeat(101)))).toBe('permission-denied');
+    });
+
+    it('denies writing joins/{someoneElse} even with the valid token (pins joins create auth.uid == memberId)', async () => {
+      const listId = await createList();
+      const token = await setInvite(listId);
+
+      const forged = setDoc(doc(stranger.firestore, `shoppingLists/${listId}/joins/${member.uid}`), { token });
+
+      expect(await errorCode(forged)).toBe('permission-denied');
+    });
+
+    it('denies the 21st member joining (pins isValidMemberIds size <= 20)', async () => {
+      const listId = await createList();
+      const token = await setInvite(listId);
+      const extra: EmulatorUser[] = [];
+      try {
+        for (let i = 0; i < 19; i++) {
+          const user = await createEmulatorUser(`Extra ${i}`);
+          extra.push(user);
+          await join(user, listId, token);
+        }
+
+        expect(await errorCode(join(member, listId, token))).toBe('permission-denied');
+      } finally {
+        await Promise.all(extra.map((user) => disposeEmulatorUser(user)));
+      }
+    }, 120_000);
+  });
+
   describe('member permissions', () => {
     it('lets a member write items and change status', async () => {
       const listId = await sharedList();
@@ -314,15 +423,13 @@ describe.skipIf(!emulatorAvailable)('firestore.rules — shoppingLists (sharing)
       expect(await errorCode(deleteDoc(listRef(member, listId)))).toBe('permission-denied');
     });
 
-    it('denies a member removing another member', async () => {
-      const listId = await sharedList();
+    it('denies a member removing another non-owner member (pins isLeave removeAll([auth.uid]))', async () => {
+      const listId = await createList();
+      const token = await setInvite(listId);
+      await join(member, listId, token);
+      await join(stranger, listId, token);
 
-      const removeOwner = updateDoc(listRef(member, listId), {
-        memberIds: arrayRemove(owner.uid),
-        [`memberNames.${owner.uid}`]: deleteField(),
-      });
-
-      expect(await errorCode(removeOwner)).toBe('permission-denied');
+      expect(await errorCode(removeMemberUpdateOnly(member, listId, stranger.uid))).toBe('permission-denied');
     });
   });
 
