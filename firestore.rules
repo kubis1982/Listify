@@ -42,7 +42,7 @@ rules_version = '2';
 //   - memberIds: list<string> (required, 1-20 entries, contains ownerId)
 //   - memberNames: map<uid, string> (required, keys == memberIds)
 //
-// Subcollections (added in a later step):
+// Subcollections:
 //   - shoppingLists/{listId}/invite/current  { token } — owner only
 //   - shoppingLists/{listId}/joins/{uid}     { token } — proof of invite
 //
@@ -200,21 +200,77 @@ service cloud.firestore {
       function isOwnerUpdate() {
         return isListOwner() &&
           areImmutableFieldsUnchanged(['id', 'createdAt', 'ownerId']) &&
-          request.resource.data.memberIds.toSet().difference(resource.data.memberIds.toSet()).size() == 0;
+          request.resource.data.memberIds.toSet().difference(resource.data.memberIds.toSet()).size() == 0 &&
+          memberNamesDiff().addedKeys().size() == 0 &&
+          memberNamesDiff().changedKeys().size() == 0;
       }
 
       function isMemberUpdate() {
         return isListMember() && changedKeys().hasOnly(['items', 'status']);
       }
 
+      function invitePath() {
+        return /databases/$(database)/documents/shoppingLists/$(listId)/invite/current;
+      }
+
+      function joinPath(uid) {
+        return /databases/$(database)/documents/shoppingLists/$(listId)/joins/$(uid);
+      }
+
+      function isStoredListOwner() {
+        return isAuthenticated() &&
+          get(/databases/$(database)/documents/shoppingLists/$(listId)).data.ownerId == request.auth.uid;
+      }
+
+      function memberNamesDiff() {
+        return request.resource.data.memberNames.diff(resource.data.memberNames);
+      }
+
+      // A non-member appends exactly their own uid and name, and the same
+      // batch must leave behind joins/{uid} carrying the current token.
+      function isJoin() {
+        return isAuthenticated() &&
+          !(request.auth.uid in resource.data.memberIds) &&
+          changedKeys().hasOnly(['memberIds', 'memberNames']) &&
+          request.resource.data.memberIds == resource.data.memberIds.concat([request.auth.uid]) &&
+          memberNamesDiff().affectedKeys().hasOnly([request.auth.uid]) &&
+          validStringLength(request.resource.data.memberNames[request.auth.uid], 1, 100) &&
+          getAfter(joinPath(request.auth.uid)).data.token == get(invitePath()).data.token;
+      }
+
+      function isLeave() {
+        return isListMember() &&
+          request.auth.uid != resource.data.ownerId &&
+          changedKeys().hasOnly(['memberIds', 'memberNames']) &&
+          request.resource.data.memberIds == resource.data.memberIds.removeAll([request.auth.uid]) &&
+          memberNamesDiff().affectedKeys().hasOnly([request.auth.uid]);
+      }
+
       allow read: if isListMember();
       allow create: if isAuthenticated() &&
         isValidShoppingList(request.resource.data, listId) &&
         request.resource.data.ownerId == request.auth.uid &&
-        request.resource.data.memberIds == [request.auth.uid];
+        request.resource.data.memberIds == [request.auth.uid] &&
+        validStringLength(request.resource.data.memberNames[request.auth.uid], 1, 100);
       allow update: if isValidShoppingList(request.resource.data, listId) &&
-        (isOwnerUpdate() || isMemberUpdate());
+        (isOwnerUpdate() || isMemberUpdate() || isJoin() || isLeave());
       allow delete: if isListOwner();
+
+      match /invite/{inviteId} {
+        allow read, delete: if inviteId == 'current' && isStoredListOwner();
+        allow create, update: if inviteId == 'current' && isStoredListOwner() &&
+          hasOnlyAllowedFields(request.resource.data, ['token']) &&
+          validStringLength(request.resource.data.token, 32, 64);
+      }
+
+      match /joins/{memberId} {
+        allow read, delete: if isAuthenticated() &&
+          (request.auth.uid == memberId || isStoredListOwner());
+        allow create, update: if isAuthenticated() && request.auth.uid == memberId &&
+          hasOnlyAllowedFields(request.resource.data, ['token']) &&
+          hasRequiredFields(request.resource.data, ['token']) &&
+          request.resource.data.token == get(invitePath()).data.token;
+      }
     }
   }
 }
