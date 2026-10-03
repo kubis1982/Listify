@@ -2,6 +2,13 @@ import { computed, inject, signal, Service } from '@angular/core';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
 import { FIREBASE_AUTH } from '../firebase/firebase.providers';
 
+const FALLBACK_DISPLAY_NAME = 'Listify';
+
+/** The name other members of a shared list see; 1-100 chars as firestore.rules requires. */
+export function toDisplayName(user: Pick<User, 'displayName' | 'email'> | null | undefined): string {
+  return (user?.displayName || user?.email || FALLBACK_DISPLAY_NAME).slice(0, 100);
+}
+
 @Service()
 export class AuthService {
   private readonly auth = inject(FIREBASE_AUTH);
@@ -9,6 +16,7 @@ export class AuthService {
 
   readonly user = this.currentUser.asReadonly();
   readonly uid = computed(() => this.user()?.uid ?? null);
+  readonly displayName = computed(() => toDisplayName(this.user()));
 
   constructor() {
     onAuthStateChanged(this.auth, (user) => this.currentUser.set(user));

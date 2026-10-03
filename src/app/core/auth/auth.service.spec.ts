@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { FIREBASE_AUTH } from '../firebase/firebase.providers';
-import { AuthService } from './auth.service';
+import { AuthService, toDisplayName } from './auth.service';
 
 type AuthStateCallback = (user: { uid: string } | null) => void;
 
@@ -66,5 +66,24 @@ describe('AuthService', () => {
     // popup capability); the assertion is that AuthService swallows it.
     await expect(service.signInWithGoogle()).resolves.toBeUndefined();
     expect(service.user()).toBeUndefined();
+  });
+});
+
+describe('toDisplayName', () => {
+  it('prefers the Google display name', () => {
+    expect(toDisplayName({ displayName: 'Ania', email: 'ania@example.com' })).toBe('Ania');
+  });
+
+  it('falls back to the e-mail when there is no display name', () => {
+    expect(toDisplayName({ displayName: null, email: 'ania@example.com' })).toBe('ania@example.com');
+  });
+
+  it('never returns an empty name', () => {
+    expect(toDisplayName({ displayName: '', email: null })).toBe('Listify');
+    expect(toDisplayName(null)).toBe('Listify');
+  });
+
+  it('truncates names to the 100 characters firestore.rules accepts', () => {
+    expect(toDisplayName({ displayName: 'x'.repeat(150), email: null })).toHaveLength(100);
   });
 });

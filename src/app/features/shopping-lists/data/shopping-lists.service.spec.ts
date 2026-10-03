@@ -1,15 +1,51 @@
 import { TestBed } from '@angular/core/testing';
-import { createInMemoryCollection } from '../../../core/testing/in-memory-collection';
+import { AuthService } from '../../../core/auth/auth.service';
+import { createFakeAuthService } from '../../../testing/fake-auth-service';
+import { buildShoppingList, provideFakeShoppingListsStore } from '../../../testing/in-memory-shopping-lists-store';
 import { Product } from '../../products/data/product.model';
-import { ShoppingListsService, SHOPPING_LISTS_COLLECTION } from './shopping-lists.service';
+import { ShoppingListsService } from './shopping-lists.service';
 
 describe('ShoppingListsService', () => {
   const product: Product = { id: 'p1', name: 'Milk 3.2%', unitSymbol: 'l', categoryName: 'Dairy' };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [{ provide: SHOPPING_LISTS_COLLECTION, useFactory: () => createInMemoryCollection() }],
+      providers: [provideFakeShoppingListsStore(), { provide: AuthService, useValue: createFakeAuthService() }],
     });
+  });
+
+  it('addList makes the signed-in user the owner and only member', () => {
+    const list = TestBed.inject(ShoppingListsService).addList('Weekend shopping');
+
+    expect(list.ownerId).toBe('test-uid');
+    expect(list.memberIds).toEqual(['test-uid']);
+    expect(list.memberNames).toEqual({ 'test-uid': 'Test User' });
+  });
+
+  it('importList makes the signed-in user the owner', () => {
+    const list = TestBed.inject(ShoppingListsService).importList({ name: 'Imported', items: [] });
+
+    expect(list.ownerId).toBe('test-uid');
+    expect(list.memberIds).toEqual(['test-uid']);
+  });
+
+  it('isOwner distinguishes own lists from lists shared with the user', () => {
+    const service = TestBed.inject(ShoppingListsService);
+
+    expect(service.isOwner(buildShoppingList())).toBe(true);
+    expect(service.isOwner(buildShoppingList({ ownerId: 'someone-else' }))).toBe(false);
+  });
+
+  it('removeItem leaves the other items untouched', () => {
+    const service = TestBed.inject(ShoppingListsService);
+    const list = service.addList('Weekend shopping');
+    service.addItemFromProduct(list.id, product, 'l', 1);
+    service.addItemFromProduct(list.id, { ...product, id: 'p2', name: 'Bread' }, 'pcs', 1);
+    const [first, second] = service.lists()[0].items;
+
+    service.removeItem(list.id, first.id);
+
+    expect(service.lists()[0].items).toEqual([second]);
   });
 
   it('starts with no lists', () => {

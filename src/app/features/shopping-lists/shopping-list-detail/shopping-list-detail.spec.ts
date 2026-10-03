@@ -2,12 +2,15 @@ import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
+import { AuthService } from '../../../core/auth/auth.service';
+import { createFakeAuthService } from '../../../testing/fake-auth-service';
+import { provideFakeShoppingListsStore } from '../../../testing/in-memory-shopping-lists-store';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { provideFakeCollection } from '../../../core/testing/in-memory-collection';
 import { CategoriesService, CATEGORIES_COLLECTION } from '../../categories/data/categories.service';
 import { ProductsService, PRODUCTS_COLLECTION } from '../../products/data/products.service';
 import { UnitsService, UNITS_COLLECTION } from '../../units/data/units.service';
-import { ShoppingListsService, SHOPPING_LISTS_COLLECTION } from '../data/shopping-lists.service';
+import { ShoppingListsService } from '../data/shopping-lists.service';
 import { ShoppingListDetail } from './shopping-list-detail';
 
 async function selectProductViaPicker(root: HTMLElement, productName: string): Promise<void> {
@@ -43,7 +46,8 @@ describe('ShoppingListDetail', () => {
       imports: [ShoppingListDetail],
       providers: [
         provideRouter([]),
-        provideFakeCollection(SHOPPING_LISTS_COLLECTION),
+        provideFakeShoppingListsStore(),
+        { provide: AuthService, useValue: createFakeAuthService() },
         provideFakeCollection(CATEGORIES_COLLECTION),
         provideFakeCollection(UNITS_COLLECTION),
         provideFakeCollection(PRODUCTS_COLLECTION),
@@ -630,7 +634,8 @@ describe('ShoppingListDetail sharing', () => {
       imports: [ShoppingListDetail],
       providers: [
         provideRouter([]),
-        provideFakeCollection(SHOPPING_LISTS_COLLECTION),
+        provideFakeShoppingListsStore(),
+        { provide: AuthService, useValue: createFakeAuthService() },
         provideFakeCollection(CATEGORIES_COLLECTION),
         provideFakeCollection(UNITS_COLLECTION),
         provideFakeCollection(PRODUCTS_COLLECTION),

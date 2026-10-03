@@ -3,9 +3,11 @@ import localePl from '@angular/common/locales/pl';
 import { ApplicationRef, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { AuthService } from '../../../core/auth/auth.service';
+import { createFakeAuthService } from '../../../testing/fake-auth-service';
+import { buildShoppingList, provideFakeShoppingListsStore } from '../../../testing/in-memory-shopping-lists-store';
 import { I18n } from '../../../core/i18n/i18n.service';
-import { provideFakeCollection, createInMemoryCollection } from '../../../core/testing/in-memory-collection';
-import { ShoppingListsService, SHOPPING_LISTS_COLLECTION } from '../data/shopping-lists.service';
+import { ShoppingListsService } from '../data/shopping-lists.service';
 import { ShoppingListsOverview } from './shopping-lists-overview';
 
 // DatePipe throws NG0701 for locale 'pl' unless its locale data is registered.
@@ -38,7 +40,8 @@ describe('ShoppingListsOverview', () => {
       imports: [ShoppingListsOverview],
       providers: [
         provideRouter([{ path: 'lists/:id', component: DummyDetailComponent }]),
-        provideFakeCollection(SHOPPING_LISTS_COLLECTION),
+        provideFakeShoppingListsStore(),
+        { provide: AuthService, useValue: createFakeAuthService() },
       ],
     });
   });
@@ -199,19 +202,10 @@ describe('ShoppingListsOverview', () => {
   it('formats the created-at date in the selected language', () => {
     TestBed.configureTestingModule({
       providers: [
-        {
-          provide: SHOPPING_LISTS_COLLECTION,
-          useFactory: () =>
-            createInMemoryCollection([
-              {
-                id: '1',
-                name: 'Weekly groceries',
-                createdAt: '2026-03-05T12:00:00.000Z',
-                status: 'active',
-                items: [],
-              },
-            ]),
-        },
+        provideFakeShoppingListsStore([
+          buildShoppingList({ id: '1', createdAt: '2026-03-05T12:00:00.000Z' }),
+        ]),
+        { provide: AuthService, useValue: createFakeAuthService() },
       ],
     });
     const fixture = TestBed.createComponent(ShoppingListsOverview);
