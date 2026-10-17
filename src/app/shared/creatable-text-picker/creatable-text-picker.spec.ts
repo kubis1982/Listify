@@ -70,6 +70,13 @@ describe('CreatableTextPicker', () => {
     expect(optionTexts()).toEqual(['Create unit "pcs"']);
   });
 
+  it('hides the create action when creating is not allowed', async () => {
+    const fixture = createPicker(['l', 'kg']);
+    fixture.componentRef.setInput('allowCreate', false);
+    await typeQuery(fixture.nativeElement, 'pcs');
+    expect(optionTexts()).toEqual([]);
+  });
+
   it('selecting an existing option sets the value and updates the input text', async () => {
     const fixture = createPicker(['l', 'kg']);
     await typeQuery(fixture.nativeElement, 'kg');

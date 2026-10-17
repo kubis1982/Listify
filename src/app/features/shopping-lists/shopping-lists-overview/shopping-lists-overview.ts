@@ -10,6 +10,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
+import { MatAutocomplete, MatAutocompleteTrigger, MatOption } from '@angular/material/autocomplete';
 import { Router, RouterLink } from '@angular/router';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
@@ -24,7 +25,7 @@ interface NewListFormValue {
 
 @Component({
   selector: 'app-shopping-lists-overview',
-  imports: [DatePipe, RouterLink, FormField, FabPanel],
+  imports: [DatePipe, RouterLink, FormField, FabPanel, MatAutocomplete, MatAutocompleteTrigger, MatOption],
   template: `
     <div class="page">
       <div class="page-header">
@@ -299,8 +300,15 @@ interface NewListFormValue {
           id="new-list-name"
           type="text"
           class="field-input"
+          autocomplete="off"
           [formField]="newListForm.name"
+          [matAutocomplete]="nameSuggestionsPanel"
         />
+        <mat-autocomplete #nameSuggestionsPanel="matAutocomplete" [aria-label]="t('lists.nameSuggestions')">
+          @for (suggestion of nameSuggestions(); track suggestion) {
+            <mat-option [value]="suggestion">{{ suggestion }}</mat-option>
+          }
+        </mat-autocomplete>
         @if (newListForm.name().invalid() && newListForm.name().touched()) {
           <span class="field-error">{{ t('common.nameRequired') }}</span>
         }
@@ -386,6 +394,26 @@ export class ShoppingListsOverview {
   private readonly model = signal<NewListFormValue>({ name: '' });
   protected readonly newListForm = form(this.model, (path) => {
     required(path.name);
+  });
+
+  /**
+   * Names of earlier lists (active and completed, deduplicated ignoring case)
+   * that contain the typed text, offered as suggestions for the name field.
+   */
+  protected readonly nameSuggestions = computed(() => {
+    const query = this.newListForm.name().value().trim().toLowerCase();
+    const names = new Map<string, string>();
+    for (const list of this.shoppingListsService.lists()) {
+      const name = list.name.trim();
+      const key = name.toLowerCase();
+      if (name && !names.has(key)) {
+        names.set(key, name);
+      }
+    }
+    return [...names.entries()]
+      .filter(([key]) => key.includes(query) && key !== query)
+      .map(([, name]) => name)
+      .sort((a, b) => a.localeCompare(b));
   });
 
   constructor() {

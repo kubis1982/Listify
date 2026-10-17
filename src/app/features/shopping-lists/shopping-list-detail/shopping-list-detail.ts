@@ -1,22 +1,27 @@
 import { Dialog } from '@angular/cdk/dialog';
 import {
+  afterNextRender,
   afterRenderEffect,
   Component,
   computed,
   effect,
   ElementRef,
   inject,
+  Injector,
   input,
-  linkedSignal,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { FormField, form, min, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { I18n } from '../../../core/i18n/i18n.service';
 import { TranslationKey } from '../../../core/i18n/translations/en';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { CreatableTextPicker } from '../../../shared/creatable-text-picker/creatable-text-picker';
 import { FabPanel } from '../../../shared/fab-panel/fab-panel';
 import { ProductPicker } from '../../../shared/product-picker/product-picker';
+import { CategoriesService } from '../../categories/data/categories.service';
 import { ProductsService } from '../../products/data/products.service';
 import { UnitsService } from '../../units/data/units.service';
 import { toExportFilename, toShoppingListExport } from '../data/shopping-list-export';
@@ -25,8 +30,10 @@ import { ShoppingListsService } from '../data/shopping-lists.service';
 import { ShareListDialog, ShareListDialogData } from '../share-list-dialog/share-list-dialog';
 
 interface ItemFormValue {
-  productId: string;
+  productName: string;
   quantity: number;
+  unitSymbol: string;
+  categoryName: string;
   note: string;
 }
 
@@ -35,12 +42,18 @@ interface EditItemFormValue {
   note: string;
 }
 
-const EMPTY_ITEM_FORM: ItemFormValue = { productId: '', quantity: 1, note: '' };
+const EMPTY_ITEM_FORM: ItemFormValue = {
+  productName: '',
+  quantity: 1,
+  unitSymbol: '',
+  categoryName: '',
+  note: '',
+};
 const EMPTY_EDIT_ITEM_FORM: EditItemFormValue = { quantity: 1, note: '' };
 
 @Component({
   selector: 'app-shopping-list-detail',
-  imports: [RouterLink, FormField, FabPanel, ProductPicker],
+  imports: [RouterLink, FormField, FabPanel, ProductPicker, CreatableTextPicker],
   template: `
     <div class="page">
       <a class="back-link" routerLink="/lists">
@@ -330,11 +343,13 @@ const EMPTY_EDIT_ITEM_FORM: EditItemFormValue = { quantity: 1, note: '' };
                 <app-product-picker
                   [inputId]="'add-item-product'"
                   [products]="sortedProducts()"
-                  [formField]="itemForm.productId"
-                  (productCreated)="focusItemQuantity()"
+                  [formField]="itemForm.productName"
+                  (productSelected)="focusItemQuantity()"
                 />
-                @if (itemForm.productId().invalid() && itemForm.productId().touched()) {
+                @if (itemForm.productName().invalid() && itemForm.productName().touched()) {
                   <span class="field-error">{{ t('listDetail.productRequired') }}</span>
+                } @else if (isNewProduct()) {
+                  <span class="field-info">{{ t('listDetail.newProductHint') }}</span>
                 }
 
                 <div class="field-row">
@@ -395,21 +410,40 @@ const EMPTY_EDIT_ITEM_FORM: EditItemFormValue = { quantity: 1, note: '' };
                   </div>
                   <div class="field-group">
                     <label class="field-label" for="add-item-unit">{{ t('listDetail.unit') }}</label>
-                    <select
-                      id="add-item-unit"
-                      class="field-input"
-                      [value]="selectedUnitSymbol()"
-                      (change)="onUnitChange($event)"
-                    >
-                      @for (symbol of unitSymbolOptions(); track symbol) {
-                        <option [value]="symbol">{{ symbol }}</option>
-                      }
-                    </select>
-                    @if (unitMissingError()) {
+                    <app-creatable-text-picker
+                      inputId="add-item-unit"
+                      [options]="unitSymbols()"
+                      [hintText]="t('unitPicker.hint')"
+                      [resultsLabel]="t('unitPicker.results')"
+                      [createOptionLabel]="unitCreateOptionLabel"
+                      [clearLabel]="t('unitPicker.clear')"
+                      [toggleLabel]="t('unitPicker.toggle')"
+                      [allowCreate]="isNewProduct()"
+                      [onCreate]="normalizeUnitSymbol"
+                      [formField]="itemForm.unitSymbol"
+                    />
+                    @if (itemForm.unitSymbol().invalid() && itemForm.unitSymbol().touched()) {
                       <span class="field-error">{{ t('listDetail.unitRequired') }}</span>
                     }
                   </div>
                 </div>
+
+                <label class="field-label" for="add-item-category">{{ t('listDetail.category') }}</label>
+                <app-creatable-text-picker
+                  inputId="add-item-category"
+                  [options]="categoryNames()"
+                  [hintText]="t('categoryPicker.hint')"
+                  [resultsLabel]="t('categoryPicker.results')"
+                  [createOptionLabel]="categoryCreateOptionLabel"
+                  [clearLabel]="t('categoryPicker.clear')"
+                  [toggleLabel]="t('categoryPicker.toggle')"
+                  [allowCreate]="isNewProduct()"
+                  [onCreate]="normalizeCategoryName"
+                  [formField]="itemForm.categoryName"
+                />
+                @if (itemForm.categoryName().invalid() && itemForm.categoryName().touched()) {
+                  <span class="field-error">{{ t('listDetail.categoryRequired') }}</span>
+                }
 
                 <label class="field-label" for="add-item-note">{{ t('listDetail.note') }}</label>
                 <input
@@ -682,10 +716,13 @@ export class ShoppingListDetail {
 
   protected readonly t = inject(I18n).t;
 
+  private readonly injector = inject(Injector);
   private readonly dialog = inject(Dialog);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
   protected readonly shoppingListsService = inject(ShoppingListsService);
   protected readonly productsService = inject(ProductsService);
   protected readonly unitsService = inject(UnitsService);
+  protected readonly categoriesService = inject(CategoriesService);
 
   protected readonly list = computed(() =>
     this.shoppingListsService.lists().find((l) => l.id === this.id()),
@@ -727,14 +764,15 @@ export class ShoppingListDetail {
   protected readonly isItemPanelOpen = signal(false);
   protected readonly editingItemId = signal<ShoppingListItemId | null>(null);
   protected readonly feedbackKey = signal<TranslationKey | null>(null);
-  protected readonly unitMissingError = signal(false);
   private feedbackTimeoutId?: ReturnType<typeof setTimeout>;
 
   private readonly itemModel = signal<ItemFormValue>({ ...EMPTY_ITEM_FORM });
   protected readonly itemForm = form(this.itemModel, (path) => {
-    required(path.productId, { message: () => this.t('listDetail.productRequired') });
+    required(path.productName, { message: () => this.t('listDetail.productRequired') });
     required(path.quantity);
     min(path.quantity, 0.01);
+    required(path.unitSymbol);
+    required(path.categoryName);
   });
 
   private readonly editItemModel = signal<EditItemFormValue>({ ...EMPTY_EDIT_ITEM_FORM });
@@ -749,18 +787,36 @@ export class ShoppingListDetail {
   );
   private readonly productPicker = viewChild(ProductPicker);
 
-  protected readonly selectedUnitSymbol = linkedSignal(() => {
-    const product = this.productsService
-      .products()
-      .find((p) => p.id === this.itemForm.productId().value());
-    return product?.unitSymbol ?? '';
+  /** The registered product whose name matches the typed one, if any. */
+  protected readonly matchedProduct = computed(() => {
+    const name = this.itemForm.productName().value().trim().toLowerCase();
+    return name
+      ? this.productsService.products().find((product) => product.name.toLowerCase() === name)
+      : undefined;
   });
 
-  protected readonly unitSymbolOptions = computed(() => {
-    const symbols = this.unitsService.units().map((unit) => unit.symbol);
-    const current = this.selectedUnitSymbol();
-    return current && !symbols.includes(current) ? [...symbols, current] : symbols;
-  });
+  protected readonly isNewProduct = computed(
+    () => this.itemForm.productName().value().trim() !== '' && !this.matchedProduct(),
+  );
+
+  protected readonly unitSymbols = computed(() => this.unitsService.units().map((unit) => unit.symbol));
+  protected readonly categoryNames = computed(() =>
+    this.categoriesService.categories().map((category) => category.name),
+  );
+
+  protected readonly unitCreateOptionLabel = (name: string): string =>
+    this.t('unitPicker.createOption', { name });
+  protected readonly categoryCreateOptionLabel = (name: string): string =>
+    this.t('categoryPicker.createOption', { name });
+
+  // New units and categories picked here are only held in the form; they get
+  // registered on submit, and only if the user agrees to register the product.
+  protected readonly normalizeUnitSymbol = (text: string): string => text.trim().toLowerCase();
+  protected readonly normalizeCategoryName = (text: string): string => text.trim();
+
+  // `undefined` until the first run, so the initial empty form also gets the
+  // new-product defaults applied.
+  private previousMatchedProductId: string | null | undefined;
 
   constructor() {
     afterRenderEffect(() => {
@@ -774,18 +830,38 @@ export class ShoppingListDetail {
       }
     });
 
+    // Fills unit and category from the product whenever the typed name starts
+    // or stops matching a registered product. Only reacts to that transition,
+    // so the user can still change the prefilled values afterwards.
     effect(() => {
-      this.selectedUnitSymbol();
-      this.unitMissingError.set(false);
+      const product = this.matchedProduct();
+      const productId = product?.id ?? null;
+      if (productId === this.previousMatchedProductId) {
+        return;
+      }
+      this.previousMatchedProductId = productId;
+      const defaults = product
+        ? { unitSymbol: product.unitSymbol, categoryName: product.categoryName }
+        : { unitSymbol: untracked(this.unitsService.defaultUnit)?.symbol ?? '', categoryName: '' };
+      this.itemModel.update((value) => ({ ...value, ...defaults }));
+    });
+
+    // Units load asynchronously, so the default unit may arrive after the form
+    // was prefilled; fill it in if the new-product unit is still empty.
+    effect(() => {
+      const symbol = this.unitsService.defaultUnit()?.symbol;
+      if (symbol && !this.matchedProduct() && !untracked(this.itemModel).unitSymbol) {
+        this.itemModel.update((value) => ({ ...value, unitSymbol: symbol }));
+      }
     });
   }
 
   protected focusItemQuantity(): void {
-    this.addItemQuantityInput()?.nativeElement.focus();
-  }
-
-  protected onUnitChange(event: Event): void {
-    this.selectedUnitSymbol.set((event.target as HTMLSelectElement).value);
+    // MatAutocompleteTrigger refocuses its own input right after emitting
+    // `optionSelected`, so move focus only once that has settled.
+    afterNextRender(() => this.addItemQuantityInput()?.nativeElement.focus(), {
+      injector: this.injector,
+    });
   }
 
   protected adjustItemQuantity(delta: number): void {
@@ -871,10 +947,8 @@ export class ShoppingListDetail {
 
   protected cancel(): void {
     this.editingItemId.set(null);
-    this.itemForm().reset({ ...EMPTY_ITEM_FORM });
+    this.resetItemForm();
     this.editItemForm().reset({ ...EMPTY_EDIT_ITEM_FORM });
-    this.unitMissingError.set(false);
-    this.productPicker()?.resetQuery();
     this.isItemPanelOpen.set(false);
   }
 
@@ -895,34 +969,68 @@ export class ShoppingListDetail {
     this.cancel();
   }
 
-  protected addItem(event: Event): void {
+  protected async addItem(event: Event): Promise<void> {
     event.preventDefault();
     this.itemForm().markAsTouched();
     if (this.itemForm().invalid()) {
       return;
     }
 
-    const { productId, quantity, note } = this.itemModel();
-    const product = this.productsService.products().find((p) => p.id === productId);
-    if (!product) {
-      return;
-    }
-    const unitSymbol = this.selectedUnitSymbol().trim();
-    if (!unitSymbol) {
-      this.unitMissingError.set(true);
+    const { productName, quantity, unitSymbol, categoryName, note } = this.itemModel();
+    const name = productName.trim();
+    if (!name) {
       return;
     }
 
-    const merged = this.shoppingListsService.addItemFromProduct(
+    const product = this.matchedProduct();
+    if (!product) {
+      const register = await this.confirmDialogService.ask({
+        title: this.t('listDetail.registerProductTitle'),
+        message: this.t('listDetail.registerProductMessage', { name }),
+        confirmLabel: this.t('listDetail.registerProductConfirm'),
+        cancelLabel: this.t('listDetail.registerProductDecline'),
+      });
+      if (register === undefined) {
+        return;
+      }
+      if (register) {
+        this.registerProduct(name, unitSymbol, categoryName);
+      }
+    }
+
+    const merged = this.shoppingListsService.addItem(
       this.id(),
-      product,
+      { name: product?.name ?? name, categoryName },
       unitSymbol,
       quantity,
       note.trim() ? note.trim() : undefined,
     );
 
-    this.itemForm().reset({ ...EMPTY_ITEM_FORM });
+    this.resetItemForm();
     this.showFeedback(merged ? 'listDetail.mergedFeedback' : null);
+  }
+
+  private registerProduct(name: string, unitSymbol: string, categoryName: string): void {
+    const unitExists = this.unitsService
+      .units()
+      .some((unit) => unit.symbol.toLowerCase() === unitSymbol.toLowerCase());
+    if (!unitExists) {
+      this.unitsService.add({ symbol: unitSymbol });
+    }
+    const categoryExists = this.categoriesService
+      .categories()
+      .some((category) => category.name.toLowerCase() === categoryName.toLowerCase());
+    if (!categoryExists) {
+      this.categoriesService.add({ name: categoryName });
+    }
+    this.productsService.add({ name, unitSymbol, categoryName });
+  }
+
+  private resetItemForm(): void {
+    this.itemForm().reset({
+      ...EMPTY_ITEM_FORM,
+      unitSymbol: this.unitsService.defaultUnit()?.symbol ?? '',
+    });
   }
 
   private showFeedback(key: TranslationKey | null): void {

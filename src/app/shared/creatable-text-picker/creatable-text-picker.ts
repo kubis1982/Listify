@@ -91,7 +91,7 @@ const CREATE_OPTION = Symbol('create-text-option');
       @for (option of filteredOptions(); track option) {
         <mat-option [value]="option">{{ option }}</mat-option>
       } @empty {
-        @if (queryText().trim() !== '') {
+        @if (allowCreate() && queryText().trim() !== '') {
           <mat-option [value]="createOptionValue">
             <span class="creatable-text-picker__create-option">
               <svg
@@ -166,6 +166,8 @@ export class CreatableTextPicker implements FormValueControl<string> {
   readonly clearLabel = input.required<string>();
   readonly toggleLabel = input.required<string>();
   readonly onCreate = input.required<(text: string) => string>();
+  /** When false, only existing options can be picked — the "create" row is hidden. */
+  readonly allowCreate = input(true);
   readonly value = model.required<string>();
   readonly touch = output<void>();
   readonly created = output<void>();

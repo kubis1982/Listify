@@ -15,13 +15,6 @@ async function typeQuery(root: HTMLElement, query: string): Promise<void> {
   await TestBed.inject(ApplicationRef).whenStable();
 }
 
-async function typeInPicker(inputId: string, query: string): Promise<void> {
-  const input = document.querySelector<HTMLInputElement>(`#${inputId}`)!;
-  input.value = query;
-  input.dispatchEvent(new Event('input'));
-  await TestBed.inject(ApplicationRef).whenStable();
-}
-
 function optionTexts(): string[] {
   return Array.from(document.querySelectorAll('mat-option')).map((el) => el.textContent?.trim() ?? '');
 }
@@ -73,7 +66,7 @@ describe('ProductPicker', () => {
   it('shows no options and the search hint when the query is blank', () => {
     const fixture = createPicker();
     expect(document.querySelectorAll('mat-option').length).toBe(0);
-    expect(fixture.nativeElement.textContent).toContain('Start typing to search products.');
+    expect(fixture.nativeElement.textContent).toContain('Start typing to search products or enter a new one.');
   });
 
   it('filters products by case-insensitive substring match', async () => {
@@ -82,76 +75,41 @@ describe('ProductPicker', () => {
     expect(optionTexts()).toEqual(['Milk']);
   });
 
-  it('shows a create action when the query has no matches', async () => {
+  it('shows no suggestions for a name that matches no product', async () => {
     const fixture = createPicker();
     await typeQuery(fixture.nativeElement, 'Eggs');
-    expect(optionTexts()).toEqual(['Create product "Eggs"']);
+    expect(optionTexts()).toEqual([]);
   });
 
-  it('selecting an existing product sets the value and updates the input text', async () => {
+  it('keeps a typed name that matches no product as the value', async () => {
     const fixture = createPicker();
-    await typeQuery(fixture.nativeElement, 'mil');
-    clickOption('Milk');
-    await TestBed.inject(ApplicationRef).whenStable();
+    await typeQuery(fixture.nativeElement, 'Eggs');
 
-    expect(fixture.componentInstance.value()).toBe(milk.id);
-    expect(fixture.nativeElement.querySelector('input').value).toBe('Milk');
+    expect(fixture.componentInstance.value()).toBe('Eggs');
+    expect(fixture.nativeElement.querySelector('input').value).toBe('Eggs');
   });
 
-  it('selecting the create action opens the dialog and selects the created product on save', async () => {
+  it('selecting a suggested product sets its name as the value and emits productSelected', async () => {
     const fixture = createPicker();
-    let productCreated = false;
-    fixture.componentInstance.productCreated.subscribe(() => {
-      productCreated = true;
+    let selected = false;
+    fixture.componentInstance.productSelected.subscribe(() => {
+      selected = true;
     });
-    await typeQuery(fixture.nativeElement, 'Eggs');
-    clickOption('Create product "Eggs"');
-    await TestBed.inject(ApplicationRef).whenStable();
-
-    const nameInput = document.querySelector<HTMLInputElement>('#create-product-name')!;
-    expect(nameInput.value).toBe('Eggs');
-
-    await typeInPicker('create-product-unit', 'l');
-    clickOption('l');
-    await TestBed.inject(ApplicationRef).whenStable();
-    await typeInPicker('create-product-category', 'Dairy');
-    clickOption('Dairy');
-    await TestBed.inject(ApplicationRef).whenStable();
-    document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
-    await TestBed.inject(ApplicationRef).whenStable();
-
-    const productsService = TestBed.inject(ProductsService);
-    const created = productsService.products().find((p) => p.name === 'Eggs')!;
-    expect(fixture.componentInstance.value()).toBe(created.id);
-    expect(fixture.nativeElement.querySelector('input').value).toBe('Eggs');
-    expect(productCreated).toBe(true);
-  });
-
-  it('leaves the value unchanged when the create dialog is cancelled', async () => {
-    const fixture = createPicker();
-    await typeQuery(fixture.nativeElement, 'Eggs');
-    clickOption('Create product "Eggs"');
-    await TestBed.inject(ApplicationRef).whenStable();
-
-    document.querySelector<HTMLButtonElement>('.btn-outline-pill')!.click();
-    await TestBed.inject(ApplicationRef).whenStable();
-
-    expect(fixture.componentInstance.value()).toBe('');
-    expect(fixture.nativeElement.querySelector('input').value).toBe('Eggs');
-    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('input'));
-  });
-
-  it('clears the value when the query is edited away from the selected product', async () => {
-    const fixture = createPicker();
     await typeQuery(fixture.nativeElement, 'mil');
     clickOption('Milk');
     await TestBed.inject(ApplicationRef).whenStable();
-    expect(fixture.componentInstance.value()).toBe(milk.id);
 
-    await typeQuery(fixture.nativeElement, 'Something else');
+    expect(fixture.componentInstance.value()).toBe('Milk');
+    expect(fixture.nativeElement.querySelector('input').value).toBe('Milk');
+    expect(selected).toBe(true);
+  });
 
-    expect(fixture.componentInstance.value()).toBe('');
-    expect(fixture.nativeElement.querySelector('input').value).toBe('Something else');
+  it('shows an externally set value in the input', async () => {
+    const fixture = createPicker();
+    fixture.componentRef.setInput('value', 'Bread');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(fixture.nativeElement.querySelector('input').value).toBe('Bread');
   });
 
   it('emits touch when the input loses focus', () => {
@@ -172,14 +130,14 @@ describe('ProductPicker', () => {
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'Start typing to search products.',
+      'Start typing to search products or enter a new one.',
     );
 
     TestBed.inject(I18n).setLanguage('pl');
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'Zacznij pisać, aby wyszukać produkty.',
+      'Zacznij pisać, aby wyszukać produkt lub wpisać nowy.',
     );
   });
 

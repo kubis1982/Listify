@@ -1,6 +1,6 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { ApplicationRef } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -30,17 +30,52 @@ async function selectProductViaPicker(root: HTMLElement, productName: string): P
   await TestBed.inject(ApplicationRef).whenStable();
 }
 
-async function selectInTextPicker(inputId: string, optionText: string): Promise<void> {
+async function typeInTextPicker(inputId: string, text: string): Promise<void> {
   const input = document.querySelector<HTMLInputElement>(`#${inputId}`)!;
-  input.value = optionText;
+  input.value = text;
   input.dispatchEvent(new Event('input'));
   await TestBed.inject(ApplicationRef).whenStable();
+}
+
+function optionTexts(): string[] {
+  return Array.from(document.querySelectorAll('mat-option')).map((el) => el.textContent?.trim() ?? '');
+}
+
+async function selectInTextPicker(inputId: string, optionText: string, query = optionText): Promise<void> {
+  await typeInTextPicker(inputId, query);
 
   const option = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
     (el) => el.textContent?.trim() === optionText,
   )!;
   option.click();
   await TestBed.inject(ApplicationRef).whenStable();
+}
+
+async function openAddItemPanel(fixture: ComponentFixture<ShoppingListDetail>): Promise<void> {
+  (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.fab')!.click();
+  fixture.detectChanges();
+  await TestBed.inject(ApplicationRef).whenStable();
+}
+
+async function submitAddItemForm(fixture: ComponentFixture<ShoppingListDetail>): Promise<void> {
+  (fixture.nativeElement as HTMLElement)
+    .querySelector('#add-item-product')!
+    .closest('form')!
+    .dispatchEvent(new Event('submit', { cancelable: true }));
+  await TestBed.inject(ApplicationRef).whenStable();
+  fixture.detectChanges();
+}
+
+async function answerConfirmDialog(
+  fixture: ComponentFixture<ShoppingListDetail>,
+  buttonText: string,
+): Promise<void> {
+  const button = Array.from(document.querySelectorAll<HTMLButtonElement>('app-confirm-dialog button')).find(
+    (el) => el.textContent?.trim() === buttonText,
+  )!;
+  button.click();
+  await TestBed.inject(ApplicationRef).whenStable();
+  fixture.detectChanges();
 }
 
 describe('ShoppingListDetail', () => {
@@ -165,7 +200,7 @@ describe('ShoppingListDetail', () => {
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 1);
+    shoppingListsService.addItem(listId, productsService.products()[0], 'l', 1);
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -201,7 +236,7 @@ describe('ShoppingListDetail', () => {
       const shoppingListsService = TestBed.inject(ShoppingListsService);
       shoppingListsService.addList('Weekly groceries');
       const listId = shoppingListsService.lists()[0].id;
-      shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 1);
+      shoppingListsService.addItem(listId, productsService.products()[0], 'l', 1);
 
       const fixture = TestBed.createComponent(ShoppingListDetail);
       fixture.componentRef.setInput('id', listId);
@@ -242,7 +277,192 @@ describe('ShoppingListDetail', () => {
     }
   });
 
-  it('does not show a category selector — category is derived from the product', () => {
+  it('prefills unit and category from an existing product and offers no create action for them', async () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ symbol: 'l' });
+    unitsService.add({ symbol: 'pcs' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    const list = shoppingListsService.addList('Weekly groceries');
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', list.id);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    await openAddItemPanel(fixture);
+
+    await selectProductViaPicker(root, 'Milk');
+    fixture.detectChanges();
+
+    expect(root.querySelector<HTMLInputElement>('#add-item-unit')!.value).toBe('l');
+    expect(root.querySelector<HTMLInputElement>('#add-item-category')!.value).toBe('Dairy');
+    expect(root.textContent).not.toContain('New product');
+
+    await typeInTextPicker('add-item-unit', 'box');
+    expect(optionTexts()).toEqual([]);
+    await typeInTextPicker('add-item-category', 'Bakery');
+    expect(optionTexts()).toEqual([]);
+  });
+
+  it('lets an existing product use another existing unit and category without changing the product', async () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ symbol: 'l' });
+    unitsService.add({ symbol: 'pcs' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    categoriesService.add({ name: 'Drinks' });
+    const productsService = TestBed.inject(ProductsService);
+    productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    const list = shoppingListsService.addList('Weekly groceries');
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', list.id);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    await openAddItemPanel(fixture);
+
+    await selectProductViaPicker(root, 'Milk');
+    await selectInTextPicker('add-item-unit', 'pcs');
+    await selectInTextPicker('add-item-category', 'Drinks');
+    await submitAddItemForm(fixture);
+
+    expect(document.querySelector('app-confirm-dialog')).toBeNull();
+    expect(shoppingListsService.lists()[0].items).toEqual([
+      expect.objectContaining({ productName: 'Milk', unitLabel: 'pcs', categoryName: 'Drinks' }),
+    ]);
+    expect(productsService.products()).toEqual([
+      expect.objectContaining({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' }),
+    ]);
+  });
+
+  it('registers a new product with its new unit and category when the user confirms', async () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    const list = shoppingListsService.addList('Weekly groceries');
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', list.id);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    await openAddItemPanel(fixture);
+
+    await typeInTextPicker('add-item-product', 'Oat milk');
+    fixture.detectChanges();
+    expect(root.textContent).toContain('New product — choose its unit and category.');
+
+    await selectInTextPicker('add-item-unit', 'Create unit "Carton"', 'Carton');
+    await selectInTextPicker('add-item-category', 'Create category "Plant drinks"', 'Plant drinks');
+
+    // Nothing is registered just by picking "create" — only on submit.
+    expect(unitsService.units().map((unit) => unit.symbol)).toEqual(['l']);
+    expect(categoriesService.categories().map((category) => category.name)).toEqual(['Dairy']);
+
+    await submitAddItemForm(fixture);
+    expect(document.querySelector('app-confirm-dialog')!.textContent).toContain(
+      '"Oat milk" is not in your products yet.',
+    );
+    await answerConfirmDialog(fixture, 'Yes, register');
+
+    expect(productsService.products()).toEqual([
+      expect.objectContaining({ name: 'Oat milk', unitSymbol: 'carton', categoryName: 'Plant drinks' }),
+    ]);
+    expect(unitsService.units().map((unit) => unit.symbol)).toEqual(['l', 'carton']);
+    expect(categoriesService.categories().map((category) => category.name)).toEqual([
+      'Dairy',
+      'Plant drinks',
+    ]);
+    expect(shoppingListsService.lists()[0].items).toEqual([
+      expect.objectContaining({ productName: 'Oat milk', unitLabel: 'carton', categoryName: 'Plant drinks' }),
+    ]);
+    expect(root.querySelector<HTMLInputElement>('#add-item-product')!.value).toBe('');
+  });
+
+  it('adds only the list item, registering nothing else, when the user declines registering', async () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const productsService = TestBed.inject(ProductsService);
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    const list = shoppingListsService.addList('Weekly groceries');
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', list.id);
+    fixture.detectChanges();
+    await openAddItemPanel(fixture);
+
+    await typeInTextPicker('add-item-product', 'Oat milk');
+    await selectInTextPicker('add-item-unit', 'Create unit "Carton"', 'Carton');
+    await selectInTextPicker('add-item-category', 'Create category "Plant drinks"', 'Plant drinks');
+    await submitAddItemForm(fixture);
+    await answerConfirmDialog(fixture, 'No, this list only');
+
+    expect(productsService.products()).toEqual([]);
+    expect(unitsService.units().map((unit) => unit.symbol)).toEqual(['l']);
+    expect(categoriesService.categories().map((category) => category.name)).toEqual(['Dairy']);
+    expect(shoppingListsService.lists()[0].items).toEqual([
+      expect.objectContaining({ productName: 'Oat milk', unitLabel: 'carton', categoryName: 'Plant drinks' }),
+    ]);
+  });
+
+  it('adds nothing and keeps the form filled when the register question is dismissed', async () => {
+    const unitsService = TestBed.inject(UnitsService);
+    unitsService.add({ symbol: 'l' });
+    const categoriesService = TestBed.inject(CategoriesService);
+    categoriesService.add({ name: 'Dairy' });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    const list = shoppingListsService.addList('Weekly groceries');
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', list.id);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    await openAddItemPanel(fixture);
+
+    await typeInTextPicker('add-item-product', 'Oat milk');
+    await selectInTextPicker('add-item-unit', 'l');
+    await selectInTextPicker('add-item-category', 'Dairy');
+    await submitAddItemForm(fixture);
+    TestBed.inject(Dialog).closeAll();
+    await TestBed.inject(ApplicationRef).whenStable();
+    fixture.detectChanges();
+
+    expect(shoppingListsService.lists()[0].items).toEqual([]);
+    expect(TestBed.inject(ProductsService).products()).toEqual([]);
+    expect(root.querySelector<HTMLInputElement>('#add-item-product')!.value).toBe('Oat milk');
+  });
+
+  it('requires a category for a new product', async () => {
+    TestBed.inject(UnitsService).add({ symbol: 'l', isDefault: true });
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    const list = shoppingListsService.addList('Weekly groceries');
+
+    const fixture = TestBed.createComponent(ShoppingListDetail);
+    fixture.componentRef.setInput('id', list.id);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    await openAddItemPanel(fixture);
+
+    await typeInTextPicker('add-item-product', 'Oat milk');
+    fixture.detectChanges();
+    expect(root.querySelector<HTMLInputElement>('#add-item-unit')!.value).toBe('l');
+
+    await submitAddItemForm(fixture);
+
+    expect(document.querySelector('app-confirm-dialog')).toBeNull();
+    expect(shoppingListsService.lists()[0].items).toEqual([]);
+    expect(root.textContent).toContain('A category is required.');
+  });
+
+  it('focuses the quantity field after picking a suggested product', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
@@ -250,112 +470,17 @@ describe('ShoppingListDetail', () => {
     const productsService = TestBed.inject(ProductsService);
     productsService.add({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' });
     const shoppingListsService = TestBed.inject(ShoppingListsService);
-    shoppingListsService.addList('Weekly groceries');
-    const listId = shoppingListsService.lists()[0].id;
+    const list = shoppingListsService.addList('Weekly groceries');
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
-    fixture.componentRef.setInput('id', listId);
+    fixture.componentRef.setInput('id', list.id);
     fixture.detectChanges();
-
     const root = fixture.nativeElement as HTMLElement;
-    root.querySelector<HTMLButtonElement>('.fab')!.click();
-    fixture.detectChanges();
+    await openAddItemPanel(fixture);
 
-    const selects = root.querySelectorAll('select');
-    expect(selects.length).toBe(1);
-    expect(root.textContent).not.toContain('Category');
-  });
+    await selectProductViaPicker(root, 'Milk');
 
-  it('creates a new product from the search field and adds it to the list', async () => {
-    const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ symbol: 'l' });
-    const categoriesService = TestBed.inject(CategoriesService);
-    categoriesService.add({ name: 'Dairy' });
-    const shoppingListsService = TestBed.inject(ShoppingListsService);
-    shoppingListsService.addList('Weekly groceries');
-    const listId = shoppingListsService.lists()[0].id;
-
-    const fixture = TestBed.createComponent(ShoppingListDetail);
-    fixture.componentRef.setInput('id', listId);
-    fixture.detectChanges();
-
-    const root = fixture.nativeElement as HTMLElement;
-    root.querySelector<HTMLButtonElement>('.fab')!.click();
-    fixture.detectChanges();
-
-    const input = root.querySelector<HTMLInputElement>('#add-item-product')!;
-    input.value = 'Oat milk';
-    input.dispatchEvent(new Event('input'));
-    await TestBed.inject(ApplicationRef).whenStable();
-
-    const createOption = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
-      (el) => el.textContent?.trim() === 'Create product "Oat milk"',
-    )!;
-    createOption.click();
-    await TestBed.inject(ApplicationRef).whenStable();
-
-    await selectInTextPicker('create-product-unit', 'l');
-    await selectInTextPicker('create-product-category', 'Dairy');
-    document
-      .querySelector('#create-product-unit')!
-      .closest('form')!
-      .dispatchEvent(new Event('submit', { cancelable: true }));
-    await TestBed.inject(ApplicationRef).whenStable();
-    fixture.detectChanges();
-
-    root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
-    fixture.detectChanges();
-
-    const productsService = TestBed.inject(ProductsService);
-    expect(productsService.products()).toEqual([
-      expect.objectContaining({ name: 'Oat milk', unitSymbol: 'l', categoryName: 'Dairy' }),
-    ]);
-    const items = shoppingListsService.lists()[0].items;
-    expect(items.length).toBe(1);
-    expect(items[0]).toEqual(
-      expect.objectContaining({ productName: 'Oat milk', unitLabel: 'l', categoryName: 'Dairy' }),
-    );
-  });
-
-  it('focuses the quantity field after creating a product from the add-item form', async () => {
-    const unitsService = TestBed.inject(UnitsService);
-    unitsService.add({ symbol: 'l' });
-    const categoriesService = TestBed.inject(CategoriesService);
-    categoriesService.add({ name: 'Dairy' });
-    const shoppingListsService = TestBed.inject(ShoppingListsService);
-    shoppingListsService.addList('Weekly groceries');
-    const listId = shoppingListsService.lists()[0].id;
-
-    const fixture = TestBed.createComponent(ShoppingListDetail);
-    fixture.componentRef.setInput('id', listId);
-    fixture.detectChanges();
-
-    const root = fixture.nativeElement as HTMLElement;
-    root.querySelector<HTMLButtonElement>('.fab')!.click();
-    fixture.detectChanges();
-
-    const input = root.querySelector<HTMLInputElement>('#add-item-product')!;
-    input.value = 'Oat milk';
-    input.dispatchEvent(new Event('input'));
-    await TestBed.inject(ApplicationRef).whenStable();
-
-    const createOption = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
-      (el) => el.textContent?.trim() === 'Create product "Oat milk"',
-    )!;
-    createOption.click();
-    await TestBed.inject(ApplicationRef).whenStable();
-
-    await selectInTextPicker('create-product-unit', 'l');
-    await selectInTextPicker('create-product-category', 'Dairy');
-    document
-      .querySelector('#create-product-unit')!
-      .closest('form')!
-      .dispatchEvent(new Event('submit', { cancelable: true }));
-    await TestBed.inject(ApplicationRef).whenStable();
-    fixture.detectChanges();
-
-    const quantityInput = root.querySelector<HTMLInputElement>('#add-item-quantity')!;
-    expect(document.activeElement).toBe(quantityInput);
+    expect(document.activeElement).toBe(root.querySelector('#add-item-quantity'));
   });
 
   it('groups items into sections by category, sorted alphabetically', () => {
@@ -371,8 +496,8 @@ describe('ShoppingListDetail', () => {
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(listId, applesProduct, 'l', 3);
-    shoppingListsService.addItemFromProduct(listId, milkProduct, 'l', 1);
+    shoppingListsService.addItem(listId, applesProduct, 'l', 3);
+    shoppingListsService.addItem(listId, milkProduct, 'l', 1);
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -403,9 +528,9 @@ describe('ShoppingListDetail', () => {
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(listId, yogurtProduct, 'l', 1);
-    shoppingListsService.addItemFromProduct(listId, milkProduct, 'l', 1);
-    shoppingListsService.addItemFromProduct(listId, cheeseProduct, 'l', 1);
+    shoppingListsService.addItem(listId, yogurtProduct, 'l', 1);
+    shoppingListsService.addItem(listId, milkProduct, 'l', 1);
+    shoppingListsService.addItem(listId, cheeseProduct, 'l', 1);
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -428,7 +553,7 @@ describe('ShoppingListDetail', () => {
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 2);
+    shoppingListsService.addItem(listId, productsService.products()[0], 'l', 2);
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -453,7 +578,7 @@ describe('ShoppingListDetail', () => {
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 2);
+    shoppingListsService.addItem(listId, productsService.products()[0], 'l', 2);
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -489,7 +614,7 @@ describe('ShoppingListDetail', () => {
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 2, 'organic');
+    shoppingListsService.addItem(listId, productsService.products()[0], 'l', 2, 'organic');
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
     fixture.componentRef.setInput('id', listId);
@@ -583,7 +708,7 @@ describe('ShoppingListDetail', () => {
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 1);
+    shoppingListsService.addItem(listId, productsService.products()[0], 'l', 1);
     shoppingListsService.setStatus(listId, 'completed');
 
     const fixture = TestBed.createComponent(ShoppingListDetail);
@@ -602,7 +727,7 @@ describe('ShoppingListDetail', () => {
     ).toBe(true);
   });
 
-  it('shows a stale unit symbol as an extra selected option when the product unit no longer exists', async () => {
+  it('keeps a stale unit symbol from the product even when that unit no longer exists', async () => {
     const unitsService = TestBed.inject(UnitsService);
     unitsService.add({ symbol: 'l' });
     const categoriesService = TestBed.inject(CategoriesService);
@@ -627,10 +752,11 @@ describe('ShoppingListDetail', () => {
     await selectProductViaPicker(root, 'Milk');
     fixture.detectChanges();
 
-    const unitSelect = root.querySelector<HTMLSelectElement>('#add-item-unit')!;
-    expect(Array.from(unitSelect.options).map((option) => option.value)).toEqual(['l']);
-    await TestBed.inject(ApplicationRef).whenStable();
-    expect(unitSelect.value).toBe('l');
+    expect(root.querySelector<HTMLInputElement>('#add-item-unit')!.value).toBe('l');
+    await submitAddItemForm(fixture);
+    expect(shoppingListsService.lists()[0].items).toEqual([
+      expect.objectContaining({ productName: 'Milk', unitLabel: 'l' }),
+    ]);
   });
 
   it('shows a required-unit error and does not add the item when the product has no resolvable unit', async () => {
@@ -694,7 +820,7 @@ describe('ShoppingListDetail sharing', () => {
     const shoppingListsService = TestBed.inject(ShoppingListsService);
     shoppingListsService.addList('Weekly groceries');
     const listId = shoppingListsService.lists()[0].id;
-    shoppingListsService.addItemFromProduct(listId, productsService.products()[0], 'l', 2, 'organic');
+    shoppingListsService.addItem(listId, productsService.products()[0], 'l', 2, 'organic');
     return listId;
   }
 

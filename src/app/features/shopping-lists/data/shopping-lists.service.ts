@@ -5,6 +5,9 @@ import { type ShoppingListExport } from './shopping-list-export';
 import { ShoppingList, ShoppingListId, ShoppingListItem, ShoppingListItemId } from './shopping-list.model';
 import { SHOPPING_LISTS_STORE } from './shopping-lists.store';
 
+/** What an item needs from a product — it may be a registered product or a one-off name. */
+export type ShoppingListItemProduct = Pick<Product, 'name' | 'categoryName'>;
+
 @Service()
 export class ShoppingListsService {
   private readonly store = inject(SHOPPING_LISTS_STORE);
@@ -51,9 +54,9 @@ export class ShoppingListsService {
     this.store.removeList(id);
   }
 
-  addItemFromProduct(
+  addItem(
     listId: ShoppingListId,
-    product: Product,
+    product: ShoppingListItemProduct,
     unitSymbol: string,
     quantity: number,
     note?: string,
@@ -130,7 +133,7 @@ export class ShoppingListsService {
 
   private isSameUnpurchasedItem(
     item: ShoppingListItem,
-    product: Product,
+    product: ShoppingListItemProduct,
     unitSymbol: string,
     note?: string,
   ): boolean {

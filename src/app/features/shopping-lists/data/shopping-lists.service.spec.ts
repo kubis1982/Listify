@@ -39,8 +39,8 @@ describe('ShoppingListsService', () => {
   it('removeItem leaves the other items untouched', () => {
     const service = TestBed.inject(ShoppingListsService);
     const list = service.addList('Weekend shopping');
-    service.addItemFromProduct(list.id, product, 'l', 1);
-    service.addItemFromProduct(list.id, { ...product, id: 'p2', name: 'Bread' }, 'pcs', 1);
+    service.addItem(list.id, product, 'l', 1);
+    service.addItem(list.id, { ...product, name: 'Bread' }, 'pcs', 1);
     const [first, second] = service.lists()[0].items;
 
     service.removeItem(list.id, first.id);
@@ -105,12 +105,12 @@ describe('ShoppingListsService', () => {
     expect(list.items[0]).not.toHaveProperty('maliciousField');
   });
 
-  it('addItemFromProduct adds a new item to an active list', () => {
+  it('addItem adds a new item to an active list', () => {
     const service = TestBed.inject(ShoppingListsService);
     const list = service.addList('Weekend shopping');
     const product: Product = { id: 'p1', name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' };
 
-    service.addItemFromProduct(list.id, product, 'l', 2);
+    service.addItem(list.id, product, 'l', 2);
 
     const updated = service.lists().find((l) => l.id === list.id)!;
     expect(updated.items).toEqual([
@@ -121,10 +121,10 @@ describe('ShoppingListsService', () => {
   it('merges quantity case-insensitively across product name, unit, and note', () => {
     const service = TestBed.inject(ShoppingListsService);
     const list = service.addList('Weekend shopping');
-    service.addItemFromProduct(list.id, product, 'l', 2, 'Organic');
+    service.addItem(list.id, product, 'l', 2, 'Organic');
 
     const upperProduct: Product = { ...product, name: 'MILK 3.2%' };
-    const merged = service.addItemFromProduct(list.id, upperProduct, 'L', 1, 'organic');
+    const merged = service.addItem(list.id, upperProduct, 'L', 1, 'organic');
 
     expect(merged).toBe(true);
     const items = service.lists().find((l) => l.id === list.id)!.items;
@@ -135,9 +135,9 @@ describe('ShoppingListsService', () => {
   it('does not merge when the note differs', () => {
     const service = TestBed.inject(ShoppingListsService);
     const list = service.addList('Weekend shopping');
-    service.addItemFromProduct(list.id, product, 'l', 2, 'organic');
+    service.addItem(list.id, product, 'l', 2, 'organic');
 
-    const merged = service.addItemFromProduct(list.id, product, 'l', 1, 'skimmed');
+    const merged = service.addItem(list.id, product, 'l', 1, 'skimmed');
 
     expect(merged).toBe(false);
     expect(service.lists().find((l) => l.id === list.id)!.items.length).toBe(2);
@@ -146,11 +146,11 @@ describe('ShoppingListsService', () => {
   it('does not merge into an item already marked as purchased', () => {
     const service = TestBed.inject(ShoppingListsService);
     const list = service.addList('Weekend shopping');
-    service.addItemFromProduct(list.id, product, 'l', 2, 'organic');
+    service.addItem(list.id, product, 'l', 2, 'organic');
     const itemId = service.lists().find((l) => l.id === list.id)!.items[0].id;
     service.setItemPurchased(list.id, itemId, true);
 
-    const merged = service.addItemFromProduct(list.id, product, 'l', 1, 'organic');
+    const merged = service.addItem(list.id, product, 'l', 1, 'organic');
 
     expect(merged).toBe(false);
     const items = service.lists().find((l) => l.id === list.id)!.items;
@@ -161,11 +161,11 @@ describe('ShoppingListsService', () => {
   it('ignores item changes for a completed list', () => {
     const service = TestBed.inject(ShoppingListsService);
     const list = service.addList('Weekend shopping');
-    service.addItemFromProduct(list.id, product, 'l', 1);
+    service.addItem(list.id, product, 'l', 1);
     const itemId = service.lists().find((l) => l.id === list.id)!.items[0].id;
     service.setStatus(list.id, 'completed');
 
-    const added = service.addItemFromProduct(list.id, product, 'l', 2);
+    const added = service.addItem(list.id, product, 'l', 2);
     service.setItemPurchased(list.id, itemId, true);
     service.updateItem(list.id, itemId, 9);
     service.removeItem(list.id, itemId);

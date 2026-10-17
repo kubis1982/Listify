@@ -19,6 +19,20 @@ export class ConfirmDialogService {
     return result ?? false;
   }
 
+  /**
+   * Yes/no question that can also be dismissed: resolves `true` for the confirm
+   * button, `false` for the cancel button, and `undefined` when closed with
+   * Escape or the backdrop.
+   */
+  async ask(data: ConfirmDialogData): Promise<boolean | undefined> {
+    const dialogRef = this.dialog.open<boolean, ConfirmDialogData>(ConfirmDialog, {
+      data,
+      role: 'alertdialog',
+      autoFocus: '.btn-accent-pill-lg',
+    });
+    return firstValueFrom(dialogRef.closed);
+  }
+
   async alert(data: { title: string; message: string }): Promise<void> {
     const dialogRef = this.dialog.open<boolean, ConfirmDialogData>(ConfirmDialog, {
       data: { ...data, hideCancel: true, confirmLabel: this.t('common.ok') },

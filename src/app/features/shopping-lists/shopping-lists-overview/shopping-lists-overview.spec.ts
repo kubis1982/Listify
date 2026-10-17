@@ -72,6 +72,47 @@ describe('ShoppingListsOverview', () => {
     expect(root.textContent).toContain('Weekly groceries');
   });
 
+  it('suggests earlier list names, deduplicated and filtered by the typed text', async () => {
+    const shoppingListsService = TestBed.inject(ShoppingListsService);
+    shoppingListsService.addList('Weekly groceries');
+    shoppingListsService.addList('weekly groceries');
+    shoppingListsService.addList('Party');
+    const completed = shoppingListsService.addList('Weekend trip');
+    shoppingListsService.setStatus(completed.id, 'completed');
+
+    const fixture = TestBed.createComponent(ShoppingListsOverview);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.fab')!.click();
+    fixture.detectChanges();
+
+    const input = root.querySelector<HTMLInputElement>('#new-list-name')!;
+    input.value = 'wee';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('focusin'));
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const optionTexts = () =>
+      Array.from(document.querySelectorAll('mat-option')).map((el) => el.textContent?.trim());
+    expect(optionTexts()).toEqual(['Weekend trip', 'Weekly groceries']);
+    expect(document.querySelector('[role="listbox"]')!.getAttribute('aria-label')).toBe(
+      'Previous list names',
+    );
+
+    Array.from(document.querySelectorAll<HTMLElement>('mat-option'))
+      .find((el) => el.textContent?.trim() === 'Weekly groceries')!
+      .click();
+    await TestBed.inject(ApplicationRef).whenStable();
+    fixture.detectChanges();
+
+    expect(input.value).toBe('Weekly groceries');
+    root.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+    expect(shoppingListsService.lists().filter((list) => list.name === 'Weekly groceries').length).toBe(2);
+
+    document.querySelectorAll('.cdk-overlay-container').forEach((container) => container.remove());
+  });
+
   it('focuses the name input when the panel opens', async () => {
     const fixture = TestBed.createComponent(ShoppingListsOverview);
     document.body.appendChild(fixture.nativeElement);
