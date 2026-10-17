@@ -337,6 +337,7 @@ describe('ShoppingListDetail', () => {
     expect(productsService.products()).toEqual([
       expect.objectContaining({ name: 'Milk', unitSymbol: 'l', categoryName: 'Dairy' }),
     ]);
+    expect(document.activeElement).toBe(root.querySelector('#add-item-product'));
   });
 
   it('registers a new product with its new unit and category when the user confirms', async () => {
@@ -383,6 +384,7 @@ describe('ShoppingListDetail', () => {
       expect.objectContaining({ productName: 'Oat milk', unitLabel: 'carton', categoryName: 'Plant drinks' }),
     ]);
     expect(root.querySelector<HTMLInputElement>('#add-item-product')!.value).toBe('');
+    expect(document.activeElement).toBe(root.querySelector('#add-item-product'));
   });
 
   it('adds only the list item, registering nothing else, when the user declines registering', async () => {

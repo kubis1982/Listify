@@ -1008,6 +1008,9 @@ export class ShoppingListDetail {
 
     this.resetItemForm();
     this.showFeedback(merged ? 'listDetail.mergedFeedback' : null);
+    // Ready for the next item. Deferred so it runs after the register
+    // question's dialog has restored focus to the submit button.
+    afterNextRender(() => this.productPicker()?.focus(), { injector: this.injector });
   }
 
   private registerProduct(name: string, unitSymbol: string, categoryName: string): void {
